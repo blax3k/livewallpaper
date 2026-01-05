@@ -1,0 +1,76 @@
+OpenGL Live Wallpaper - Base Components Setup
+==============================================
+
+The following components have been created to support an OpenGL-based live wallpaper:
+
+## Java Files Created:
+
+1. **GLWallpaperRenderer.java**
+   - Interface defining the renderer contract
+   - Methods: onSurfaceCreated(), onSurfaceChanged(), onDrawFrame(), onDestroy()
+
+2. **SimpleRenderer.java**
+   - Example implementation of GLWallpaperRenderer
+   - Renders an animated background with smoothly changing colors
+   - Uses sine waves to create smooth color transitions
+
+3. **WallpaperGLService.java**
+   - Main WallpaperService implementation
+   - Manages EGL context creation and destruction
+   - Handles the render thread lifecycle
+   - Implements SurfaceHolder callbacks for surface management
+   - Features:
+     * Automatic rendering start/stop based on visibility
+     * EGL14 context management for OpenGL ES 2.0
+     * Thread-safe rendering with ~60 FPS throttling
+     * Proper resource cleanup
+
+## Configuration Files Created:
+
+1. **res/xml/live_wallpaper.xml**
+   - Wallpaper metadata file
+   - Defines thumbnail and description
+
+2. **AndroidManifest.xml (updated)**
+   - Added WallpaperGLService declaration
+   - Added proper intent filters
+   - Added wallpaper metadata reference
+   - Service is exported and has BIND_WALLPAPER permission
+
+## How to Use:
+
+1. To create a custom renderer, implement the GLWallpaperRenderer interface
+2. Override the four lifecycle methods as needed
+3. In WallpaperGLService.onCreate(), replace:
+   ```
+   renderer = new SimpleRenderer();
+   ```
+   with your custom renderer implementation
+
+4. Build and run the app
+5. Go to Settings > Wallpaper and select your live wallpaper
+
+## Minimum Requirements:
+
+- Android API 17+ (for EGL14)
+- OpenGL ES 2.0 support
+
+## Architecture:
+
+```
+WallpaperGLService
+  ├─ GLWallpaperEngine (extends WallpaperService.Engine)
+  │  ├─ EGL14 Display, Context, Surface management
+  │  ├─ Render Thread for GL operations
+  │  └─ GLWallpaperRenderer (interface)
+  │     └─ SimpleRenderer (example implementation)
+  └─ SurfaceHolder.Callback for lifecycle management
+```
+
+The service handles:
+- Surface creation/destruction
+- EGL context initialization
+- Visibility changes (pause/resume rendering)
+- Thread-safe rendering
+- Proper resource cleanup
+
