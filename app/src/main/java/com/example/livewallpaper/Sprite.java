@@ -17,23 +17,25 @@ import java.nio.FloatBuffer;
  */
 public class Sprite {
     private static final String TAG = "Sprite";
+    private static final int VERTEX_COUNT = 4;
 
-    private Context context;
+    private final Context context;
     private FloatBuffer vertexBuffer;
     private FloatBuffer texCoordBuffer;
-    private int vertexCount = 4;
     private int textureId = 0;
-    private int textureResourceId;
+    private final int textureResourceId;
 
     // Sprite properties for positioning and sizing
     private float positionX = 0f;
     private float positionY = 0f;
-    private float width = 0.5f;   // Full width (0.25 on each side of center)
-    private float height = 0.5f;  // Full height (0.25 on each side of center)
+    private float width;
+    private float height;
 
-    public Sprite(Context context, int textureResourceId) {
+    public Sprite(Context context, int textureResourceId, float width, float height) {
         this.context = context;
         this.textureResourceId = textureResourceId;
+        this.width = width;
+        this.height = height;
         initializeGeometry();
         loadTexture();
     }
@@ -148,7 +150,7 @@ public class Sprite {
         GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 8, texCoordBuffer);
 
         // Draw the sprite
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, vertexCount);
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_COUNT);
 
         // Disable vertex attribute arrays
         GLES20.glDisableVertexAttribArray(positionHandle);
@@ -167,6 +169,7 @@ public class Sprite {
     /**
      * Set the size of the sprite.
      */
+    @SuppressWarnings("unused")
     public void setSize(float width, float height) {
         this.width = width;
         this.height = height;
@@ -178,6 +181,7 @@ public class Sprite {
      *
      * @param texCoords array of 8 floats representing 4 texture coordinates (u, v pairs)
      */
+    @SuppressWarnings("unused")
     public void setTextureCoordinates(float[] texCoords) {
         if (texCoords.length != 8) {
             Log.w(TAG, "Texture coordinates must be an array of 8 floats");
@@ -192,6 +196,7 @@ public class Sprite {
     /**
      * Get the current X position.
      */
+    @SuppressWarnings("unused")
     public float getPositionX() {
         return positionX;
     }
@@ -199,6 +204,7 @@ public class Sprite {
     /**
      * Get the current Y position.
      */
+    @SuppressWarnings("unused")
     public float getPositionY() {
         return positionY;
     }
@@ -206,6 +212,7 @@ public class Sprite {
     /**
      * Get the current width.
      */
+    @SuppressWarnings("unused")
     public float getWidth() {
         return width;
     }
@@ -213,6 +220,7 @@ public class Sprite {
     /**
      * Get the current height.
      */
+    @SuppressWarnings("unused")
     public float getHeight() {
         return height;
     }
@@ -220,6 +228,7 @@ public class Sprite {
     /**
      * Get the texture ID.
      */
+    @SuppressWarnings("unused")
     public int getTextureId() {
         return textureId;
     }

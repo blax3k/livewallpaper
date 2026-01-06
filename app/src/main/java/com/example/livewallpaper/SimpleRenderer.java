@@ -47,10 +47,13 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         samplerHandle = GLES20.glGetUniformLocation(program, "samplerTexture");
         projectionMatrixHandle = GLES20.glGetUniformLocation(program, "projectionMatrix");
 
-        // Create a sprite with the knight texture
-        Sprite knightSprite = new Sprite(context, R.drawable.knight);
-        knightSprite.setPosition(0f, 0f);  // Center of screen
+        // Create sprites with position and size
+        Sprite landscapeSprite = new Sprite(context, R.drawable.landscape, 1.5f, 1.5f);
+        sprites.add(landscapeSprite);
+
+        Sprite knightSprite = new Sprite(context, R.drawable.knight, 1f, 1.5f);
         sprites.add(knightSprite);
+
 
         Log.d(TAG, "Surface created");
     }
@@ -58,9 +61,17 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     @Override
     public void onSurfaceChanged(int width, int height) {
         GLES20.glViewport(0, 0, width, height);
+        float aspectRatio = (float) width / height;
 
-        // Set up orthographic projection matrix with standard math coordinates (Y up)
-        setOrthographicProjection(-1f, 1f, 1f, -1f, -1f, 1f);
+        // Set up orthographic projection that accounts for aspect ratio
+        // Keep vertical range at -1 to 1, scale horizontal by aspect ratio
+        if (aspectRatio > 1) {
+            // Landscape: wider than tall
+            setOrthographicProjection(-aspectRatio, aspectRatio, 1f, -1f, -1f, 1f);
+        } else {
+            // Portrait: taller than wide
+            setOrthographicProjection(-1f, 1f, 1f / aspectRatio, -1f / aspectRatio, -1f, 1f);
+        }
 
         Log.d(TAG, "Surface changed: " + width + "x" + height);
     }
