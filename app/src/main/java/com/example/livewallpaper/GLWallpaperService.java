@@ -1,5 +1,9 @@
 package com.example.livewallpaper;
 
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
 import android.opengl.EGLContext;
@@ -35,6 +39,27 @@ public class GLWallpaperService extends WallpaperService {
         // Renderer
         private GLWallpaperRenderer renderer;
 
+        // Sensor management
+        private SensorManager sensorManager;
+        private Sensor gyroscopeSensor;
+        private final SensorEventListener sensorEventListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE && renderer != null) {
+                    // Pass gyroscope data to renderer
+                    // event.values[0] = rotation around X axis (pitch)
+                    // event.values[1] = rotation around Y axis (roll)
+                    // event.values[2] = rotation around Z axis (yaw)
+                    renderer.onGyroscopeChanged(event.values[0], event.values[1], event.values[2]);
+                }
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+                // Handle accuracy changes if needed
+            }
+        };
+
         @Override
         public void onCreate(SurfaceHolder surfaceHolder) {
             try {
@@ -42,6 +67,19 @@ public class GLWallpaperService extends WallpaperService {
                 surfaceHolder.addCallback(this);
                 renderer = new SimpleRenderer(GLWallpaperService.this);
                 setTouchEventsEnabled(false);
+
+                // Initialize sensor manager and register gyroscope listener
+                sensorManager = (SensorManager) GLWallpaperService.this.getSystemService(SENSOR_SERVICE);
+                if (sensorManager != null) {
+                    gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+                    if (gyroscopeSensor != null) {
+                        sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
+                        Log.d(TAG, "Gyroscope sensor registered");
+                    } else {
+                        Log.w(TAG, "Gyroscope sensor not available on this device");
+                    }
+                }
+
                 Log.d(TAG, "Engine created");
             } catch (Exception e) {
                 Log.e(TAG, "Error in onCreate: " + e.getMessage(), e);
@@ -51,6 +89,11 @@ public class GLWallpaperService extends WallpaperService {
 
         @Override
         public void onDestroy() {
+            // Unregister sensor listener
+            if (sensorManager != null && sensorEventListener != null) {
+                sensorManager.unregisterListener(sensorEventListener);
+                Log.d(TAG, "Gyroscope sensor unregistered");
+            }
             stopRendering();
             super.onDestroy();
         }

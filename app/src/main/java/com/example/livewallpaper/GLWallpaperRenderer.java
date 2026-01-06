@@ -32,6 +32,14 @@ public interface GLWallpaperRenderer {
     void onDestroy();
 
     void onScrollOffsetChanged(float offsetX);
+
+    /**
+     * Called when gyroscope data is updated.
+     * Use this to move sprites based on device rotation.
+     *
+     * @param rotationX rotation around X axis in rad/s (pitch)
+     * @param rotationY rotation around Y axis in rad/s (roll)
+     * @param rotationZ rotation around Z axis in rad/s (yaw)
+     */
+    void onGyroscopeChanged(float rotationX, float rotationY, float rotationZ);
 }
-
-
