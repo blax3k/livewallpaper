@@ -33,6 +33,10 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     public void onSurfaceCreated() {
         GLES20.glClearColor(0f, 0f, 0f, 1f);
 
+        // Enable blending for transparency
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
         // Compile shaders and create program
         int vertexShader = compileShader(GLES20.GL_VERTEX_SHADER, getVertexShaderCode());
         int fragmentShader = compileShader(GLES20.GL_FRAGMENT_SHADER, getFragmentShaderCode());
@@ -128,7 +132,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
                 + "uniform sampler2D samplerTexture;"
                 + "varying vec2 texCoord;"
                 + "void main() {"
-                + "  gl_FragColor = texture2D(samplerTexture, texCoord);"
+                + "  vec4 texColor = texture2D(samplerTexture, texCoord);"
+                + "  gl_FragColor = texColor;"
                 + "}";
     }
 
