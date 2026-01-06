@@ -14,8 +14,8 @@ import androidx.annotation.NonNull;
  * A WallpaperService that renders OpenGL content as a live wallpaper.
  * Manages EGL context creation and a dedicated render thread.
  */
-public class WallpaperGLService extends WallpaperService {
-    private static final String TAG = "WallpaperGLService";
+public class GLWallpaperService extends WallpaperService {
+    private static final String TAG = "GLWallpaperService";
 
     @Override
     public Engine onCreateEngine() {
@@ -40,7 +40,7 @@ public class WallpaperGLService extends WallpaperService {
             try {
                 super.onCreate(surfaceHolder);
                 surfaceHolder.addCallback(this);
-                renderer = new SimpleRenderer();
+                renderer = new SimpleRenderer(GLWallpaperService.this);
                 setTouchEventsEnabled(false);
                 Log.d(TAG, "Engine created");
             } catch (Exception e) {
@@ -152,6 +152,9 @@ public class WallpaperGLService extends WallpaperService {
                     return false;
                 }
 
+                // Enable vsync (swap interval = 1 means sync to display refresh rate)
+                EGL14.eglSwapInterval(eglDisplay, 1);
+
                 renderer.onSurfaceCreated();
                 Log.d(TAG, "EGL initialized successfully");
                 return true;
@@ -208,15 +211,8 @@ public class WallpaperGLService extends WallpaperService {
                     try {
                         // Render a frame
                         renderer.onDrawFrame();
-
-                        // Swap buffers
+                        // Swap buffers (vsync handled by eglSwapInterval)
                         EGL14.eglSwapBuffers(eglDisplay, eglSurface);
-
-                        // Sleep to throttle to approximately 60 FPS
-                        //noinspection BusyWait
-                        Thread.sleep(16);
-                    } catch (InterruptedException e) {
-                        break;
                     } catch (Exception e) {
                         Log.e(TAG, "Rendering error", e);
                     }

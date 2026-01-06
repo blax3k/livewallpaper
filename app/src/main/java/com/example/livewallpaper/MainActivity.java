@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
             intent.putExtra(
                 WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
-                new ComponentName(this, WallpaperGLService.class)
+                new ComponentName(this, GLWallpaperService.class)
             );
             startActivity(intent);
         } catch (Exception e) {
