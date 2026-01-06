@@ -2,6 +2,7 @@ package com.example.livewallpaper;
 
 import android.content.Context;
 import android.opengl.GLES20;
+import android.opengl.Matrix;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -71,10 +72,11 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Keep vertical range at -1 to 1, scale horizontal by aspect ratio
         if (aspectRatio > 1) {
             // Landscape: wider than tall
-            setOrthographicProjection(-aspectRatio, aspectRatio, 1f, -1f, -1f, 1f);
+
+            Matrix.orthoM(projectionMatrix, 0, -aspectRatio, aspectRatio, 1f, -1f, -1f, 1f);
         } else {
             // Portrait: taller than wide
-            setOrthographicProjection(-1f, 1f, 1f / aspectRatio, -1f / aspectRatio, -1f, 1f);
+            Matrix.orthoM(projectionMatrix, 0, -1f, 1f, 1f / aspectRatio, -1f / aspectRatio, -1f, 1f);
         }
 
         Log.d(TAG, "Surface changed: " + width + "x" + height);
@@ -138,23 +140,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     }
 
     private void setOrthographicProjection(float left, float right, float bottom, float top, float near, float far) {
-        float[] orthoMatrix = new float[16];
-
-        // Initialize identity matrix
-        for (int i = 0; i < 16; i++) {
-            orthoMatrix[i] = 0f;
-        }
-
-        // Set orthographic projection matrix values
-        orthoMatrix[0] = 2f / (right - left);
-        orthoMatrix[5] = 2f / (top - bottom);
-        orthoMatrix[10] = -2f / (far - near);
-        orthoMatrix[12] = -(right + left) / (right - left);
-        orthoMatrix[13] = -(top + bottom) / (top - bottom);
-        orthoMatrix[14] = -(far + near) / (far - near);
-        orthoMatrix[15] = 1f;
-
-        projectionMatrix = orthoMatrix;
+        Matrix.orthoM(projectionMatrix, 0, left, right, bottom, top, near, far);
     }
 }
 
