@@ -22,6 +22,7 @@ public class Sprite {
     private final Context context;
     private FloatBuffer vertexBuffer;
     private FloatBuffer texCoordBuffer;
+    private FloatBuffer parallaxMultiplierBuffer;
     private int textureId = 0;
     private final int textureResourceId;
 
@@ -30,6 +31,7 @@ public class Sprite {
     private float positionY = 0f;
     private float width;
     private float height;
+    private float parallaxMultiplier = 1.0f;
 
     public Sprite(Context context, int textureResourceId, float width, float height) {
         this.context = context;
@@ -72,6 +74,14 @@ public class Sprite {
         texCoordBuffer = tbb.asFloatBuffer();
         texCoordBuffer.put(texCoords);
         texCoordBuffer.position(0);
+
+        // Initialize parallax multiplier buffer (one value per vertex)
+        float[] parallaxMultipliers = {1.0f, 1.0f, 1.0f, 1.0f};
+        ByteBuffer pmbb = ByteBuffer.allocateDirect(parallaxMultipliers.length * 4);
+        pmbb.order(ByteOrder.nativeOrder());
+        parallaxMultiplierBuffer = pmbb.asFloatBuffer();
+        parallaxMultiplierBuffer.put(parallaxMultipliers);
+        parallaxMultiplierBuffer.position(0);
     }
 
     /**
@@ -134,8 +144,9 @@ public class Sprite {
      * @param positionHandle attribute handle for vertex positions
      * @param texCoordHandle attribute handle for texture coordinates
      * @param samplerHandle uniform handle for texture sampler
+     * @param parallaxMultiplierHandle attribute handle for parallax multiplier
      */
-    public void draw(int positionHandle, int texCoordHandle, int samplerHandle) {
+    public void draw(int positionHandle, int texCoordHandle, int samplerHandle, int parallaxMultiplierHandle) {
         // Bind texture
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
@@ -149,12 +160,17 @@ public class Sprite {
         GLES20.glEnableVertexAttribArray(texCoordHandle);
         GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 8, texCoordBuffer);
 
+        // Enable parallax multiplier attribute array
+        GLES20.glEnableVertexAttribArray(parallaxMultiplierHandle);
+        GLES20.glVertexAttribPointer(parallaxMultiplierHandle, 1, GLES20.GL_FLOAT, false, 4, parallaxMultiplierBuffer);
+
         // Draw the sprite
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_COUNT);
 
         // Disable vertex attribute arrays
         GLES20.glDisableVertexAttribArray(positionHandle);
         GLES20.glDisableVertexAttribArray(texCoordHandle);
+        GLES20.glDisableVertexAttribArray(parallaxMultiplierHandle);
     }
 
     /**
@@ -231,6 +247,29 @@ public class Sprite {
     @SuppressWarnings("unused")
     public int getTextureId() {
         return textureId;
+    }
+
+    /**
+     * Set the parallax multiplier for this sprite.
+     * Controls how much this sprite responds to scroll offset (1.0 = full, 0.5 = half, etc.)
+     *
+     * @param multiplier the parallax multiplier value
+     */
+    public void setParallaxMultiplier(float multiplier) {
+        this.parallaxMultiplier = multiplier;
+        // Update all values in the buffer with the new multiplier
+        float[] parallaxMultipliers = {multiplier, multiplier, multiplier, multiplier};
+        parallaxMultiplierBuffer.position(0);
+        parallaxMultiplierBuffer.put(parallaxMultipliers);
+        parallaxMultiplierBuffer.position(0);
+    }
+
+    /**
+     * Get the parallax multiplier for this sprite.
+     */
+    @SuppressWarnings("unused")
+    public float getParallaxMultiplier() {
+        return parallaxMultiplier;
     }
 
     /**

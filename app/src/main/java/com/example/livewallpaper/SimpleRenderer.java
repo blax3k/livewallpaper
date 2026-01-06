@@ -20,10 +20,13 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     private int texCoordHandle;
     private int samplerHandle;
     private int projectionMatrixHandle;
+    private int scrollOffsetHandle;
+    private int parallaxMultiplierHandle;
 
     private List<Sprite> sprites;
 
     private float[] projectionMatrix = new float[16];
+    private float currentScrollOffset = 0f;
 
     public SimpleRenderer(Context context) {
         this.context = context;
@@ -51,12 +54,16 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         texCoordHandle = GLES20.glGetAttribLocation(program, "vTexCoord");
         samplerHandle = GLES20.glGetUniformLocation(program, "samplerTexture");
         projectionMatrixHandle = GLES20.glGetUniformLocation(program, "projectionMatrix");
+        scrollOffsetHandle = GLES20.glGetUniformLocation(program, "scrollOffset");
+        parallaxMultiplierHandle = GLES20.glGetAttribLocation(program, "parallaxMultiplier");
 
         // Create sprites with position and size
         Sprite landscapeSprite = new Sprite(context, R.drawable.landscape, 1.5f, 1.5f);
+        landscapeSprite.setParallaxMultiplier(0.5f);  // Background moves slower
         sprites.add(landscapeSprite);
 
         Sprite knightSprite = new Sprite(context, R.drawable.knight, 1f, 1.5f);
+        knightSprite.setParallaxMultiplier(1.0f);  // Foreground moves with scroll
         sprites.add(knightSprite);
 
 
@@ -91,9 +98,12 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Set projection matrix
         GLES20.glUniformMatrix4fv(projectionMatrixHandle, 1, false, projectionMatrix, 0);
 
+        // Set scroll offset uniform (applied by all sprites with their own multiplier)
+        GLES20.glUniform1f(scrollOffsetHandle, currentScrollOffset);
+
         // Draw all sprites
         for (Sprite sprite : sprites) {
-            sprite.draw(positionHandle, texCoordHandle, samplerHandle);
+            sprite.draw(positionHandle, texCoordHandle, samplerHandle, parallaxMultiplierHandle);
         }
     }
 
@@ -111,6 +121,11 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         Log.d(TAG, "Renderer destroyed");
     }
 
+    @Override
+    public void onScrollOffsetChanged(float offsetX) {
+        this.currentScrollOffset = offsetX;
+    }
+
     private int compileShader(int type, String shaderCode) {
         int shader = GLES20.glCreateShader(type);
         GLES20.glShaderSource(shader, shaderCode);
@@ -120,11 +135,15 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     private String getVertexShaderCode() {
         return "uniform mat4 projectionMatrix;"
+                + "uniform float scrollOffset;"
                 + "attribute vec4 vPosition;"
                 + "attribute vec2 vTexCoord;"
+                + "attribute float parallaxMultiplier;"
                 + "varying vec2 texCoord;"
                 + "void main() {"
-                + "  gl_Position = projectionMatrix * vPosition;"
+                + "  vec4 position = vPosition;"
+                + "  position.x += scrollOffset * parallaxMultiplier;"
+                + "  gl_Position = projectionMatrix * position;"
                 + "  texCoord = vTexCoord;"
                 + "}";
     }

@@ -86,6 +86,14 @@ public class GLWallpaperService extends WallpaperService {
             stopRendering();
         }
 
+        @Override
+        public void onOffsetsChanged(float xOffset, float yOffset, float xOffsetStep, float yOffsetStep, int xPixelOffset, int yPixelOffset) {
+            super.onOffsetsChanged(xOffset, yOffset, xOffsetStep, yOffsetStep, xPixelOffset, yPixelOffset);
+            if (renderer != null) {
+                renderer.onScrollOffsetChanged(xOffset);
+            }
+        }
+
         private boolean initEGL(SurfaceHolder holder) {
             try {
                 // Get the default EGL display

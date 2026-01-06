@@ -30,6 +30,8 @@ public interface GLWallpaperRenderer {
      * Release GL resources here.
      */
     void onDestroy();
+
+    void onScrollOffsetChanged(float offsetX);
 }
 
 
