@@ -42,6 +42,8 @@ public class GLWallpaperService extends WallpaperService {
         // Sensor management
         private SensorManager sensorManager;
         private Sensor gyroscopeSensor;
+        // Flag to avoid double registration/unregistration
+        private volatile boolean sensorRegistered = false;
         private final SensorEventListener sensorEventListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
@@ -68,14 +70,11 @@ public class GLWallpaperService extends WallpaperService {
                 renderer = new SimpleRenderer(GLWallpaperService.this);
                 setTouchEventsEnabled(false);
 
-                // Initialize sensor manager and register gyroscope listener
+                // Initialize sensor manager and obtain gyroscope sensor but don't register yet
                 sensorManager = (SensorManager) GLWallpaperService.this.getSystemService(SENSOR_SERVICE);
                 if (sensorManager != null) {
                     gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-                    if (gyroscopeSensor != null) {
-                        sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
-                        Log.d(TAG, "Gyroscope sensor registered");
-                    } else {
+                    if (gyroscopeSensor == null) {
                         Log.w(TAG, "Gyroscope sensor not available on this device");
                     }
                 }
@@ -89,10 +88,11 @@ public class GLWallpaperService extends WallpaperService {
 
         @Override
         public void onDestroy() {
-            // Unregister sensor listener
-            if (sensorManager != null && sensorEventListener != null) {
+            // Ensure sensor listener is unregistered
+            if (sensorManager != null && sensorRegistered) {
                 sensorManager.unregisterListener(sensorEventListener);
-                Log.d(TAG, "Gyroscope sensor unregistered");
+                sensorRegistered = false;
+                Log.d(TAG, "Gyroscope sensor unregistered in onDestroy");
             }
             stopRendering();
             super.onDestroy();
@@ -249,6 +249,13 @@ public class GLWallpaperService extends WallpaperService {
                 return;
             }
 
+            // Register sensor listener now that rendering is starting
+            if (!sensorRegistered && sensorManager != null && gyroscopeSensor != null) {
+                sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
+                sensorRegistered = true;
+                Log.d(TAG, "Gyroscope sensor registered");
+            }
+
             running = true;
             renderThread = new Thread(() -> {
                 SurfaceHolder holder = getSurfaceHolder();
@@ -276,6 +283,13 @@ public class GLWallpaperService extends WallpaperService {
         }
 
         private void stopRendering() {
+            // Unregister sensor listener to stop sensor updates while not visible
+            if (sensorRegistered && sensorManager != null) {
+                sensorManager.unregisterListener(sensorEventListener);
+                sensorRegistered = false;
+                Log.d(TAG, "Gyroscope sensor unregistered");
+            }
+
             running = false;
             if (renderThread != null) {
                 renderThread.interrupt();
