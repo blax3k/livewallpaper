@@ -6,6 +6,8 @@ import android.opengl.Matrix;
 import android.util.Log;
 
 import com.example.livewallpaper.gl.ShaderProgram;
+import com.example.livewallpaper.gl.TextureManager;
+import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
 
 import java.util.ArrayList;
@@ -34,6 +36,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     private float currentScrollOffset = 0f;
 
     private GyroSensorProcessor gyroProcessor = new GyroSensorProcessor();
+    private TextureManager textureManager;
+    private SpriteRenderer spriteRenderer;
 
     public SimpleRenderer(Context context) {
         this.context = context;
@@ -62,7 +66,17 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         gyroOffsetXHandle = GLES20.glGetUniformLocation(prog, "gyroOffsetX");
         gyroOffsetYHandle = GLES20.glGetUniformLocation(prog, "gyroOffsetY");
 
+        // Create texture manager and sprite renderer
+        textureManager = new TextureManager();
+        spriteRenderer = new SpriteRenderer(positionHandle, texCoordHandle, samplerHandle, parallaxMultiplierHandle);
+
         addSprites();
+
+        // Resolve textures for each sprite through TextureManager
+        for (Sprite sprite : sprites) {
+            int texId = textureManager.getTexture(context, sprite.getTextureResourceId());
+            sprite.setTextureId(texId);
+        }
 
         Log.d(TAG, "Surface created");
     }
@@ -117,7 +131,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
         // Draw all sprites
         for (Sprite sprite : sprites) {
-            sprite.draw(positionHandle, texCoordHandle, samplerHandle, parallaxMultiplierHandle);
+            spriteRenderer.drawSprite(sprite);
         }
     }
 
@@ -131,6 +145,9 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
         if (shaderProgram != null) {
             shaderProgram.delete();
+        }
+        if (textureManager != null) {
+            textureManager.destroyAll();
         }
         Log.d(TAG, "Renderer destroyed");
     }

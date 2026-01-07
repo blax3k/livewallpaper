@@ -1,10 +1,6 @@
 package com.example.livewallpaper;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.opengl.GLES20;
-import android.opengl.GLUtils;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -13,7 +9,8 @@ import java.nio.FloatBuffer;
 
 /**
  * Represents a single sprite that can be rendered with an independent position, size, and texture.
- * Each sprite manages its own vertex buffer, texture coordinates, and texture ID.
+ * This class now only owns geometry buffers and sprite properties; texture loading and draw calls
+ * are delegated to TextureManager and SpriteRenderer respectively.
  */
 public class Sprite {
     private static final String TAG = "Sprite";
@@ -39,7 +36,7 @@ public class Sprite {
         this.width = width;
         this.height = height;
         initializeGeometry();
-        loadTexture();
+        // Texture loading is handled by TextureManager; caller should set textureId via setTextureId().
     }
 
     /**
@@ -47,7 +44,7 @@ public class Sprite {
      * Creates a unit square centered at the origin.
      */
     private void initializeGeometry() {
-        // Define square vertices (centered at origin, 0.5 units on each side)
+        // Define square vertices (centered at origin, width/height on each side)
         float[] squareCoords = {
             -width / 2f,  height / 2f, 0.0f,  // top left
             -width / 2f, -height / 2f, 0.0f,  // bottom left
@@ -76,7 +73,7 @@ public class Sprite {
         texCoordBuffer.position(0);
 
         // Initialize parallax multiplier buffer (one value per vertex)
-        float[] parallaxMultipliers = {1.0f, 1.0f, 1.0f, 1.0f};
+        float[] parallaxMultipliers = {parallaxMultiplier, parallaxMultiplier, parallaxMultiplier, parallaxMultiplier};
         ByteBuffer pmbb = ByteBuffer.allocateDirect(parallaxMultipliers.length * 4);
         pmbb.order(ByteOrder.nativeOrder());
         parallaxMultiplierBuffer = pmbb.asFloatBuffer();
@@ -102,75 +99,6 @@ public class Sprite {
         vertexBuffer.position(0);
         vertexBuffer.put(squareCoords);
         vertexBuffer.position(0);
-    }
-
-    /**
-     * Load texture from the drawable resource.
-     */
-    private void loadTexture() {
-        try {
-            // Load bitmap from drawable folder
-            Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), textureResourceId);
-
-            // Create texture ID
-            int[] textureIds = new int[1];
-            GLES20.glGenTextures(1, textureIds, 0);
-            textureId = textureIds[0];
-
-            // Bind texture
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
-
-            // Set texture parameters
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-
-            // Load bitmap into texture
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-
-            // Recycle bitmap
-            bitmap.recycle();
-
-            Log.d(TAG, "Texture loaded successfully for resource " + textureResourceId);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to load texture: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Draw this sprite using the provided shader attribute handles.
-     *
-     * @param positionHandle attribute handle for vertex positions
-     * @param texCoordHandle attribute handle for texture coordinates
-     * @param samplerHandle uniform handle for texture sampler
-     * @param parallaxMultiplierHandle attribute handle for parallax multiplier
-     */
-    public void draw(int positionHandle, int texCoordHandle, int samplerHandle, int parallaxMultiplierHandle) {
-        // Bind texture
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
-        GLES20.glUniform1i(samplerHandle, 0);
-
-        // Enable vertex attribute array
-        GLES20.glEnableVertexAttribArray(positionHandle);
-        GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 12, vertexBuffer);
-
-        // Enable texture coordinate attribute array
-        GLES20.glEnableVertexAttribArray(texCoordHandle);
-        GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 8, texCoordBuffer);
-
-        // Enable parallax multiplier attribute array
-        GLES20.glEnableVertexAttribArray(parallaxMultiplierHandle);
-        GLES20.glVertexAttribPointer(parallaxMultiplierHandle, 1, GLES20.GL_FLOAT, false, 4, parallaxMultiplierBuffer);
-
-        // Draw the sprite
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_COUNT);
-
-        // Disable vertex attribute arrays
-        GLES20.glDisableVertexAttribArray(positionHandle);
-        GLES20.glDisableVertexAttribArray(texCoordHandle);
-        GLES20.glDisableVertexAttribArray(parallaxMultiplierHandle);
     }
 
     /**
@@ -242,9 +170,22 @@ public class Sprite {
     }
 
     /**
-     * Get the texture ID.
+     * Get the texture resource id (original drawable id).
      */
-    @SuppressWarnings("unused")
+    public int getTextureResourceId() {
+        return textureResourceId;
+    }
+
+    /**
+     * Set the GL texture ID that will be used for rendering. Typically obtained from TextureManager.
+     */
+    public void setTextureId(int textureId) {
+        this.textureId = textureId;
+    }
+
+    /**
+     * Get the GL texture ID assigned to this sprite.
+     */
     public int getTextureId() {
         return textureId;
     }
@@ -273,15 +214,22 @@ public class Sprite {
     }
 
     /**
-     * Destroy this sprite and release its GL resources.
+     * Accessors for renderer to use the geometry buffers.
+     */
+    public FloatBuffer getVertexBuffer() { return vertexBuffer; }
+    public FloatBuffer getTexCoordBuffer() { return texCoordBuffer; }
+    public FloatBuffer getParallaxMultiplierBuffer() { return parallaxMultiplierBuffer; }
+    public int getVertexCount() { return VERTEX_COUNT; }
+
+    /**
+     * Destroy this sprite and release its CPU-side resources.
+     * Texture deletion is handled by TextureManager.
      */
     public void destroy() {
-        if (textureId != 0) {
-            int[] textures = {textureId};
-            GLES20.glDeleteTextures(1, textures, 0);
-            textureId = 0;
-        }
-        Log.d(TAG, "Sprite destroyed");
+        // Help GC by nulling buffers
+        vertexBuffer = null;
+        texCoordBuffer = null;
+        parallaxMultiplierBuffer = null;
+        Log.d(TAG, "Sprite destroyed (CPU resources released)");
     }
 }
-
