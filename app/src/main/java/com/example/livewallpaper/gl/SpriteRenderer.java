@@ -12,11 +12,11 @@ public class SpriteRenderer {
     private final int samplerHandle;
     private final int parallaxMultiplierHandle;
 
-    public SpriteRenderer(int positionHandle, int texCoordHandle, int samplerHandle, int parallaxMultiplierHandle) {
-        this.positionHandle = positionHandle;
-        this.texCoordHandle = texCoordHandle;
-        this.samplerHandle = samplerHandle;
-        this.parallaxMultiplierHandle = parallaxMultiplierHandle;
+    public SpriteRenderer(Handles handles) {
+        this.positionHandle = handles.positionHandle;
+        this.texCoordHandle = handles.texCoordHandle;
+        this.samplerHandle = handles.samplerHandle;
+        this.parallaxMultiplierHandle = handles.parallaxMultiplierHandle;
     }
 
     public void drawSprite(Sprite sprite) {

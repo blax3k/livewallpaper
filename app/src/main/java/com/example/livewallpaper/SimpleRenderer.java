@@ -5,6 +5,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.gl.ShaderProgram;
 import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.gl.SpriteRenderer;
@@ -21,17 +22,9 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     private Context context;
     private ShaderProgram shaderProgram;
-    private int positionHandle;
-    private int texCoordHandle;
-    private int samplerHandle;
-    private int projectionMatrixHandle;
-    private int scrollOffsetHandle;
-    private int parallaxMultiplierHandle;
-    private int gyroOffsetXHandle;
-    private int gyroOffsetYHandle;
-
     private List<Sprite> sprites;
 
+    private Handles handles;
     private float[] projectionMatrix = new float[16];
     private float currentScrollOffset = 0f;
 
@@ -57,18 +50,11 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         shaderProgram.use();
 
         int prog = shaderProgram.getProgram();
-        positionHandle = GLES20.glGetAttribLocation(prog, "vPosition");
-        texCoordHandle = GLES20.glGetAttribLocation(prog, "vTexCoord");
-        samplerHandle = GLES20.glGetUniformLocation(prog, "samplerTexture");
-        projectionMatrixHandle = GLES20.glGetUniformLocation(prog, "projectionMatrix");
-        scrollOffsetHandle = GLES20.glGetUniformLocation(prog, "scrollOffset");
-        parallaxMultiplierHandle = GLES20.glGetAttribLocation(prog, "parallaxMultiplier");
-        gyroOffsetXHandle = GLES20.glGetUniformLocation(prog, "gyroOffsetX");
-        gyroOffsetYHandle = GLES20.glGetUniformLocation(prog, "gyroOffsetY");
+        handles = new Handles(prog);
 
         // Create texture manager and sprite renderer
         textureManager = new TextureManager();
-        spriteRenderer = new SpriteRenderer(positionHandle, texCoordHandle, samplerHandle, parallaxMultiplierHandle);
+        spriteRenderer = new SpriteRenderer(handles);
 
         addSprites();
 
@@ -120,14 +106,14 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         shaderProgram.use();
 
         // Set projection matrix
-        GLES20.glUniformMatrix4fv(projectionMatrixHandle, 1, false, projectionMatrix, 0);
+        GLES20.glUniformMatrix4fv(handles.projectionMatrixHandle, 1, false, projectionMatrix, 0);
 
         // Set scroll offset uniform (applied by all sprites with their own multiplier)
-        GLES20.glUniform1f(scrollOffsetHandle, currentScrollOffset);
+        GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
         // Set gyroscope offsets for device tilt movement
-        GLES20.glUniform1f(gyroOffsetXHandle, gyroProcessor.getOffsetX());
-        GLES20.glUniform1f(gyroOffsetYHandle, gyroProcessor.getOffsetY());
+        GLES20.glUniform1f(handles.gyroOffsetXHandle, gyroProcessor.getOffsetX());
+        GLES20.glUniform1f(handles.gyroOffsetYHandle, gyroProcessor.getOffsetY());
 
         // Draw all sprites
         for (Sprite sprite : sprites) {
