@@ -5,10 +5,10 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
-import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.gl.ShaderProgram;
 import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.gl.SpriteRenderer;
+import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
 
 import java.util.ArrayList;
@@ -31,6 +31,11 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     private GyroSensorProcessor gyroProcessor = new GyroSensorProcessor();
     private TextureManager textureManager;
     private SpriteRenderer spriteRenderer;
+
+    // World-space height which maps to the device's vertical view. A sprite with height == worldHeight
+    // will fill the vertical screen on any device. Change this to zoom in/out uniformly.
+    private float worldHeight = 10f;
+
 
     public SimpleRenderer(Context context) {
         this.context = context;
@@ -70,11 +75,11 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     private void addSprites()
     {
         // Create sprites with position and size
-        Sprite landscapeSprite = new Sprite(context, R.drawable.landscape, 1.5f, 1.5f);
+        Sprite landscapeSprite = new Sprite(context, R.drawable.landscape, 10.0f, 10.0f);
         landscapeSprite.setParallaxMultiplier(0.5f);  // Background moves slower
         sprites.add(landscapeSprite);
 
-        Sprite knightSprite = new Sprite(context, R.drawable.knight, 1f, 1.5f);
+        Sprite knightSprite = new Sprite(context, R.drawable.knight, 2.5f, 5f);
         knightSprite.setParallaxMultiplier(1.0f);  // Foreground moves with scroll
         sprites.add(knightSprite);
 
@@ -83,17 +88,29 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     @Override
     public void onSurfaceChanged(int width, int height) {
         GLES20.glViewport(0, 0, width, height);
-        float aspectRatio = (float) width / height;
+        float aspectRatio = (float) width / (float) height;
 
-        // Set up orthographic projection that accounts for aspect ratio
-        // Keep vertical range at -1 to 1, scale horizontal by aspect ratio
-        if (aspectRatio > 1) {
-            // Landscape: wider than tall
+        // Compute projection so that vertical span == worldHeight units
+        // half extents in world units
+        float halfWorldH = worldHeight * 0.5f;
+        float halfWorldW = halfWorldH * aspectRatio;
 
-            Matrix.orthoM(projectionMatrix, 0, -aspectRatio, aspectRatio, 1f, -1f, -1f, 1f);
-        } else {
-            // Portrait: taller than wide
-            Matrix.orthoM(projectionMatrix, 0, -1f, 1f, 1f / aspectRatio, -1f / aspectRatio, -1f, 1f);
+        // left, right, bottom, top using world-space extents
+        // Use inverted Y ordering (bottom > top) to match the original renderer orientation
+        Matrix.orthoM(projectionMatrix, 0, -halfWorldW, halfWorldW, halfWorldH, -halfWorldH, -1f, 1f);
+
+
+        // Ensure background (first) sprite fills the vertical view by setting its size to worldHeight
+        // and width to worldHeight * aspectRatio (so it covers the full world width).
+        if (sprites != null && !sprites.isEmpty()) {
+            Sprite bg = sprites.get(0);
+            if (bg != null) {
+                float bgWidth = worldHeight * aspectRatio;
+                float bgHeight = worldHeight;
+                bg.setSize(bgWidth, bgHeight);
+                // center background at origin
+                bg.setPosition(0f, 0f);
+            }
         }
 
         Log.d(TAG, "Surface changed: " + width + "x" + height);
