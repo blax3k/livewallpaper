@@ -5,6 +5,9 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import com.example.livewallpaper.gl.ShaderProgram;
+import com.example.livewallpaper.sensors.GyroSensorProcessor;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,35 +18,22 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     private static final String TAG = "SimpleRenderer";
 
     private Context context;
-    private int program;
+    private ShaderProgram shaderProgram;
     private int positionHandle;
     private int texCoordHandle;
     private int samplerHandle;
     private int projectionMatrixHandle;
     private int scrollOffsetHandle;
     private int parallaxMultiplierHandle;
+    private int gyroOffsetXHandle;
+    private int gyroOffsetYHandle;
 
     private List<Sprite> sprites;
 
     private float[] projectionMatrix = new float[16];
     private float currentScrollOffset = 0f;
-    private int gyroOffsetXHandle;
-    private int gyroOffsetYHandle;
-    private float currentGyroOffsetX = 0f;
-    private float currentGyroOffsetY = 0f;
 
-    // Cumulative angle tracking for gyroscope (maintains position after tilt)
-    private float cumulativeAngleX = 0f;  // Pitch - tilt forward/backward
-    private float cumulativeAngleY = 0f;  // Roll - tilt left/right
-    private long lastGyroUpdateTime = 0;
-
-    // Low-pass filter for smoothing
-    private float[] prevSensorData = {0f, 0f, 0f};
-    private float motionOffsetStrength = 1.0f;
-    private float motionOffsetLimit = 1.0f;
-
-    // Sensitivity of gyro-to-offset conversion (tunable). Higher = larger movement per radian.
-    private float gyroSensitivity = 0.8f;
+    private GyroSensorProcessor gyroProcessor = new GyroSensorProcessor();
 
     public SimpleRenderer(Context context) {
         this.context = context;
@@ -58,23 +48,19 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
-        // Compile shaders and create program
-        int vertexShader = compileShader(GLES20.GL_VERTEX_SHADER, getVertexShaderCode());
-        int fragmentShader = compileShader(GLES20.GL_FRAGMENT_SHADER, getFragmentShaderCode());
+        // Create shader program using helper
+        shaderProgram = new ShaderProgram(getVertexShaderCode(), getFragmentShaderCode());
+        shaderProgram.use();
 
-        program = GLES20.glCreateProgram();
-        GLES20.glAttachShader(program, vertexShader);
-        GLES20.glAttachShader(program, fragmentShader);
-        GLES20.glLinkProgram(program);
-
-        positionHandle = GLES20.glGetAttribLocation(program, "vPosition");
-        texCoordHandle = GLES20.glGetAttribLocation(program, "vTexCoord");
-        samplerHandle = GLES20.glGetUniformLocation(program, "samplerTexture");
-        projectionMatrixHandle = GLES20.glGetUniformLocation(program, "projectionMatrix");
-        scrollOffsetHandle = GLES20.glGetUniformLocation(program, "scrollOffset");
-        parallaxMultiplierHandle = GLES20.glGetAttribLocation(program, "parallaxMultiplier");
-        gyroOffsetXHandle = GLES20.glGetUniformLocation(program, "gyroOffsetX");
-        gyroOffsetYHandle = GLES20.glGetUniformLocation(program, "gyroOffsetY");
+        int prog = shaderProgram.getProgram();
+        positionHandle = GLES20.glGetAttribLocation(prog, "vPosition");
+        texCoordHandle = GLES20.glGetAttribLocation(prog, "vTexCoord");
+        samplerHandle = GLES20.glGetUniformLocation(prog, "samplerTexture");
+        projectionMatrixHandle = GLES20.glGetUniformLocation(prog, "projectionMatrix");
+        scrollOffsetHandle = GLES20.glGetUniformLocation(prog, "scrollOffset");
+        parallaxMultiplierHandle = GLES20.glGetAttribLocation(prog, "parallaxMultiplier");
+        gyroOffsetXHandle = GLES20.glGetUniformLocation(prog, "gyroOffsetX");
+        gyroOffsetYHandle = GLES20.glGetUniformLocation(prog, "gyroOffsetY");
 
         addSprites();
 
@@ -117,7 +103,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     public void onDrawFrame() {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-        GLES20.glUseProgram(program);
+        shaderProgram.use();
 
         // Set projection matrix
         GLES20.glUniformMatrix4fv(projectionMatrixHandle, 1, false, projectionMatrix, 0);
@@ -126,8 +112,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         GLES20.glUniform1f(scrollOffsetHandle, currentScrollOffset);
 
         // Set gyroscope offsets for device tilt movement
-        GLES20.glUniform1f(gyroOffsetXHandle, currentGyroOffsetX);
-        GLES20.glUniform1f(gyroOffsetYHandle, currentGyroOffsetY);
+        GLES20.glUniform1f(gyroOffsetXHandle, gyroProcessor.getOffsetX());
+        GLES20.glUniform1f(gyroOffsetYHandle, gyroProcessor.getOffsetY());
 
         // Draw all sprites
         for (Sprite sprite : sprites) {
@@ -143,8 +129,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         }
         sprites.clear();
 
-        if (program != 0) {
-            GLES20.glDeleteProgram(program);
+        if (shaderProgram != null) {
+            shaderProgram.delete();
         }
         Log.d(TAG, "Renderer destroyed");
     }
@@ -158,86 +144,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     @Override
     public void onGyroscopeChanged(float rotationX, float rotationY, float rotationZ) {
-        try {
-            // Get current time to calculate delta time
-            long currentTime = System.nanoTime();
-            float deltaTime = lastGyroUpdateTime == 0 ? 0 : (currentTime - lastGyroUpdateTime) / 1_000_000_000.0f;
-            lastGyroUpdateTime = currentTime;
-
-            // Clamp deltaTime to prevent huge jumps if app was paused
-            if (deltaTime > 0.1f) {
-                deltaTime = 0.1f;
-            }
-
-            // Get raw sensor data
-            float[] rawSensorData = new float[3];
-            rawSensorData[0] = rotationX;
-            rawSensorData[1] = rotationY;
-            rawSensorData[2] = rotationZ;
-
-            // Apply low-pass filter to smooth sensor data
-            float[] lowPassSensorData = lowPass(rawSensorData, prevSensorData);
-            prevSensorData = rawSensorData;
-
-            // Integrate rotation rates to get cumulative angles (this maintains position after tilt)
-            cumulativeAngleX += lowPassSensorData[0] * deltaTime;
-            cumulativeAngleY += lowPassSensorData[1] * deltaTime;
-
-            // Guard rails: clamp cumulative angles so offsets cannot grow beyond motionOffsetLimit
-            float angleLimit = motionOffsetLimit / Math.max(gyroSensitivity, 1e-6f);
-            if (cumulativeAngleX > angleLimit) cumulativeAngleX = angleLimit;
-            else if (cumulativeAngleX < -angleLimit) cumulativeAngleX = -angleLimit;
-            if (cumulativeAngleY > angleLimit) cumulativeAngleY = angleLimit;
-            else if (cumulativeAngleY < -angleLimit) cumulativeAngleY = -angleLimit;
-
-            // Convert cumulative angles to screen offsets using configurable sensitivity
-            float targetOffsetX = cumulativeAngleY * gyroSensitivity;
-            float targetOffsetY = cumulativeAngleX * gyroSensitivity;
-
-            // Clamp to motion limits
-            if (targetOffsetX > motionOffsetLimit) {
-                targetOffsetX = motionOffsetLimit;
-            } else if (targetOffsetX < -motionOffsetLimit) {
-                targetOffsetX = -motionOffsetLimit;
-            }
-
-            if (targetOffsetY > motionOffsetLimit) {
-                targetOffsetY = motionOffsetLimit;
-            } else if (targetOffsetY < -motionOffsetLimit) {
-                targetOffsetY = -motionOffsetLimit;
-            }
-
-            // Smooth the transition to target offset
-            float smoothingFactor = 0.2f;
-            currentGyroOffsetX = currentGyroOffsetX * (1.0f - smoothingFactor) + targetOffsetX * smoothingFactor;
-            currentGyroOffsetY = currentGyroOffsetY * (1.0f - smoothingFactor) + targetOffsetY * smoothingFactor;
-        } catch (Exception e) {
-            Log.e(TAG, "Error in onGyroscopeChanged: " + e.getMessage(), e);
-        }
-    }
-
-    private int compileShader(int type, String shaderCode) {
-        int shader = GLES20.glCreateShader(type);
-        GLES20.glShaderSource(shader, shaderCode);
-        GLES20.glCompileShader(shader);
-        return shader;
-    }
-
-    /**
-     * Low-pass filter for gyroscope sensor data to reduce noise/jitter.
-     * Blends current sensor values with previous values.
-     *
-     * @param current current sensor data
-     * @param previous previous sensor data
-     * @return filtered sensor data
-     */
-    private float[] lowPass(float[] current, float[] previous) {
-        float alpha = 0.25f;  // Low-pass filter coefficient (0.0-1.0, lower = more smoothing)
-        float[] output = new float[3];
-        for (int i = 0; i < 3; i++) {
-            output[i] = alpha * current[i] + (1.0f - alpha) * previous[i];
-        }
-        return output;
+        // Forward raw sensor data to the processor which handles filtering, integration and limits
+        gyroProcessor.onGyroscopeChanged(rotationX, rotationY, rotationZ);
     }
 
     private String getVertexShaderCode() {
@@ -249,6 +157,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
                 + "attribute vec2 vTexCoord;"
                 + "attribute float parallaxMultiplier;"
                 + "varying vec2 texCoord;"
+
                 + "void main() {"
                 + "  vec4 position = vPosition;"
                 + "  position.x += scrollOffset * parallaxMultiplier + gyroOffsetX * parallaxMultiplier;"
@@ -266,9 +175,5 @@ public class SimpleRenderer implements GLWallpaperRenderer {
                 + "  vec4 texColor = texture2D(samplerTexture, texCoord);"
                 + "  gl_FragColor = texColor;"
                 + "}";
-    }
-
-    private void setOrthographicProjection(float left, float right, float bottom, float top, float near, float far) {
-        Matrix.orthoM(projectionMatrix, 0, left, right, bottom, top, near, far);
     }
 }
