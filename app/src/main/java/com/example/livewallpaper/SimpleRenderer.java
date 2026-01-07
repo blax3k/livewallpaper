@@ -82,7 +82,6 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         Sprite knightSprite = new Sprite(context, R.drawable.knight, 2.5f, 5f);
         knightSprite.setParallaxMultiplier(1.0f);  // Foreground moves with scroll
         sprites.add(knightSprite);
-
     }
 
     @Override
@@ -96,22 +95,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         float halfWorldW = halfWorldH * aspectRatio;
 
         // left, right, bottom, top using world-space extents
-        // Use inverted Y ordering (bottom > top) to match the original renderer orientation
         Matrix.orthoM(projectionMatrix, 0, -halfWorldW, halfWorldW, halfWorldH, -halfWorldH, -1f, 1f);
-
-
-        // Ensure background (first) sprite fills the vertical view by setting its size to worldHeight
-        // and width to worldHeight * aspectRatio (so it covers the full world width).
-        if (sprites != null && !sprites.isEmpty()) {
-            Sprite bg = sprites.get(0);
-            if (bg != null) {
-                float bgWidth = worldHeight * aspectRatio;
-                float bgHeight = worldHeight;
-                bg.setSize(bgWidth, bgHeight);
-                // center background at origin
-                bg.setPosition(0f, 0f);
-            }
-        }
 
         Log.d(TAG, "Surface changed: " + width + "x" + height);
     }
