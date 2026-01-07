@@ -7,43 +7,36 @@ import com.example.livewallpaper.Sprite;
  * Responsible for issuing draw calls for sprites using a compiled shader program.
  */
 public class SpriteRenderer {
-    private final int positionHandle;
-    private final int texCoordHandle;
-    private final int samplerHandle;
-    private final int parallaxMultiplierHandle;
+    private final ShaderHandles handles;
 
-    public SpriteRenderer(int positionHandle, int texCoordHandle, int samplerHandle, int parallaxMultiplierHandle) {
-        this.positionHandle = positionHandle;
-        this.texCoordHandle = texCoordHandle;
-        this.samplerHandle = samplerHandle;
-        this.parallaxMultiplierHandle = parallaxMultiplierHandle;
+    public SpriteRenderer(ShaderHandles handles) {
+        this.handles = handles;
     }
 
     public void drawSprite(Sprite sprite) {
         // Bind texture
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, sprite.getTextureId());
-        GLES20.glUniform1i(samplerHandle, 0);
+        GLES20.glUniform1i(handles.sampler, 0);
 
         // Enable vertex attribute array
-        GLES20.glEnableVertexAttribArray(positionHandle);
-        GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 12, sprite.getVertexBuffer());
+        GLES20.glEnableVertexAttribArray(handles.position);
+        GLES20.glVertexAttribPointer(handles.position, 3, GLES20.GL_FLOAT, false, 12, sprite.getVertexBuffer());
 
         // Enable texture coordinate attribute array
-        GLES20.glEnableVertexAttribArray(texCoordHandle);
-        GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 8, sprite.getTexCoordBuffer());
+        GLES20.glEnableVertexAttribArray(handles.texCoord);
+        GLES20.glVertexAttribPointer(handles.texCoord, 2, GLES20.GL_FLOAT, false, 8, sprite.getTexCoordBuffer());
 
         // Enable parallax multiplier attribute array
-        GLES20.glEnableVertexAttribArray(parallaxMultiplierHandle);
-        GLES20.glVertexAttribPointer(parallaxMultiplierHandle, 1, GLES20.GL_FLOAT, false, 4, sprite.getParallaxMultiplierBuffer());
+        GLES20.glEnableVertexAttribArray(handles.parallaxMultiplier);
+        GLES20.glVertexAttribPointer(handles.parallaxMultiplier, 1, GLES20.GL_FLOAT, false, 4, sprite.getParallaxMultiplierBuffer());
 
         // Draw the sprite
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, sprite.getVertexCount());
 
         // Disable attribute arrays
-        GLES20.glDisableVertexAttribArray(positionHandle);
-        GLES20.glDisableVertexAttribArray(texCoordHandle);
-        GLES20.glDisableVertexAttribArray(parallaxMultiplierHandle);
+        GLES20.glDisableVertexAttribArray(handles.position);
+        GLES20.glDisableVertexAttribArray(handles.texCoord);
+        GLES20.glDisableVertexAttribArray(handles.parallaxMultiplier);
     }
 }
-

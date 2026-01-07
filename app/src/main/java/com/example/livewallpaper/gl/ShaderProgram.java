@@ -10,9 +10,9 @@ public class ShaderProgram {
     private static final String TAG = "ShaderProgram";
     private int program = 0;
 
-    public ShaderProgram(String vertexSource, String fragmentSource) {
-        int vertexShader = compileShader(GLES20.GL_VERTEX_SHADER, vertexSource);
-        int fragmentShader = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource);
+    public ShaderProgram() {
+        int vertexShader = compileShader(GLES20.GL_VERTEX_SHADER, getVertexShaderCode());
+        int fragmentShader = compileShader(GLES20.GL_FRAGMENT_SHADER, getFragmentShaderCode());
 
         program = GLES20.glCreateProgram();
         if (program == 0) {
@@ -84,6 +84,35 @@ public class ShaderProgram {
             GLES20.glDeleteProgram(program);
             program = 0;
         }
+    }
+
+    private String getVertexShaderCode() {
+        return "uniform mat4 projectionMatrix;"
+                + "uniform float scrollOffset;"
+                + "uniform float gyroOffsetX;"
+                + "uniform float gyroOffsetY;"
+                + "attribute vec4 vPosition;"
+                + "attribute vec2 vTexCoord;"
+                + "attribute float parallaxMultiplier;"
+                + "varying vec2 texCoord;"
+
+                + "void main() {"
+                + "  vec4 position = vPosition;"
+                + "  position.x += scrollOffset * parallaxMultiplier + gyroOffsetX * parallaxMultiplier;"
+                + "  position.y += gyroOffsetY * parallaxMultiplier;"
+                + "  gl_Position = projectionMatrix * position;"
+                + "  texCoord = vTexCoord;"
+                + "}";
+    }
+
+    private String getFragmentShaderCode() {
+        return "precision mediump float;"
+                + "uniform sampler2D samplerTexture;"
+                + "varying vec2 texCoord;"
+                + "void main() {"
+                + "  vec4 texColor = texture2D(samplerTexture, texCoord);"
+                + "  gl_FragColor = texColor;"
+                + "}";
     }
 }
 
