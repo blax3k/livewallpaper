@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -29,6 +30,23 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Log.e(TAG, "Button not found in layout!");
                 Toast.makeText(this, "UI initialization failed", Toast.LENGTH_SHORT).show();
+            }
+
+            ToggleButton scrollToggle = findViewById(R.id.toggle_scroll_motion);
+            if (scrollToggle != null) {
+                Log.d(TAG, "Toggle button found, setting click listener");
+                // Set initial state based on the config
+                scrollToggle.setChecked(ScrollMotionConfig.isScrollMotionEnabled());
+                scrollToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    ScrollMotionConfig.setScrollMotionEnabled(isChecked);
+                    Log.d(TAG, "Scroll motion toggled: " + (isChecked ? "ON" : "OFF"));
+                    Toast.makeText(MainActivity.this,
+                        "Scroll motion " + (isChecked ? "enabled" : "disabled"),
+                        Toast.LENGTH_SHORT).show();
+                });
+                Log.d(TAG, "Toggle button click listener set");
+            } else {
+                Log.e(TAG, "Toggle button not found in layout!");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error in onCreate: " + e.getMessage(), e);

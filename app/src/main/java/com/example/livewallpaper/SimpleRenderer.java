@@ -149,8 +149,13 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     @Override
     public void onScrollOffsetChanged(float offsetX) {
-        // Delegate to the interpolator to set the scroll target
-        scrollOffsetInterpolator.setScrollTarget(offsetX);
+        // Only update scroll target if scroll motion is enabled
+        if (ScrollMotionConfig.isScrollMotionEnabled()) {
+            scrollOffsetInterpolator.setScrollTarget(offsetX);
+        } else {
+            // If scroll motion is disabled, reset to neutral position
+            scrollOffsetInterpolator.disableScrollMotion();
+        }
     }
 
     @Override

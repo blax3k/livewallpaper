@@ -134,5 +134,15 @@ public class ScrollOffsetInterpolator {
     public float getTargetOffset() {
         return targetScrollOffset;
     }
+
+    /**
+     * Disable scroll motion and smoothly interpolate to neutral position.
+     * The sprites will smoothly animate back to their centered position using the existing interpolation.
+     */
+    public void disableScrollMotion() {
+        // Only set the target to neutral; the current offset will smoothly approach it
+        // via the normal interpolation logic in updateAndGetCurrentOffset()
+        this.targetScrollOffset = calculateScrollOffset(0.5f); // 0.5 is the neutral centered position
+    }
 }
 
