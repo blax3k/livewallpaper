@@ -68,12 +68,25 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         textureManager = new TextureManager();
         spriteRenderer = new SpriteRenderer(handles);
 
-        addSprites();
+        // Only add sprites if they haven't been created yet
+        if (sprites.isEmpty()) {
+            addSprites();
+        }
 
         // Resolve textures for each sprite through TextureManager
         for (Sprite sprite : sprites) {
             int texId = textureManager.getTexture(context, sprite.getTextureResourceId());
             sprite.setTextureId(texId);
+        }
+
+        // Reapply gyro scaling if it was previously enabled
+        if (spritesScaledForGyro && MotionConfig.isGyroMotionEnabled()) {
+            float scaleFactor = GyroScaleCalculator.calculateScaleFactor(
+                gyroProcessor.getMotionOffsetLimit(),
+                worldHeight
+            );
+            applyGyroScalingToSprites(scaleFactor);
+            Log.d(TAG, "Reapplied gyro scaling after surface recreation");
         }
 
         Log.d(TAG, "Surface created");
