@@ -5,8 +5,8 @@ package com.example.livewallpaper;
  * Maintains current and target scroll offsets and interpolates between them
  * over a configurable duration. Handles pause/resume lifecycle to avoid snapping.
  */
-public class ScrollOffsetInterpolator {
-    private static final String TAG = "ScrollOffsetInterpolator";
+public class ScrollOffsetProcessor {
+    private static final String TAG = "ScrollOffsetProcessor";
 
     // Current displayed scroll offset (world units). This is the value sent to the GPU each frame.
     private float currentScrollOffset = 0f;
@@ -29,11 +29,11 @@ public class ScrollOffsetInterpolator {
     public float updateAndGetCurrentOffset() {
         // Compute delta time (seconds) since last frame using utility
         long nowNs = System.nanoTime();
-        float dt = TimeBassedInterpolator.calculateDeltaTime(nowNs, lastFrameTimeNs);
+        float dt = TimeBasedInterpolator.calculateDeltaTime(nowNs, lastFrameTimeNs);
         lastFrameTimeNs = nowNs;
 
         // Smoothly approach the target scroll offset using time-based interpolation
-        currentScrollOffset = TimeBassedInterpolator.interpolateTowardsTarget(
+        currentScrollOffset = TimeBasedInterpolator.interpolateTowardsTarget(
             currentScrollOffset, targetScrollOffset, dt, scrollSmoothingDuration);
 
         return currentScrollOffset;

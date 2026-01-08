@@ -1,7 +1,7 @@
 package com.example.livewallpaper.sensors;
 
 import android.util.Log;
-import com.example.livewallpaper.TimeBassedInterpolator;
+import com.example.livewallpaper.TimeBasedInterpolator;
 
 /**
  * Processes raw gyroscope rotation rates and converts them into stable offsets that can be
@@ -62,40 +62,68 @@ public class GyroSensorProcessor {
     public void onGyroscopeChanged(float rotationX, float rotationY, float rotationZ) {
         try {
             long now = System.nanoTime();
-            float deltaTime = lastUpdateTimeNs == 0 ? 0f : (now - lastUpdateTimeNs) / 1_000_000_000.0f;
+            float deltaTime = calculateDeltaTime(now);
             lastUpdateTimeNs = now;
 
-            if (deltaTime > 0.1f) deltaTime = 0.1f; // cap
-
             float[] raw = new float[] { rotationX, rotationY, rotationZ };
-
-            float[] lp = lowPass(raw, prevSensorData);
+            float[] filtered = lowPass(raw, prevSensorData);
             prevSensorData = raw;
 
-            // Integrate rotation rates to cumulative angles
-            cumulativeAngleX += lp[0] * deltaTime;
-            cumulativeAngleY += lp[1] * deltaTime;
-
-            // Guard rails on cumulative angles so that offsets are bounded
-            float angleLimit = motionOffsetLimit / Math.max(gyroSensitivity, 1e-6f);
-            if (cumulativeAngleX > angleLimit) cumulativeAngleX = angleLimit;
-            else if (cumulativeAngleX < -angleLimit) cumulativeAngleX = -angleLimit;
-
-            if (cumulativeAngleY > angleLimit) cumulativeAngleY = angleLimit;
-            else if (cumulativeAngleY < -angleLimit) cumulativeAngleY = -angleLimit;
-
-            // Compute target offsets from cumulative angles
-            targetOffsetX = cumulativeAngleY * gyroSensitivity; // roll -> x
-            targetOffsetY = cumulativeAngleX * gyroSensitivity; // pitch -> y
-
-            // Clamp targets to limits
-            if (targetOffsetX > motionOffsetLimit) targetOffsetX = motionOffsetLimit;
-            else if (targetOffsetX < -motionOffsetLimit) targetOffsetX = -motionOffsetLimit;
-            if (targetOffsetY > motionOffsetLimit) targetOffsetY = motionOffsetLimit;
-            else if (targetOffsetY < -motionOffsetLimit) targetOffsetY = -motionOffsetLimit;
+            integrateAngles(filtered, deltaTime);
+            clampCumulativeAngles();
+            computeTargetOffsets();
+            clampTargetOffsets();
         } catch (Exception e) {
             Log.e(TAG, "Error processing gyro: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Calculate delta time since last gyro update.
+     *
+     * @param currentTimeNs current time in nanoseconds
+     * @return delta time in seconds, capped at 100ms
+     */
+    private float calculateDeltaTime(long currentTimeNs) {
+        float deltaTime = lastUpdateTimeNs == 0 ? 0f : (currentTimeNs - lastUpdateTimeNs) / 1_000_000_000.0f;
+        if (deltaTime > 0.1f) deltaTime = 0.1f;
+        return deltaTime;
+    }
+
+    /**
+     * Integrate filtered rotation rates into cumulative angles.
+     *
+     * @param filteredRates the low-pass filtered rotation rates [x, y, z]
+     * @param deltaTime     delta time since last update in seconds
+     */
+    private void integrateAngles(float[] filteredRates, float deltaTime) {
+        cumulativeAngleX += filteredRates[0] * deltaTime;
+        cumulativeAngleY += filteredRates[1] * deltaTime;
+    }
+
+    /**
+     * Apply guard rails to cumulative angles to prevent unbounded rotation.
+     */
+    private void clampCumulativeAngles() {
+        float angleLimit = motionOffsetLimit / Math.max(gyroSensitivity, 1e-6f);
+        cumulativeAngleX = Math.max(-angleLimit, Math.min(angleLimit, cumulativeAngleX));
+        cumulativeAngleY = Math.max(-angleLimit, Math.min(angleLimit, cumulativeAngleY));
+    }
+
+    /**
+     * Compute target offsets from cumulative angles using gyro sensitivity.
+     */
+    private void computeTargetOffsets() {
+        targetOffsetX = cumulativeAngleY * gyroSensitivity; // roll -> x
+        targetOffsetY = cumulativeAngleX * gyroSensitivity; // pitch -> y
+    }
+
+    /**
+     * Clamp target offsets to motion limits.
+     */
+    private void clampTargetOffsets() {
+        targetOffsetX = Math.max(-motionOffsetLimit, Math.min(motionOffsetLimit, targetOffsetX));
+        targetOffsetY = Math.max(-motionOffsetLimit, Math.min(motionOffsetLimit, targetOffsetY));
     }
 
     /**
@@ -107,7 +135,7 @@ public class GyroSensorProcessor {
      */
     public float updateAndGetCurrentOffsetX() {
         long nowNs = System.nanoTime();
-        lastFrameDt = TimeBassedInterpolator.calculateDeltaTime(nowNs, lastFrameTimeNs);
+        lastFrameDt = TimeBasedInterpolator.calculateDeltaTime(nowNs, lastFrameTimeNs);
         lastFrameTimeNs = nowNs;
         return interpolateTowardsTarget(true);
     }
@@ -131,7 +159,7 @@ public class GyroSensorProcessor {
         float target = isX ? targetOffsetX : targetOffsetY;
 
         // Use utility for time-based interpolation
-        float newValue = TimeBassedInterpolator.interpolateTowardsTarget(
+        float newValue = TimeBasedInterpolator.interpolateTowardsTarget(
             current, target, lastFrameDt, gyroChasingDuration);
 
         if (isX) {

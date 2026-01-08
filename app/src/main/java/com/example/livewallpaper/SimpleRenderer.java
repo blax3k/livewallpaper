@@ -27,7 +27,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     private Handles handles;
     private float[] projectionMatrix = new float[16];
     // Manages smooth scrolling interpolation with time-based easing
-    private ScrollOffsetInterpolator scrollOffsetInterpolator = new ScrollOffsetInterpolator();
+    private ScrollOffsetProcessor scrollOffsetProcessor = new ScrollOffsetProcessor();
 
     private GyroSensorProcessor gyroProcessor = new GyroSensorProcessor();
     private TextureManager textureManager;
@@ -115,7 +115,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         GLES20.glUniformMatrix4fv(handles.projectionMatrixHandle, 1, false, projectionMatrix, 0);
 
         // Update scroll offset interpolation and get the current value for this frame
-        float currentScrollOffset = scrollOffsetInterpolator.updateAndGetCurrentOffset();
+        float currentScrollOffset = scrollOffsetProcessor.updateAndGetCurrentOffset();
 
         // Set scroll offset uniform (applied by all sprites with their own multiplier)
         GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
@@ -159,23 +159,23 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     public void onScrollOffsetChanged(float offsetX) {
         // Only update scroll target if scroll motion is enabled
         if (MotionConfig.isScrollMotionEnabled()) {
-            scrollOffsetInterpolator.setScrollTarget(offsetX);
+            scrollOffsetProcessor.setScrollTarget(offsetX);
         } else {
             // If scroll motion is disabled, reset to neutral position
-            scrollOffsetInterpolator.disableScrollMotion();
+            scrollOffsetProcessor.disableScrollMotion();
         }
     }
 
     @Override
     public void onRendererResume(long resumeTimeNs) {
         // Delegate to the interpolator to invalidate its frame timer
-        scrollOffsetInterpolator.onRendererResume();
+        scrollOffsetProcessor.onRendererResume();
     }
 
     @Override
     public void onRendererPause() {
         // Delegate to the interpolator to invalidate its frame timer
-        scrollOffsetInterpolator.onRendererPause();
+        scrollOffsetProcessor.onRendererPause();
     }
 
     @Override

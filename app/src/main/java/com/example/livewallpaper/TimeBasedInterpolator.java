@@ -4,7 +4,7 @@ package com.example.livewallpaper;
  * Utility class for time-based linear interpolation (chasing).
  * Provides common interpolation logic used by ScrollOffsetInterpolator and GyroSensorProcessor.
  */
-public class TimeBassedInterpolator {
+public class TimeBasedInterpolator {
     private static final float DEFAULT_FPS = 60f;
     private static final float SNAP_THRESHOLD = 0.001f;
     private static final float DIFFERENCE_THRESHOLD = 0.00001f;
