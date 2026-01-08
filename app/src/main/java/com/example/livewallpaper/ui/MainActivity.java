@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.ui;
 
 import android.app.WallpaperManager;
 import android.content.ComponentName;
@@ -9,6 +9,10 @@ import android.widget.Button;
 import android.widget.Switch;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.livewallpaper.GLWallpaperService;
+import com.example.livewallpaper.R;
+import com.example.livewallpaper.sensors.MotionConfig;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";

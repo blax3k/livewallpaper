@@ -1,7 +1,6 @@
 package com.example.livewallpaper.sensors;
 
 import android.util.Log;
-import com.example.livewallpaper.TimeBasedInterpolator;
 
 /**
  * Processes raw gyroscope rotation rates and converts them into stable offsets that can be

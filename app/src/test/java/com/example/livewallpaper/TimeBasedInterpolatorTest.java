@@ -3,6 +3,8 @@ package com.example.livewallpaper;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+import com.example.livewallpaper.sensors.TimeBasedInterpolator;
+
 /**
  * Unit tests for TimeBasedInterpolator utility class.
  * Tests time-based linear interpolation behavior.

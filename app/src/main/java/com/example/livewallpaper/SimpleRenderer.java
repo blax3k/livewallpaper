@@ -10,6 +10,8 @@ import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
+import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
 
 import java.util.ArrayList;
 import java.util.List;

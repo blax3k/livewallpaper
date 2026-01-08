@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.sensors;
 
 /**
  * Thread-safe configuration class for sharing motion settings between

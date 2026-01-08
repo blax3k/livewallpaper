@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.sensors;
 
 /**
  * Utility class for time-based linear interpolation (chasing).
