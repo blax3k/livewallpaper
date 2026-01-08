@@ -98,6 +98,19 @@ public class GyroSensorProcessor {
         return currentOffsetY;
     }
 
+    /**
+     * Reset the gyroscope processor to zero offsets.
+     * Call this when disabling gyro motion to clear any accumulated rotation state.
+     */
+    public void reset() {
+        currentOffsetX = 0f;
+        currentOffsetY = 0f;
+        cumulativeAngleX = 0f;
+        cumulativeAngleY = 0f;
+        lastUpdateTimeNs = 0L;
+        prevSensorData = new float[3];
+    }
+
     private float[] lowPass(float[] current, float[] previous) {
         float alpha = 0.25f;
         float[] out = new float[3];

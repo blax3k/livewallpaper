@@ -36,9 +36,9 @@ public class MainActivity extends AppCompatActivity {
             if (scrollToggle != null) {
                 Log.d(TAG, "Toggle button found, setting click listener");
                 // Set initial state based on the config
-                scrollToggle.setChecked(ScrollMotionConfig.isScrollMotionEnabled());
+                scrollToggle.setChecked(MotionConfig.isScrollMotionEnabled());
                 scrollToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    ScrollMotionConfig.setScrollMotionEnabled(isChecked);
+                    MotionConfig.setScrollMotionEnabled(isChecked);
                     Log.d(TAG, "Scroll motion toggled: " + (isChecked ? "ON" : "OFF"));
                     Toast.makeText(MainActivity.this,
                         "Scroll motion " + (isChecked ? "enabled" : "disabled"),
@@ -47,6 +47,23 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "Toggle button click listener set");
             } else {
                 Log.e(TAG, "Toggle button not found in layout!");
+            }
+
+            ToggleButton gyroToggle = findViewById(R.id.toggle_gyro_motion);
+            if (gyroToggle != null) {
+                Log.d(TAG, "Gyro toggle button found, setting click listener");
+                // Set initial state based on the config
+                gyroToggle.setChecked(MotionConfig.isGyroMotionEnabled());
+                gyroToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    MotionConfig.setGyroMotionEnabled(isChecked);
+                    Log.d(TAG, "Gyro motion toggled: " + (isChecked ? "ON" : "OFF"));
+                    Toast.makeText(MainActivity.this,
+                        "Gyro motion " + (isChecked ? "enabled" : "disabled"),
+                        Toast.LENGTH_SHORT).show();
+                });
+                Log.d(TAG, "Gyro toggle button click listener set");
+            } else {
+                Log.e(TAG, "Gyro toggle button not found in layout!");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error in onCreate: " + e.getMessage(), e);

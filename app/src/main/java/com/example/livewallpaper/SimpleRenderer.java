@@ -120,9 +120,15 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Set scroll offset uniform (applied by all sprites with their own multiplier)
         GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
-        // Set gyroscope offsets for device tilt movement
-        GLES20.glUniform1f(handles.gyroOffsetXHandle, gyroProcessor.getOffsetX());
-        GLES20.glUniform1f(handles.gyroOffsetYHandle, gyroProcessor.getOffsetY());
+        // Set gyroscope offsets for device tilt movement (only if gyro motion is enabled)
+        if (MotionConfig.isGyroMotionEnabled()) {
+            GLES20.glUniform1f(handles.gyroOffsetXHandle, gyroProcessor.getOffsetX());
+            GLES20.glUniform1f(handles.gyroOffsetYHandle, gyroProcessor.getOffsetY());
+        } else {
+            // When gyro is disabled, set offsets to zero
+            GLES20.glUniform1f(handles.gyroOffsetXHandle, 0f);
+            GLES20.glUniform1f(handles.gyroOffsetYHandle, 0f);
+        }
 
         // Draw all sprites
         for (Sprite sprite : sprites) {
@@ -150,7 +156,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     @Override
     public void onScrollOffsetChanged(float offsetX) {
         // Only update scroll target if scroll motion is enabled
-        if (ScrollMotionConfig.isScrollMotionEnabled()) {
+        if (MotionConfig.isScrollMotionEnabled()) {
             scrollOffsetInterpolator.setScrollTarget(offsetX);
         } else {
             // If scroll motion is disabled, reset to neutral position
@@ -172,8 +178,14 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     @Override
     public void onGyroscopeChanged(float rotationX, float rotationY, float rotationZ) {
-        // Forward raw sensor data to the processor which handles filtering, integration and limits
-        gyroProcessor.onGyroscopeChanged(rotationX, rotationY, rotationZ);
+        // Only process gyroscope data if gyro motion is enabled
+        if (MotionConfig.isGyroMotionEnabled()) {
+            // Forward raw sensor data to the processor which handles filtering, integration and limits
+            gyroProcessor.onGyroscopeChanged(rotationX, rotationY, rotationZ);
+        } else {
+            // When gyro is disabled, reset the processor to avoid stale offsets
+            gyroProcessor.reset();
+        }
     }
 
     private String getVertexShaderCode() {
