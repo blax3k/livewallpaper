@@ -120,10 +120,12 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Set scroll offset uniform (applied by all sprites with their own multiplier)
         GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
-        // Set gyroscope offsets for device tilt movement (only if gyro motion is enabled)
+        // Update gyro offset interpolation and set gyroscope offsets for device tilt movement
         if (MotionConfig.isGyroMotionEnabled()) {
-            GLES20.glUniform1f(handles.gyroOffsetXHandle, gyroProcessor.getOffsetX());
-            GLES20.glUniform1f(handles.gyroOffsetYHandle, gyroProcessor.getOffsetY());
+            float gyroOffsetX = gyroProcessor.updateAndGetCurrentOffsetX();
+            float gyroOffsetY = gyroProcessor.updateAndGetCurrentOffsetY();
+            GLES20.glUniform1f(handles.gyroOffsetXHandle, gyroOffsetX);
+            GLES20.glUniform1f(handles.gyroOffsetYHandle, gyroOffsetY);
         } else {
             // When gyro is disabled, set offsets to zero
             GLES20.glUniform1f(handles.gyroOffsetXHandle, 0f);

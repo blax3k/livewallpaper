@@ -27,27 +27,14 @@ public class ScrollOffsetInterpolator {
      * @return the interpolated current scroll offset to send to the GPU
      */
     public float updateAndGetCurrentOffset() {
-        // Compute delta time (seconds) since last frame. If unknown, assume 60 FPS.
+        // Compute delta time (seconds) since last frame using utility
         long nowNs = System.nanoTime();
-        float dt = 1f / 60f;
-        if (lastFrameTimeNs > 0L) {
-            dt = (nowNs - lastFrameTimeNs) / 1_000_000_000f;
-            if (dt <= 0f) dt = 1f / 60f;
-        }
+        float dt = TimeBassedInterpolator.calculateDeltaTime(nowNs, lastFrameTimeNs);
         lastFrameTimeNs = nowNs;
 
-        // Smoothly approach the target scroll offset using a time-based duration so motion is consistent
-        // across variable frame rates. alpha = min(1, dt / duration) moves the offset linearly to the
-        // target over approximately `scrollSmoothingDuration` seconds.
-        float diff = targetScrollOffset - currentScrollOffset;
-        if (Math.abs(diff) > 0.00001f) {
-            float alpha = scrollSmoothingDuration <= 0f ? 1f : Math.min(1f, dt / scrollSmoothingDuration);
-            currentScrollOffset += diff * alpha;
-            // Snap when very close to avoid endless tiny adjustments
-            if (Math.abs(targetScrollOffset - currentScrollOffset) < 0.001f) {
-                currentScrollOffset = targetScrollOffset;
-            }
-        }
+        // Smoothly approach the target scroll offset using time-based interpolation
+        currentScrollOffset = TimeBassedInterpolator.interpolateTowardsTarget(
+            currentScrollOffset, targetScrollOffset, dt, scrollSmoothingDuration);
 
         return currentScrollOffset;
     }

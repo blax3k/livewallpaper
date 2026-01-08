@@ -256,7 +256,7 @@ public class GLWallpaperService extends WallpaperService {
 
             // Register sensor listener now that rendering is starting
             if (!sensorRegistered && sensorManager != null && gyroscopeSensor != null) {
-                sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
+                sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_UI);
                 sensorRegistered = true;
                 Log.d(TAG, "Gyroscope sensor registered");
             }
