@@ -249,6 +249,11 @@ public class GLWallpaperService extends WallpaperService {
                 return;
             }
 
+            // Notify renderer that rendering is about to start so it can reset its frame timer
+            if (renderer != null) {
+                renderer.onRendererResume(System.nanoTime());
+            }
+
             // Register sensor listener now that rendering is starting
             if (!sensorRegistered && sensorManager != null && gyroscopeSensor != null) {
                 sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
@@ -283,6 +288,11 @@ public class GLWallpaperService extends WallpaperService {
         }
 
         private void stopRendering() {
+            // Notify renderer that rendering is stopping so it invalidates its frame timer
+            if (renderer != null) {
+                renderer.onRendererPause();
+            }
+
             // Unregister sensor listener to stop sensor updates while not visible
             if (sensorRegistered && sensorManager != null) {
                 sensorManager.unregisterListener(sensorEventListener);
@@ -304,4 +314,3 @@ public class GLWallpaperService extends WallpaperService {
         }
     }
 }
-

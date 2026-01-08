@@ -26,7 +26,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     private Handles handles;
     private float[] projectionMatrix = new float[16];
-    private float currentScrollOffset = 0f;
+    // Manages smooth scrolling interpolation with time-based easing
+    private ScrollOffsetInterpolator scrollOffsetInterpolator = new ScrollOffsetInterpolator();
 
     private GyroSensorProcessor gyroProcessor = new GyroSensorProcessor();
     private TextureManager textureManager;
@@ -75,12 +76,12 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     private void addSprites()
     {
         // Create sprites with position and size
-        Sprite landscapeSprite = new Sprite(context, R.drawable.landscape, 10.0f, 10.0f);
-        landscapeSprite.setParallaxMultiplier(0.5f);  // Background moves slower
+        Sprite landscapeSprite = new Sprite(context, R.drawable.testscape, 10.0f, 10.0f);
+        landscapeSprite.setParallaxMultiplier(1.0f);  // Background moves slower
         sprites.add(landscapeSprite);
 
         Sprite knightSprite = new Sprite(context, R.drawable.knight, 2.5f, 5f);
-        knightSprite.setParallaxMultiplier(1.0f);  // Foreground moves with scroll
+        knightSprite.setParallaxMultiplier(1.5f);  // Foreground moves with scroll
         sprites.add(knightSprite);
     }
 
@@ -108,6 +109,9 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
         // Set projection matrix
         GLES20.glUniformMatrix4fv(handles.projectionMatrixHandle, 1, false, projectionMatrix, 0);
+
+        // Update scroll offset interpolation and get the current value for this frame
+        float currentScrollOffset = scrollOffsetInterpolator.updateAndGetCurrentOffset();
 
         // Set scroll offset uniform (applied by all sprites with their own multiplier)
         GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
@@ -141,9 +145,20 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     @Override
     public void onScrollOffsetChanged(float offsetX) {
-        // Treat offset=0.5 as the centered position. We want positive offset to move sprites left when user scrolls right,
-        // so compute (0.5 - offsetX). At offsetX == 0.5 this becomes 0 (no displacement).
-        this.currentScrollOffset = 0.5f - offsetX;
+        // Delegate to the interpolator to set the scroll target
+        scrollOffsetInterpolator.setScrollTarget(offsetX);
+    }
+
+    @Override
+    public void onRendererResume(long resumeTimeNs) {
+        // Delegate to the interpolator to invalidate its frame timer
+        scrollOffsetInterpolator.onRendererResume();
+    }
+
+    @Override
+    public void onRendererPause() {
+        // Delegate to the interpolator to invalidate its frame timer
+        scrollOffsetInterpolator.onRendererPause();
     }
 
     @Override

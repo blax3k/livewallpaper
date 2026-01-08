@@ -42,4 +42,21 @@ public interface GLWallpaperRenderer {
      * @param rotationZ rotation around Z axis in rad/s (yaw)
      */
     void onGyroscopeChanged(float rotationX, float rotationY, float rotationZ);
+
+    /**
+     * Called by the hosting service when rendering is about to start or visibility has resumed.
+     * The renderer can use the provided timestamp to reset or initialize frame-timers and avoid
+     * treating the long pause as a large delta-time.
+     *
+     * @param resumeTimeNs a recent System.nanoTime() timestamp from the caller; if <=0 the
+     *                     renderer should choose a sane fallback.
+     */
+    void onRendererResume(long resumeTimeNs);
+
+    /**
+     * Called by the hosting service when rendering is being stopped or visibility is lost.
+     * The renderer should invalidate any frame-timer state so a subsequent resume is explicit.
+     */
+    void onRendererPause();
 }
+
