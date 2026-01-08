@@ -77,8 +77,12 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     {
         // Create sprites with position and size
         Sprite landscapeSprite = new Sprite(context, R.drawable.testscape, 10.0f, 10.0f);
-        landscapeSprite.setParallaxMultiplier(1.0f);  // Background moves slower
+        landscapeSprite.setParallaxMultiplier(0.5f);  // Background moves slower
         sprites.add(landscapeSprite);
+
+        Sprite towerSprite = new Sprite(context, R.drawable.tower, 10f, 10f);
+        towerSprite.setParallaxMultiplier(1.0f);
+        sprites.add(towerSprite);
 
         Sprite knightSprite = new Sprite(context, R.drawable.knight, 2.5f, 5f);
         knightSprite.setParallaxMultiplier(1.5f);  // Foreground moves with scroll
