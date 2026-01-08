@@ -6,8 +6,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Switch;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -32,9 +32,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "UI initialization failed", Toast.LENGTH_SHORT).show();
             }
 
-            ToggleButton scrollToggle = findViewById(R.id.toggle_scroll_motion);
+            Switch scrollToggle = findViewById(R.id.toggle_scroll_motion);
             if (scrollToggle != null) {
-                Log.d(TAG, "Toggle button found, setting click listener");
+                Log.d(TAG, "Scroll toggle switch found, setting listener");
                 // Set initial state based on the config
                 scrollToggle.setChecked(MotionConfig.isScrollMotionEnabled());
                 scrollToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -44,14 +44,14 @@ public class MainActivity extends AppCompatActivity {
                         "Scroll motion " + (isChecked ? "enabled" : "disabled"),
                         Toast.LENGTH_SHORT).show();
                 });
-                Log.d(TAG, "Toggle button click listener set");
+                Log.d(TAG, "Scroll toggle switch listener set");
             } else {
-                Log.e(TAG, "Toggle button not found in layout!");
+                Log.e(TAG, "Scroll toggle switch not found in layout!");
             }
 
-            ToggleButton gyroToggle = findViewById(R.id.toggle_gyro_motion);
+            Switch gyroToggle = findViewById(R.id.toggle_gyro_motion);
             if (gyroToggle != null) {
-                Log.d(TAG, "Gyro toggle button found, setting click listener");
+                Log.d(TAG, "Gyro toggle switch found, setting listener");
                 // Set initial state based on the config
                 gyroToggle.setChecked(MotionConfig.isGyroMotionEnabled());
                 gyroToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -61,9 +61,9 @@ public class MainActivity extends AppCompatActivity {
                         "Gyro motion " + (isChecked ? "enabled" : "disabled"),
                         Toast.LENGTH_SHORT).show();
                 });
-                Log.d(TAG, "Gyro toggle button click listener set");
+                Log.d(TAG, "Gyro toggle switch listener set");
             } else {
-                Log.e(TAG, "Gyro toggle button not found in layout!");
+                Log.e(TAG, "Gyro toggle switch not found in layout!");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error in onCreate: " + e.getMessage(), e);
