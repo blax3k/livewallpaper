@@ -16,7 +16,6 @@ public class Sprite {
     private static final String TAG = "Sprite";
     private static final int VERTEX_COUNT = 4;
 
-    private final Context context;
     private FloatBuffer vertexBuffer;
     private FloatBuffer texCoordBuffer;
     private FloatBuffer parallaxMultiplierBuffer;
@@ -30,11 +29,18 @@ public class Sprite {
     private float height;
     private float parallaxMultiplier = 1.0f;
 
-    public Sprite(Context context, int textureResourceId, float width, float height) {
-        this.context = context;
+    // Store original dimensions and positions for scaling
+    private final float originalWidth;
+    private final float originalHeight;
+    private float originalPositionX = 0f;
+    private float originalPositionY = 0f;
+
+    public Sprite(int textureResourceId, float width, float height) {
         this.textureResourceId = textureResourceId;
         this.width = width;
         this.height = height;
+        this.originalWidth = width;
+        this.originalHeight = height;
         initializeGeometry();
         // Texture loading is handled by TextureManager; caller should set textureId via setTextureId().
     }
@@ -102,16 +108,44 @@ public class Sprite {
     }
 
     /**
-     * Set the position of the sprite.
+     * Set the position of the sprite in world-space coordinates.
+     * Uses world-space units that match the worldHeight scale.
+     * Position (0, 0) is the center of the screen.
+     * Positive Y moves up, negative Y moves down.
+     * X coordinates scale with aspect ratio.
+     *
+     * @param x the x position in world units
+     * @param y the y position in world units
      */
     public void setPosition(float x, float y) {
         this.positionX = x;
         this.positionY = y;
+
+        // Store as original position if this is the first time being set (both original positions are 0)
+        // or if explicitly setting a new base position
+        if (originalPositionX == 0f && originalPositionY == 0f && (x != 0f || y != 0f)) {
+            originalPositionX = x;
+            originalPositionY = y;
+        }
+
+        updateVertexBuffer();
+    }
+
+    /**
+     * Reset the position back to its original value.
+     * Used when disabling gyro scaling.
+     */
+    public void resetPosition() {
+        this.positionX = originalPositionX;
+        this.positionY = originalPositionY;
         updateVertexBuffer();
     }
 
     /**
      * Set the size of the sprite.
+     *
+     * @param width  the new width in world units
+     * @param height the new height in world units
      */
     @SuppressWarnings("unused")
     public void setSize(float width, float height) {
@@ -167,6 +201,44 @@ public class Sprite {
     @SuppressWarnings("unused")
     public float getHeight() {
         return height;
+    }
+
+    /**
+     * Get the original width before any scaling.
+     */
+    @SuppressWarnings("unused")
+    public float getOriginalWidth() {
+        return originalWidth;
+    }
+
+    /**
+     * Get the original height before any scaling.
+     */
+    @SuppressWarnings("unused")
+    public float getOriginalHeight() {
+        return originalHeight;
+    }
+
+    /**
+     * Scale this sprite by a factor relative to its original dimensions.
+     * For example, a factor of 1.2f will scale the sprite to 120% of its original size.
+     * This is useful for expanding sprites when gyro motion is enabled.
+     *
+     * @param scaleFactor the scale factor to apply (1.0 = original size)
+     */
+    public void scaleFromOriginal(float scaleFactor) {
+        this.width = originalWidth * scaleFactor;
+        this.height = originalHeight * scaleFactor;
+        updateVertexBuffer();
+    }
+
+    /**
+     * Reset sprite size back to its original dimensions.
+     */
+    public void resetScale() {
+        this.width = originalWidth;
+        this.height = originalHeight;
+        updateVertexBuffer();
     }
 
     /**

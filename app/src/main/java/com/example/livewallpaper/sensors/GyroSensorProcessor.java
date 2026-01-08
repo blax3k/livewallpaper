@@ -41,6 +41,10 @@ public class GyroSensorProcessor {
         this.motionOffsetLimit = limit;
     }
 
+    public float getMotionOffsetLimit() {
+        return motionOffsetLimit;
+    }
+
     public void setGyroSensitivity(float sensitivity) {
         this.gyroSensitivity = sensitivity;
     }

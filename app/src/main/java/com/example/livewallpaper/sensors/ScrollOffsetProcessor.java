@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.sensors;
 
 /**
  * Manages smooth scrolling interpolation with time-based easing.
@@ -13,7 +13,7 @@ public class ScrollOffsetProcessor {
     // Target scroll offset we will smoothly approach over several frames.
     private float targetScrollOffset = 0f;
     // Scale for converting wallpaper offset [0..1] into world units
-    private static final float SCROLL_SCALE = 6.0f;
+    private static final float SCROLL_SCALE = 5.0f;
     // Time-based smoothing: duration in seconds over which we'll reach the target. Default ~120ms.
     private float scrollSmoothingDuration = 0.05f;
     // Last frame timestamp (nanoseconds) used to compute delta time between frames.

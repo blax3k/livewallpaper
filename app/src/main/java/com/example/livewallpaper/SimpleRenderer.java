@@ -10,6 +10,7 @@ import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
+import com.example.livewallpaper.sensors.GyroScaleCalculator;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
 
@@ -38,6 +39,9 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     // World-space height which maps to the device's vertical view. A sprite with height == worldHeight
     // will fill the vertical screen on any device. Change this to zoom in/out uniformly.
     private float worldHeight = 10f;
+
+    // Track whether sprites are currently scaled for gyro motion
+    private boolean spritesScaledForGyro = false;
 
 
     public SimpleRenderer(Context context) {
@@ -78,15 +82,24 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     private void addSprites()
     {
         // Create sprites with position and size
-        Sprite landscapeSprite = new Sprite(context, R.drawable.testscape, 10.0f, 10.0f);
+        Sprite landscapeSprite = new Sprite( R.drawable.testscape, 10.0f, 10.0f);
         landscapeSprite.setParallaxMultiplier(0.5f);  // Background moves slower
         sprites.add(landscapeSprite);
 
-        Sprite towerSprite = new Sprite(context, R.drawable.tower, 10f, 10f);
+        Sprite towerSprite = new Sprite(R.drawable.tower, 10f, 10f);
         towerSprite.setParallaxMultiplier(1.0f);
         sprites.add(towerSprite);
 
-        Sprite knightSprite = new Sprite(context, R.drawable.knight, 2.5f, 5f);
+        Sprite pigeonSprite = new Sprite(R.drawable.pigeon, 4f, 4f);
+        pigeonSprite.setParallaxMultiplier(1.0f);
+        pigeonSprite.setPosition(-2.0f, -3.0f);
+        sprites.add(pigeonSprite);
+        Sprite pigeonSprite2 = new Sprite(R.drawable.pigeon, 4f, 4f);
+        pigeonSprite2.setParallaxMultiplier(1.0f);
+        pigeonSprite2.setPosition(2.0f, -3.0f);
+        sprites.add(pigeonSprite2);
+
+        Sprite knightSprite = new Sprite(R.drawable.knight, 2.5f, 5f);
         knightSprite.setParallaxMultiplier(1.5f);  // Foreground moves with scroll
         sprites.add(knightSprite);
     }
@@ -123,15 +136,32 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
         // Update gyro offset interpolation and set gyroscope offsets for device tilt movement
-        if (MotionConfig.isGyroMotionEnabled()) {
+        boolean gyroEnabled = MotionConfig.isGyroMotionEnabled();
+        if (gyroEnabled) {
             float gyroOffsetX = gyroProcessor.updateAndGetCurrentOffsetX();
             float gyroOffsetY = gyroProcessor.updateAndGetCurrentOffsetY();
             GLES20.glUniform1f(handles.gyroOffsetXHandle, gyroOffsetX);
             GLES20.glUniform1f(handles.gyroOffsetYHandle, gyroOffsetY);
+
+            // Apply sprite scaling for gyro motion if not already scaled
+            if (!spritesScaledForGyro) {
+                float scaleFactor = GyroScaleCalculator.calculateScaleFactor(
+                    gyroProcessor.getMotionOffsetLimit(),
+                    worldHeight
+                );
+                applyGyroScalingToSprites(scaleFactor);
+                spritesScaledForGyro = true;
+            }
         } else {
             // When gyro is disabled, set offsets to zero
             GLES20.glUniform1f(handles.gyroOffsetXHandle, 0f);
             GLES20.glUniform1f(handles.gyroOffsetYHandle, 0f);
+
+            // Reset sprite scaling if previously scaled
+            if (spritesScaledForGyro) {
+                resetSpritesFromGyroScaling();
+                spritesScaledForGyro = false;
+            }
         }
 
         // Draw all sprites
@@ -219,5 +249,41 @@ public class SimpleRenderer implements GLWallpaperRenderer {
                 + "  vec4 texColor = texture2D(samplerTexture, texCoord);"
                 + "  gl_FragColor = texColor;"
                 + "}";
+    }
+
+    /**
+     * Apply gyro scaling to all sprites.
+     * Expands sprites proportionally to account for the range of gyro motion.
+     * Also moves sprites away from center proportionally to maintain relative spacing.
+     *
+     * @param scaleFactor the scale factor to apply (>1.0 to enlarge)
+     */
+    private void applyGyroScalingToSprites(float scaleFactor) {
+        for (Sprite sprite : sprites) {
+            // Scale the sprite size
+            sprite.scaleFromOriginal(scaleFactor);
+
+            // Scale the position away from center (0, 0) to maintain relative spacing
+            // If sprite is at (2, 3) and scaleFactor is 1.2, move it to (2.4, 3.6)
+            float currentX = sprite.getPositionX();
+            float currentY = sprite.getPositionY();
+            sprite.setPosition(currentX * scaleFactor, currentY * scaleFactor);
+        }
+        Log.d(TAG, "Sprites scaled for gyro motion. Scale factor: " + scaleFactor);
+    }
+
+    /**
+     * Reset all sprites to their original sizes and positions.
+     * Called when gyro motion is disabled to restore normal sprite dimensions and spacing.
+     */
+    private void resetSpritesFromGyroScaling() {
+        for (Sprite sprite : sprites) {
+            // Reset size to original
+            sprite.resetScale();
+
+            // Reset position to original
+            sprite.resetPosition();
+        }
+        Log.d(TAG, "Sprites reset to original size and position");
     }
 }
