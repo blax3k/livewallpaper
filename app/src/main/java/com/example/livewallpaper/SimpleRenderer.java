@@ -92,27 +92,26 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     private void addSprites()
     {
-        // Create sprites with position and size
-        Sprite landscapeSprite = new Sprite( R.drawable.testscape, 10.0f, 10.0f);
-        landscapeSprite.setParallaxMultiplier(0.5f);  // Background moves slower
-        currentScene.addSprite(landscapeSprite);
+        // Create sprites using SpriteConfig for cleaner initialization
+        currentScene.addSprite(new Sprite(new SpriteConfig(
+            R.drawable.testscape, 10.0f, 10.0f, 0.5f, 0f, 0f
+        )));
 
-        Sprite towerSprite = new Sprite(R.drawable.tower, 10f, 10f);
-        towerSprite.setParallaxMultiplier(1.0f);
-        currentScene.addSprite(towerSprite);
+        currentScene.addSprite(new Sprite(new SpriteConfig(
+            R.drawable.tower, 10f, 10f, 1.0f, 0f, 0f
+        )));
 
-        Sprite pigeonSprite = new Sprite(R.drawable.pigeon, 4f, 4f);
-        pigeonSprite.setParallaxMultiplier(1.0f);
-        pigeonSprite.setPosition(-2.0f, -3.0f);
-        currentScene.addSprite(pigeonSprite);
-        Sprite pigeonSprite2 = new Sprite(R.drawable.pigeon, 4f, 4f);
-        pigeonSprite2.setParallaxMultiplier(1.0f);
-        pigeonSprite2.setPosition(2.0f, -3.0f);
-        currentScene.addSprite(pigeonSprite2);
+        currentScene.addSprite(new Sprite(new SpriteConfig(
+            R.drawable.pigeon, 4f, 4f, 1.0f, -2.0f, -3.0f
+        )));
 
-        Sprite knightSprite = new Sprite(R.drawable.knight, 2.5f, 5f);
-        knightSprite.setParallaxMultiplier(1.5f);  // Foreground moves with scroll
-        currentScene.addSprite(knightSprite);
+        currentScene.addSprite(new Sprite(new SpriteConfig(
+            R.drawable.pigeon, 4f, 4f, 1.0f, 2.0f, -3.0f
+        )));
+
+        currentScene.addSprite(new Sprite(new SpriteConfig(
+            R.drawable.knight, 2.5f, 5f, 1.5f, 0f, 0f
+        )));
     }
 
     @Override

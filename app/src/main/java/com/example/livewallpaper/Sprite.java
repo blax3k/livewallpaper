@@ -46,16 +46,54 @@ public class Sprite {
     }
 
     /**
+     * Constructor with parallax multiplier and position.
+     *
+     * @param textureResourceId the drawable resource ID for the texture
+     * @param width the width in world units
+     * @param height the height in world units
+     * @param parallaxMultiplier the parallax multiplier (1.0 = full scroll, 0.5 = half, etc.)
+     * @param positionX the x position in world units
+     * @param positionY the y position in world units
+     */
+    public Sprite(int textureResourceId, float width, float height, float parallaxMultiplier, float positionX, float positionY) {
+        this.textureResourceId = textureResourceId;
+        this.width = width;
+        this.height = height;
+        this.originalWidth = width;
+        this.originalHeight = height;
+        this.parallaxMultiplier = parallaxMultiplier;
+        this.positionX = positionX;
+        this.positionY = positionY;
+        this.originalPositionX = positionX;
+        this.originalPositionY = positionY;
+        initializeGeometry();
+        // Texture loading is handled by TextureManager; caller should set textureId via setTextureId().
+    }
+
+    /**
+     * Constructor using a SpriteConfig object for cleaner initialization.
+     *
+     * @param config the sprite configuration containing all initialization parameters
+     */
+    public Sprite(SpriteConfig config) {
+        this(config.textureResourceId, config.width, config.height,
+             config.parallaxMultiplier, config.positionX, config.positionY);
+    }
+
+    /**
      * Initialize vertex and texture coordinate buffers with default geometry.
      * Creates a unit square centered at the origin.
      */
     private void initializeGeometry() {
-        // Define square vertices (centered at origin, width/height on each side)
+        // Define square vertices (centered at position, width/height on each side)
+        float halfWidth = width / 2f;
+        float halfHeight = height / 2f;
+
         float[] squareCoords = {
-            -width / 2f,  height / 2f, 0.0f,  // top left
-            -width / 2f, -height / 2f, 0.0f,  // bottom left
-             width / 2f,  height / 2f, 0.0f,  // top right
-             width / 2f, -height / 2f, 0.0f   // bottom right
+            positionX - halfWidth,  positionY + halfHeight, 0.0f,  // top left
+            positionX - halfWidth,  positionY - halfHeight, 0.0f,  // bottom left
+            positionX + halfWidth,  positionY + halfHeight, 0.0f,  // top right
+            positionX + halfWidth,  positionY - halfHeight, 0.0f   // bottom right
         };
 
         ByteBuffer bb = ByteBuffer.allocateDirect(squareCoords.length * 4);
