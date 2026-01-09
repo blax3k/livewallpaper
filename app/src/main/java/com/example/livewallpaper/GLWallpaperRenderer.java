@@ -58,5 +58,19 @@ public interface GLWallpaperRenderer {
      * The renderer should invalidate any frame-timer state so a subsequent resume is explicit.
      */
     void onRendererPause();
+
+    /**
+     * Called when the renderer is being suspended (e.g., screen turned off).
+     * The renderer should prepare for suspension but NOT release GL resources.
+     * This allows fast resumption without reloading sprites and textures.
+     */
+    void onRendererSuspend();
+
+    /**
+     * Called when the renderer is resuming after suspension.
+     * The renderer can restore any necessary state.
+     * GL resources are still valid from the suspension.
+     */
+    void onRendererSuspendResume();
 }
 

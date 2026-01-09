@@ -76,31 +76,10 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         textureManager = new TextureManager();
         spriteRenderer = new SpriteRenderer(handles);
 
-        // Reload scene if it was destroyed (sprite count is 0)
-        if (currentScene.getSpriteCount() == 0) {
-            try {
-                currentScene = sceneLoader.loadScene("default_scene.json");
-                Log.d(TAG, "Reloaded scene from JSON after destruction: " + currentScene.getSceneName());
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to reload scene from JSON, using empty scene", e);
-                currentScene = new Scene("DefaultScene");
-            }
-        }
-
-        // Resolve textures for each sprite through TextureManager
+        // Initialize the scene and load textures
         currentScene.initialize(context, textureManager);
 
-        // Reapply gyro scaling if it was previously enabled
-        if (spritesScaledForGyro && MotionConfig.isGyroMotionEnabled()) {
-            float scaleFactor = GyroScaleCalculator.calculateScaleFactor(
-                gyroProcessor.getMotionOffsetLimit(),
-                worldHeight
-            );
-            currentScene.applyGyroScaling(scaleFactor);
-            Log.d(TAG, "Reapplied gyro scaling after surface recreation");
-        }
-
-        Log.d(TAG, "Surface created");
+        Log.d(TAG, "Surface created and scene initialized");
     }
 
 
@@ -205,6 +184,21 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     public void onRendererPause() {
         // Delegate to the interpolator to invalidate its frame timer
         scrollOffsetProcessor.onRendererPause();
+    }
+
+    @Override
+    public void onRendererSuspend() {
+        // Prepare for suspension - reset frame timers to avoid jumps when resuming
+        scrollOffsetProcessor.onRendererPause();
+        gyroProcessor.reset();
+        Log.d(TAG, "Renderer suspended - frame timers reset");
+    }
+
+    @Override
+    public void onRendererSuspendResume() {
+        // Resume after suspension - reset frame timers for smooth animation
+        scrollOffsetProcessor.onRendererResume();
+        Log.d(TAG, "Renderer resumed after suspension");
     }
 
     @Override

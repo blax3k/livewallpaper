@@ -36,6 +36,9 @@ public class GLWallpaperService extends WallpaperService {
         private EGLSurface eglSurface;
         private EGLConfig eglConfig;
 
+        // Track if EGL context has been initialized (survives pause/resume)
+        private boolean eglContextInitialized = false;
+
         // Renderer
         private GLWallpaperRenderer renderer;
 
@@ -95,6 +98,8 @@ public class GLWallpaperService extends WallpaperService {
                 Log.d(TAG, "Gyroscope sensor unregistered in onDestroy");
             }
             stopRendering();
+            // Fully destroy EGL resources when the engine is being destroyed
+            destroyEGL();
             super.onDestroy();
         }
 
@@ -139,6 +144,13 @@ public class GLWallpaperService extends WallpaperService {
 
         private boolean initEGL(SurfaceHolder holder) {
             try {
+                // If we already have a context, just create a new surface and rebind
+                if (eglContextInitialized && eglDisplay != null && eglContext != null) {
+                    return resumeEGL(holder);
+                }
+
+                // First-time initialization: create display, context, and surface
+
                 // Get the default EGL display
                 eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
                 if (eglDisplay == EGL14.EGL_NO_DISPLAY) {
@@ -206,8 +218,9 @@ public class GLWallpaperService extends WallpaperService {
                 // Enable vsync (swap interval = 1 means sync to display refresh rate)
                 EGL14.eglSwapInterval(eglDisplay, 1);
 
+                eglContextInitialized = true;
                 renderer.onSurfaceCreated();
-                Log.d(TAG, "EGL initialized successfully");
+                Log.d(TAG, "EGL initialized successfully (first time)");
                 return true;
             } catch (Exception e) {
                 Log.e(TAG, "initEGL failed", e);
@@ -215,7 +228,74 @@ public class GLWallpaperService extends WallpaperService {
             }
         }
 
-        private void releaseEGL() {
+        /**
+         * Resume EGL by creating a new surface with the existing context.
+         * Called when we already have an initialized context from a previous session.
+         */
+        private boolean resumeEGL(SurfaceHolder holder) {
+            try {
+                // Create new GL surface
+                int[] surfaceAttribs = { EGL14.EGL_NONE };
+                eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, holder.getSurface(), surfaceAttribs, 0);
+                if (eglSurface == null || eglSurface == EGL14.EGL_NO_SURFACE) {
+                    Log.e(TAG, "Failed to create EGL surface on resume");
+                    return false;
+                }
+
+                // Make the context current with the new surface
+                if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
+                    Log.e(TAG, "Failed to make EGL context current on resume");
+                    return false;
+                }
+
+                // Enable vsync
+                EGL14.eglSwapInterval(eglDisplay, 1);
+
+                // Notify renderer it's resuming (GL resources are still valid)
+                if (renderer != null) {
+                    renderer.onRendererSuspendResume();
+                }
+
+                Log.d(TAG, "EGL resumed successfully (context preserved)");
+                return true;
+            } catch (Exception e) {
+                Log.e(TAG, "resumeEGL failed", e);
+                return false;
+            }
+        }
+
+        /**
+         * Pause EGL by destroying only the surface, keeping the context alive.
+         * This preserves all GL resources (textures, shaders, etc.)
+         */
+        private void pauseEGL() {
+            try {
+                if (renderer != null) {
+                    renderer.onRendererSuspend();
+                }
+
+                if (eglDisplay != null && eglDisplay != EGL14.EGL_NO_DISPLAY) {
+                    // Unbind the context from the surface
+                    EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+
+                    // Destroy only the surface, keep the context
+                    if (eglSurface != null && eglSurface != EGL14.EGL_NO_SURFACE) {
+                        EGL14.eglDestroySurface(eglDisplay, eglSurface);
+                        eglSurface = null;
+                    }
+                }
+
+                Log.d(TAG, "EGL paused (surface destroyed, context preserved)");
+            } catch (Exception e) {
+                Log.e(TAG, "Error pausing EGL", e);
+            }
+        }
+
+        /**
+         * Fully release all EGL resources including context.
+         * Called only when the engine is being destroyed.
+         */
+        private void destroyEGL() {
             try {
                 if (renderer != null) {
                     renderer.onDestroy();
@@ -224,23 +304,24 @@ public class GLWallpaperService extends WallpaperService {
                 if (eglDisplay != null && eglDisplay != EGL14.EGL_NO_DISPLAY) {
                     EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
 
-                    if (eglSurface != null) {
+                    if (eglSurface != null && eglSurface != EGL14.EGL_NO_SURFACE) {
                         EGL14.eglDestroySurface(eglDisplay, eglSurface);
                     }
-                    if (eglContext != null) {
+                    if (eglContext != null && eglContext != EGL14.EGL_NO_CONTEXT) {
                         EGL14.eglDestroyContext(eglDisplay, eglContext);
                     }
                     EGL14.eglTerminate(eglDisplay);
                 }
 
-                Log.d(TAG, "EGL released");
+                Log.d(TAG, "EGL fully destroyed");
             } catch (Exception e) {
-                Log.e(TAG, "Error releasing EGL", e);
+                Log.e(TAG, "Error destroying EGL", e);
             } finally {
                 eglDisplay = null;
                 eglContext = null;
                 eglSurface = null;
                 eglConfig = null;
+                eglContextInitialized = false;
             }
         }
 
@@ -273,7 +354,9 @@ public class GLWallpaperService extends WallpaperService {
                 while (running) {
                     try {
                         // Render a frame
-                        renderer.onDrawFrame();
+                        if (renderer != null) {
+                            renderer.onDrawFrame();
+                        }
                         // Swap buffers (vsync handled by eglSwapInterval)
                         EGL14.eglSwapBuffers(eglDisplay, eglSurface);
                     } catch (Exception e) {
@@ -281,7 +364,7 @@ public class GLWallpaperService extends WallpaperService {
                     }
                 }
 
-                releaseEGL();
+                pauseEGL();
             });
             renderThread.start();
             Log.d(TAG, "Rendering started");
