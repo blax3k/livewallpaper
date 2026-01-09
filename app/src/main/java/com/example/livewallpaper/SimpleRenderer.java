@@ -25,7 +25,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     private Context context;
     private ShaderProgram shaderProgram;
-    private List<Sprite> sprites;
+
+    private Scene currentScene;
 
     private Handles handles;
     private float[] projectionMatrix = new float[16];
@@ -46,7 +47,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     public SimpleRenderer(Context context) {
         this.context = context;
-        this.sprites = new ArrayList<>();
+        this.currentScene = new Scene("DefaultScene");
     }
 
     @Override
@@ -69,15 +70,12 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         spriteRenderer = new SpriteRenderer(handles);
 
         // Only add sprites if they haven't been created yet
-        if (sprites.isEmpty()) {
+        if (currentScene.getSprites().isEmpty()) {
             addSprites();
         }
 
         // Resolve textures for each sprite through TextureManager
-        for (Sprite sprite : sprites) {
-            int texId = textureManager.getTexture(context, sprite.getTextureResourceId());
-            sprite.setTextureId(texId);
-        }
+        currentScene.initialize(context, textureManager);
 
         // Reapply gyro scaling if it was previously enabled
         if (spritesScaledForGyro && MotionConfig.isGyroMotionEnabled()) {
@@ -85,7 +83,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
                 gyroProcessor.getMotionOffsetLimit(),
                 worldHeight
             );
-            applyGyroScalingToSprites(scaleFactor);
+            currentScene.applyGyroScaling(scaleFactor);
             Log.d(TAG, "Reapplied gyro scaling after surface recreation");
         }
 
@@ -97,24 +95,24 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Create sprites with position and size
         Sprite landscapeSprite = new Sprite( R.drawable.testscape, 10.0f, 10.0f);
         landscapeSprite.setParallaxMultiplier(0.5f);  // Background moves slower
-        sprites.add(landscapeSprite);
+        currentScene.addSprite(landscapeSprite);
 
         Sprite towerSprite = new Sprite(R.drawable.tower, 10f, 10f);
         towerSprite.setParallaxMultiplier(1.0f);
-        sprites.add(towerSprite);
+        currentScene.addSprite(towerSprite);
 
         Sprite pigeonSprite = new Sprite(R.drawable.pigeon, 4f, 4f);
         pigeonSprite.setParallaxMultiplier(1.0f);
         pigeonSprite.setPosition(-2.0f, -3.0f);
-        sprites.add(pigeonSprite);
+        currentScene.addSprite(pigeonSprite);
         Sprite pigeonSprite2 = new Sprite(R.drawable.pigeon, 4f, 4f);
         pigeonSprite2.setParallaxMultiplier(1.0f);
         pigeonSprite2.setPosition(2.0f, -3.0f);
-        sprites.add(pigeonSprite2);
+        currentScene.addSprite(pigeonSprite2);
 
         Sprite knightSprite = new Sprite(R.drawable.knight, 2.5f, 5f);
         knightSprite.setParallaxMultiplier(1.5f);  // Foreground moves with scroll
-        sprites.add(knightSprite);
+        currentScene.addSprite(knightSprite);
     }
 
     @Override
@@ -162,7 +160,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
                     gyroProcessor.getMotionOffsetLimit(),
                     worldHeight
                 );
-                applyGyroScalingToSprites(scaleFactor);
+                currentScene.applyGyroScaling(scaleFactor);
                 spritesScaledForGyro = true;
             }
         } else {
@@ -172,13 +170,13 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
             // Reset sprite scaling if previously scaled
             if (spritesScaledForGyro) {
-                resetSpritesFromGyroScaling();
+                currentScene.resetGyroScaling();
                 spritesScaledForGyro = false;
             }
         }
 
         // Draw all sprites
-        for (Sprite sprite : sprites) {
+        for (Sprite sprite : currentScene.getSprites()) {
             spriteRenderer.drawSprite(sprite);
         }
     }
@@ -186,10 +184,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     @Override
     public void onDestroy() {
         // Destroy all sprites
-        for (Sprite sprite : sprites) {
-            sprite.destroy();
-        }
-        sprites.clear();
+        currentScene.destroy();
 
         if (shaderProgram != null) {
             shaderProgram.delete();
@@ -264,39 +259,4 @@ public class SimpleRenderer implements GLWallpaperRenderer {
                 + "}";
     }
 
-    /**
-     * Apply gyro scaling to all sprites.
-     * Expands sprites proportionally to account for the range of gyro motion.
-     * Also moves sprites away from center proportionally to maintain relative spacing.
-     *
-     * @param scaleFactor the scale factor to apply (>1.0 to enlarge)
-     */
-    private void applyGyroScalingToSprites(float scaleFactor) {
-        for (Sprite sprite : sprites) {
-            // Scale the sprite size
-            sprite.scaleFromOriginal(scaleFactor);
-
-            // Scale the position away from center (0, 0) to maintain relative spacing
-            // If sprite is at (2, 3) and scaleFactor is 1.2, move it to (2.4, 3.6)
-            float currentX = sprite.getPositionX();
-            float currentY = sprite.getPositionY();
-            sprite.setPosition(currentX * scaleFactor, currentY * scaleFactor);
-        }
-        Log.d(TAG, "Sprites scaled for gyro motion. Scale factor: " + scaleFactor);
-    }
-
-    /**
-     * Reset all sprites to their original sizes and positions.
-     * Called when gyro motion is disabled to restore normal sprite dimensions and spacing.
-     */
-    private void resetSpritesFromGyroScaling() {
-        for (Sprite sprite : sprites) {
-            // Reset size to original
-            sprite.resetScale();
-
-            // Reset position to original
-            sprite.resetPosition();
-        }
-        Log.d(TAG, "Sprites reset to original size and position");
-    }
 }
