@@ -76,16 +76,6 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         textureManager = new TextureManager();
         spriteRenderer = new SpriteRenderer(handles);
 
-        // Reload scene if it was destroyed (sprite count is 0)
-        if (currentScene.getSpriteCount() == 0) {
-            try {
-                currentScene = sceneLoader.loadScene("default_scene.json");
-                Log.d(TAG, "Reloaded scene from JSON after destruction: " + currentScene.getSceneName());
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to reload scene from JSON, using empty scene", e);
-                currentScene = new Scene("DefaultScene");
-            }
-        }
 
         // Resolve textures for each sprite through TextureManager
         currentScene.initialize(context, textureManager);

@@ -28,6 +28,7 @@ public class GLWallpaperService extends WallpaperService {
 
     private class GLWallpaperEngine extends Engine implements SurfaceHolder.Callback {
         private volatile boolean running = false;
+        private volatile boolean eglInitialized = false;
         private Thread renderThread;
 
         // EGL objects
@@ -101,9 +102,9 @@ public class GLWallpaperService extends WallpaperService {
         @Override
         public void onVisibilityChanged(boolean visible) {
             if (visible) {
-                startRendering();
+                resumeRendering();
             } else {
-                stopRendering();
+                pauseRendering();
             }
         }
 
@@ -268,6 +269,7 @@ public class GLWallpaperService extends WallpaperService {
                     running = false;
                     return;
                 }
+                eglInitialized = true;
 
                 // Main render loop
                 while (running) {
@@ -282,18 +284,105 @@ public class GLWallpaperService extends WallpaperService {
                 }
 
                 releaseEGL();
+                eglInitialized = false;
             });
             renderThread.start();
             Log.d(TAG, "Rendering started");
         }
 
-        private void stopRendering() {
-            // Notify renderer that rendering is stopping so it invalidates its frame timer
+        /**
+         * Pause rendering without destroying GL resources.
+         * Keeps scene data and textures in memory for quick resumption.
+         */
+        private void pauseRendering() {
+            if (!running) {
+                return;
+            }
+
+            Log.d(TAG, "Pausing rendering (keeping EGL context)");
+
+            // Notify renderer that rendering is pausing
             if (renderer != null) {
                 renderer.onRendererPause();
             }
 
-            // Unregister sensor listener to stop sensor updates while not visible
+            // Unregister sensor listener to stop sensor updates while not visible (saves battery)
+            if (sensorRegistered && sensorManager != null) {
+                sensorManager.unregisterListener(sensorEventListener);
+                sensorRegistered = false;
+                Log.d(TAG, "Gyroscope sensor unregistered (paused)");
+            }
+
+            // Stop the render thread but keep EGL context alive
+            running = false;
+            if (renderThread != null) {
+                renderThread.interrupt();
+                try {
+                    renderThread.join(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                renderThread = null;
+            }
+            Log.d(TAG, "Rendering paused (EGL context preserved, resources in memory)");
+        }
+
+        /**
+         * Resume rendering without reinitializing GL resources.
+         * Uses previously loaded scene data and textures.
+         */
+        private void resumeRendering() {
+            if (running || !eglInitialized) {
+                // If EGL wasn't initialized, do full startup
+                if (!eglInitialized) {
+                    startRendering();
+                }
+                return;
+            }
+
+            Log.d(TAG, "Resuming rendering (using cached EGL context)");
+
+            // Notify renderer that rendering is resuming
+            if (renderer != null) {
+                renderer.onRendererResume(System.nanoTime());
+            }
+
+            // Re-register sensor listener
+            if (!sensorRegistered && sensorManager != null && gyroscopeSensor != null) {
+                sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_UI);
+                sensorRegistered = true;
+                Log.d(TAG, "Gyroscope sensor re-registered (resumed)");
+            }
+
+            running = true;
+            renderThread = new Thread(() -> {
+                // Main render loop - EGL is already initialized from previous start
+                while (running) {
+                    try {
+                        // Render a frame
+                        renderer.onDrawFrame();
+                        // Swap buffers (vsync handled by eglSwapInterval)
+                        EGL14.eglSwapBuffers(eglDisplay, eglSurface);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Rendering error", e);
+                    }
+                }
+            });
+            renderThread.start();
+            Log.d(TAG, "Rendering resumed (using cached resources)");
+        }
+
+        /**
+         * Stop rendering completely and destroy all GL resources.
+         * Called when wallpaper is being destroyed.
+         */
+        private void stopRendering() {
+            // Notify renderer that rendering is stopping
+            if (renderer != null) {
+                renderer.onRendererPause();
+            }
+
+            // Unregister sensor listener
             if (sensorRegistered && sensorManager != null) {
                 sensorManager.unregisterListener(sensorEventListener);
                 sensorRegistered = false;
@@ -310,7 +399,11 @@ public class GLWallpaperService extends WallpaperService {
                 }
                 renderThread = null;
             }
-            Log.d(TAG, "Rendering stopped");
+
+            // Release GL resources
+            releaseEGL();
+
+            Log.d(TAG, "Rendering stopped (resources destroyed)");
         }
     }
 }
