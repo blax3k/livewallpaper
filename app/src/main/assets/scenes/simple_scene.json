@@ -1,0 +1,14 @@
+{
+  "sceneName": "SimpleScene",
+  "sprites": [
+    {
+      "textureResource": "knight",
+      "width": 3.0,
+      "height": 6.0,
+      "parallaxMultiplier": 1.0,
+      "positionX": 0.0,
+      "positionY": 0.0
+    }
+  ]
+}
+

@@ -14,9 +14,6 @@ import com.example.livewallpaper.sensors.GyroScaleCalculator;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Simple example renderer that displays a blue square with a texture (knight.png) in the center of the view.
  */
@@ -27,6 +24,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     private ShaderProgram shaderProgram;
 
     private Scene currentScene;
+    private SceneLoader sceneLoader;
 
     private Handles handles;
     private float[] projectionMatrix = new float[16];
@@ -47,7 +45,16 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     public SimpleRenderer(Context context) {
         this.context = context;
-        this.currentScene = new Scene("DefaultScene");
+        this.sceneLoader = new SceneLoader(context);
+
+        // Try to load scene from JSON, fall back to empty scene if loading fails
+        try {
+            this.currentScene = sceneLoader.loadScene("default_scene.json");
+            Log.d(TAG, "Loaded scene from JSON: " + currentScene.getSceneName());
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to load scene from JSON, using empty scene", e);
+            this.currentScene = new Scene("DefaultScene");
+        }
     }
 
     @Override
@@ -69,9 +76,15 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         textureManager = new TextureManager();
         spriteRenderer = new SpriteRenderer(handles);
 
-        // Only add sprites if they haven't been created yet
-        if (currentScene.getSprites().isEmpty()) {
-            addSprites();
+        // Reload scene if it was destroyed (sprite count is 0)
+        if (currentScene.getSpriteCount() == 0) {
+            try {
+                currentScene = sceneLoader.loadScene("default_scene.json");
+                Log.d(TAG, "Reloaded scene from JSON after destruction: " + currentScene.getSceneName());
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to reload scene from JSON, using empty scene", e);
+                currentScene = new Scene("DefaultScene");
+            }
         }
 
         // Resolve textures for each sprite through TextureManager
@@ -90,29 +103,6 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         Log.d(TAG, "Surface created");
     }
 
-    private void addSprites()
-    {
-        // Create sprites using SpriteConfig for cleaner initialization
-        currentScene.addSprite(new Sprite(new SpriteConfig(
-            R.drawable.testscape, 10.0f, 10.0f, 0.5f, 0f, 0f
-        )));
-
-        currentScene.addSprite(new Sprite(new SpriteConfig(
-            R.drawable.tower, 10f, 10f, 1.0f, 0f, 0f
-        )));
-
-        currentScene.addSprite(new Sprite(new SpriteConfig(
-            R.drawable.pigeon, 4f, 4f, 1.0f, -2.0f, -3.0f
-        )));
-
-        currentScene.addSprite(new Sprite(new SpriteConfig(
-            R.drawable.pigeon, 4f, 4f, 1.0f, 2.0f, -3.0f
-        )));
-
-        currentScene.addSprite(new Sprite(new SpriteConfig(
-            R.drawable.knight, 2.5f, 5f, 1.5f, 0f, 0f
-        )));
-    }
 
     @Override
     public void onSurfaceChanged(int width, int height) {
