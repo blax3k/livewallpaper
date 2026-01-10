@@ -72,5 +72,12 @@ public interface GLWallpaperRenderer {
      * GL resources are still valid from the suspension.
      */
     void onRendererSuspendResume();
+
+    /**
+     * Called when a double-tap gesture is detected.
+     * @param x the x-coordinate of the tap
+     * @param y the y-coordinate of the tap
+     */
+    void onDoubleTap(float x, float y);
 }
 

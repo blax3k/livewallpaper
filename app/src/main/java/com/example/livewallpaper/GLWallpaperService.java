@@ -11,6 +11,8 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.service.wallpaper.WallpaperService;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 
@@ -42,6 +44,9 @@ public class GLWallpaperService extends WallpaperService {
         // Renderer
         private GLWallpaperRenderer renderer;
 
+        // Gesture detection for double tap
+        private GestureDetector gestureDetector;
+
         // Sensor management
         private SensorManager sensorManager;
         private Sensor gyroscopeSensor;
@@ -65,13 +70,27 @@ public class GLWallpaperService extends WallpaperService {
             }
         };
 
+        private final GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                Log.d(TAG, "Double tap detected at x=" + e.getX() + ", y=" + e.getY());
+                if (renderer != null) {
+                    renderer.onDoubleTap(e.getX(), e.getY());
+                }
+                return true;
+            }
+        };
+
         @Override
         public void onCreate(SurfaceHolder surfaceHolder) {
             try {
                 super.onCreate(surfaceHolder);
                 surfaceHolder.addCallback(this);
                 renderer = new SimpleRenderer(GLWallpaperService.this);
-                setTouchEventsEnabled(false);
+
+                // Enable touch events and initialize gesture detector for double tap detection
+                setTouchEventsEnabled(true);
+                gestureDetector = new GestureDetector(GLWallpaperService.this, gestureListener);
 
                 // Initialize sensor manager and obtain gyroscope sensor but don't register yet
                 sensorManager = (SensorManager) GLWallpaperService.this.getSystemService(SENSOR_SERVICE);
@@ -140,6 +159,12 @@ public class GLWallpaperService extends WallpaperService {
             if (renderer != null) {
                 renderer.onScrollOffsetChanged(xOffset);
             }
+        }
+
+        @Override
+        public void onTouchEvent(MotionEvent event) {
+            // Pass touch events to gesture detector for double tap detection
+            gestureDetector.onTouchEvent(event);
         }
 
         private boolean initEGL(SurfaceHolder holder) {

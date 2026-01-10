@@ -71,8 +71,11 @@ public class SceneLoader {
             int resourceId = getDrawableResourceId(spriteData.textureResource);
             if (resourceId == 0) {
                 Log.w(TAG, "Could not find drawable resource: " + spriteData.textureResource + ". Skipping sprite.");
+                Log.w(TAG, "Tried to resolve: package=" + context.getPackageName() + ", name=" + spriteData.textureResource);
                 continue;
             }
+
+            Log.d(TAG, "Successfully resolved texture: " + spriteData.textureResource + " -> resourceId=" + resourceId);
 
             // Create sprite configuration
             SpriteConfig config = new SpriteConfig(

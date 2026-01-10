@@ -1,12 +1,14 @@
 package com.example.livewallpaper.gl;
 
 import android.opengl.GLES20;
+import android.util.Log;
 import com.example.livewallpaper.Sprite;
 
 /**
  * Responsible for issuing draw calls for sprites using a compiled shader program.
  */
 public class SpriteRenderer {
+    private static final String TAG = "SpriteRenderer";
     private final int positionHandle;
     private final int texCoordHandle;
     private final int samplerHandle;
@@ -20,9 +22,15 @@ public class SpriteRenderer {
     }
 
     public void drawSprite(Sprite sprite) {
+        int textureId = sprite.getTextureId();
+        if (textureId == 0) {
+            Log.w(TAG, "Attempted to draw sprite with textureId=0. This sprite will not render.");
+            return;
+        }
+
         // Bind texture
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, sprite.getTextureId());
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
         GLES20.glUniform1i(samplerHandle, 0);
 
         // Enable vertex attribute array

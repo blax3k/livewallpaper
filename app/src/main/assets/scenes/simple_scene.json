@@ -2,11 +2,43 @@
   "sceneName": "SimpleScene",
   "sprites": [
     {
-      "textureResource": "knight",
-      "width": 3.0,
-      "height": 6.0,
+      "textureResource": "testscape",
+      "width": 10.0,
+      "height": 10.0,
+      "parallaxMultiplier": 0.5,
+      "positionX": 0.0,
+      "positionY": 0.0
+    },
+    {
+      "textureResource": "tower2",
+      "width": 10.0,
+      "height": 10.0,
       "parallaxMultiplier": 1.0,
       "positionX": 0.0,
+      "positionY": 0.0
+    },
+    {
+      "textureResource": "pigeon",
+      "width": 4.0,
+      "height": 4.0,
+      "parallaxMultiplier": 1.0,
+      "positionX": -2.0,
+      "positionY": 3.0
+    },
+    {
+      "textureResource": "pigeon",
+      "width": 4.0,
+      "height": 4.0,
+      "parallaxMultiplier": 1.0,
+      "positionX": 2.0,
+      "positionY": 3.0
+    },
+    {
+      "textureResource": "knight2",
+      "width": 2.5,
+      "height": 5.0,
+      "parallaxMultiplier": 1.5,
+      "positionX": -3.0,
       "positionY": 0.0
     }
   ]

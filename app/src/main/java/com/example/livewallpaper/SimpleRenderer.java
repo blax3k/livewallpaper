@@ -42,6 +42,14 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     // Track whether sprites are currently scaled for gyro motion
     private boolean spritesScaledForGyro = false;
 
+    // Track the currently loaded scene file for toggling between scenes
+    private String currentSceneFile = "default_scene.json";
+    private static final String SCENE_ONE = "default_scene.json";
+    private static final String SCENE_TWO = "simple_scene.json";
+
+    // Flag to request scene switch on GL thread (set from UI thread, consumed on GL thread)
+    private volatile boolean sceneSwitchRequested = false;
+
 
     public SimpleRenderer(Context context) {
         this.context = context;
@@ -49,7 +57,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
         // Try to load scene from JSON, fall back to empty scene if loading fails
         try {
-            this.currentScene = sceneLoader.loadScene("default_scene.json");
+            this.currentScene = sceneLoader.loadScene(currentSceneFile);
             Log.d(TAG, "Loaded scene from JSON: " + currentScene.getSceneName());
         } catch (Exception e) {
             Log.e(TAG, "Failed to load scene from JSON, using empty scene", e);
@@ -101,6 +109,12 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     @Override
     public void onDrawFrame() {
+        // Check if scene switch was requested (from UI thread) and perform it here on GL thread
+        if (sceneSwitchRequested) {
+            sceneSwitchRequested = false;
+            performSceneSwitch();
+        }
+
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
         shaderProgram.use();
@@ -210,6 +224,52 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         } else {
             // When gyro is disabled, reset the processor to avoid stale offsets
             gyroProcessor.reset();
+        }
+    }
+
+    @Override
+    public void onDoubleTap(float x, float y) {
+        Log.d(TAG, "Double tap received at screen coordinates (" + x + ", " + y + ")");
+        // Request scene switch - will be performed on GL thread during next onDrawFrame
+        sceneSwitchRequested = true;
+    }
+
+    /**
+     * Perform the actual scene switch. Must be called on the GL thread.
+     * If currently on default_scene.json, switch to simple_scene.json and vice versa.
+     */
+    private void performSceneSwitch() {
+        String nextSceneFile = currentSceneFile.equals(SCENE_ONE) ? SCENE_TWO : SCENE_ONE;
+        Log.d(TAG, "Switching scene from " + currentSceneFile + " to " + nextSceneFile);
+
+        try {
+            // Destroy the current scene
+            if (currentScene != null) {
+                currentScene.destroy();
+                Log.d(TAG, "Destroyed current scene: " + currentScene.getSceneName());
+            }
+
+            // Load the next scene
+            currentScene = sceneLoader.loadScene(nextSceneFile);
+            currentSceneFile = nextSceneFile;
+
+            // Initialize the new scene with textures if GL resources are ready
+            if (textureManager != null) {
+                currentScene.initialize(context, textureManager);
+                Log.d(TAG, "Initialized new scene: " + currentScene.getSceneName());
+            }
+
+            // Reset gyro scaling state since we have a new scene
+            if (spritesScaledForGyro) {
+                currentScene.applyGyroScaling(GyroScaleCalculator.calculateScaleFactor(
+                    gyroProcessor.getMotionOffsetLimit(),
+                    worldHeight
+                ));
+            }
+
+            Log.d(TAG, "Scene switched successfully to: " + currentScene.getSceneName());
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to switch scene", e);
         }
     }
 
