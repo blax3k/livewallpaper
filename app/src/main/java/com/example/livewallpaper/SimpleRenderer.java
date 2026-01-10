@@ -243,6 +243,9 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         Log.d(TAG, "Switching scene from " + currentSceneFile + " to " + nextSceneFile);
 
         try {
+            // Get the current scene's used texture IDs before destroying it
+            java.util.Set<Integer> oldSceneTextureIds = currentScene.getUsedTextureResourceIds();
+
             // Destroy the current scene
             if (currentScene != null) {
                 currentScene.destroy();
@@ -257,6 +260,11 @@ public class SimpleRenderer implements GLWallpaperRenderer {
             if (textureManager != null) {
                 currentScene.initialize(context, textureManager);
                 Log.d(TAG, "Initialized new scene: " + currentScene.getSceneName());
+
+                // Clean up textures from the old scene that aren't used in the new scene
+                java.util.Set<Integer> newSceneTextureIds = currentScene.getUsedTextureResourceIds();
+                textureManager.unloadUnusedTextures(oldSceneTextureIds, newSceneTextureIds);
+                Log.d(TAG, "Cleaned up unused textures (kept " + newSceneTextureIds.size() + " shared textures)");
             }
 
             // Reset gyro scaling state since we have a new scene

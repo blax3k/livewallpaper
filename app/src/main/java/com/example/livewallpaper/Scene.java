@@ -3,7 +3,9 @@ import android.content.Context;
 import android.util.Log;
 import com.example.livewallpaper.gl.TextureManager;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 /**
  * Represents a scene containing a collection of sprites.
  * Scenes can be switched to display different sets of sprites on screen.
@@ -111,5 +113,19 @@ public class Scene {
      */
     public int getSpriteCount() {
         return sprites.size();
+    }
+
+    /**
+     * Get all unique texture resource IDs used by sprites in this scene.
+     * Useful for determining which textures to keep/unload during scene switches.
+     *
+     * @return set of unique resource IDs
+     */
+    public Set<Integer> getUsedTextureResourceIds() {
+        Set<Integer> usedIds = new HashSet<>();
+        for (Sprite sprite : sprites) {
+            usedIds.add(sprite.getTextureResourceId());
+        }
+        return usedIds;
     }
 }

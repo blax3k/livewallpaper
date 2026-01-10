@@ -9,6 +9,8 @@ import android.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
+import java.util.LinkedList;
 
 /**
  * Loads and caches GL textures by resource id. Callers should call destroyAll when the GL context
@@ -17,6 +19,7 @@ import java.util.Map;
 public class TextureManager {
     private static final String TAG = "TextureManager";
     private final Map<Integer, Integer> textureCache = new HashMap<>(); // resourceId -> textureId
+    private final Queue<Integer> freedTextureIds = new LinkedList<>(); // Pool of freed texture IDs for reuse
 
     /**
      * Get or load a texture by resource ID. Cached textures are returned immediately,
@@ -33,24 +36,23 @@ public class TextureManager {
             return textureCache.get(resourceId);
         }
 
-        // Generate texture ID
-        int[] textureIds = new int[1];
-        GLES20.glGenTextures(1, textureIds, 0);
-        if (textureIds[0] == 0) {
-            Log.e(TAG, "Failed to generate texture ID for resourceId=" + resourceId);
+        // Allocate texture ID (from pool or generate new)
+        int textureId = allocateTextureId();
+        if (textureId == 0) {
+            Log.e(TAG, "Failed to allocate texture ID for resourceId=" + resourceId);
             return 0;
         }
 
         // Load and process bitmap
         Bitmap textureBitmap = decodeBitmap(context, resourceId);
         if (textureBitmap == null) {
-            GLES20.glDeleteTextures(1, textureIds, 0);
+            freeTextureId(textureId);
             return 0;
         }
 
         // Upload to GPU
-        if (!uploadTextureToGPU(textureIds[0], textureBitmap, resourceId)) {
-            GLES20.glDeleteTextures(1, textureIds, 0);
+        if (!uploadTextureToGPU(textureId, textureBitmap, resourceId)) {
+            freeTextureId(textureId);
             textureBitmap.recycle();
             return 0;
         }
@@ -58,9 +60,43 @@ public class TextureManager {
         textureBitmap.recycle();
 
         // Cache and return
-        textureCache.put(resourceId, textureIds[0]);
-        Log.d(TAG, "Texture uploaded to GPU for resourceId=" + resourceId + ", assigned texId=" + textureIds[0]);
+        textureCache.put(resourceId, textureId);
+        Log.d(TAG, "Texture uploaded to GPU for resourceId=" + resourceId + ", assigned texId=" + textureId + " (pool size: " + freedTextureIds.size() + ")");
+        return textureId;
+    }
+
+    /**
+     * Allocate a texture ID, preferring reused IDs from the freed pool before generating new ones.
+     *
+     * @return texture ID, or 0 if allocation failed
+     */
+    private int allocateTextureId() {
+        // Try to reuse a freed texture ID first
+        if (!freedTextureIds.isEmpty()) {
+            int reusedId = freedTextureIds.poll();
+            Log.d(TAG, "Reusing freed texture ID: " + reusedId + " (remaining in pool: " + freedTextureIds.size() + ")");
+            return reusedId;
+        }
+
+        // No freed IDs available, generate a new one
+        int[] textureIds = new int[1];
+        GLES20.glGenTextures(1, textureIds, 0);
+        if (textureIds[0] == 0) {
+            Log.e(TAG, "Failed to generate new texture ID");
+            return 0;
+        }
+        Log.d(TAG, "Generated new texture ID: " + textureIds[0]);
         return textureIds[0];
+    }
+
+    /**
+     * Return a texture ID to the freed pool for reuse later.
+     *
+     * @param textureId GL texture ID to free
+     */
+    private void freeTextureId(int textureId) {
+        freedTextureIds.offer(textureId);
+        Log.d(TAG, "Freed texture ID: " + textureId + " (pool size: " + freedTextureIds.size() + ")");
     }
 
     /**
@@ -184,6 +220,61 @@ public class TextureManager {
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
     }
 
+    /**
+     * Unload textures that are in the 'resourceIdsToUnload' set, but skip any that are
+     * in the 'resourceIdsToKeep' set. This is used during scene switches to release GPU
+     * memory for unused textures while keeping shared textures.
+     *
+     * @param resourceIdsToUnload set of resource IDs to potentially unload
+     * @param resourceIdsToKeep set of resource IDs to keep (not unload)
+     */
+    public void unloadUnusedTextures(java.util.Set<Integer> resourceIdsToUnload, java.util.Set<Integer> resourceIdsToKeep) {
+        java.util.List<Integer> texturesToDelete = new java.util.ArrayList<>();
+
+        for (Integer resourceId : resourceIdsToUnload) {
+            // Skip if this texture is needed by the next scene
+            if (resourceIdsToKeep.contains(resourceId)) {
+                Log.d(TAG, "Keeping texture for resourceId=" + resourceId + " (shared with next scene)");
+                continue;
+            }
+
+            // Mark this texture for deletion
+            if (textureCache.containsKey(resourceId)) {
+                int texId = textureCache.remove(resourceId);
+                texturesToDelete.add(texId);
+                Log.d(TAG, "Marked for deletion: resourceId=" + resourceId + " (texId=" + texId + ")");
+            }
+        }
+
+        // Single GL call to delete all textures at once
+        if (!texturesToDelete.isEmpty()) {
+            int[] textureIds = new int[texturesToDelete.size()];
+            for (int i = 0; i < texturesToDelete.size(); i++) {
+                textureIds[i] = texturesToDelete.get(i);
+            }
+            GLES20.glDeleteTextures(textureIds.length, textureIds, 0);
+
+            // Add freed IDs to the reuse pool
+            for (Integer freedId : texturesToDelete) {
+                freeTextureId(freedId);
+            }
+
+            Log.d(TAG, "Texture cleanup complete: unloaded " + texturesToDelete.size() + " textures in single GL call (pool size: " + freedTextureIds.size() + ")");
+        } else {
+            Log.d(TAG, "Texture cleanup complete: no textures to unload");
+        }
+    }
+
+    /**
+     * Get the current number of cached textures.
+     * Useful for monitoring GPU memory usage.
+     *
+     * @return number of textures currently in cache
+     */
+    public int getCachedTextureCount() {
+        return textureCache.size();
+    }
+
     public void destroyAll() {
         if (textureCache.isEmpty()) return;
         int[] ids = new int[textureCache.size()];
@@ -193,6 +284,10 @@ public class TextureManager {
         }
         GLES20.glDeleteTextures(ids.length, ids, 0);
         textureCache.clear();
+
+        // Clear the pool since GL context is being destroyed
+        freedTextureIds.clear();
+
         Log.d(TAG, "All textures deleted");
     }
 }
