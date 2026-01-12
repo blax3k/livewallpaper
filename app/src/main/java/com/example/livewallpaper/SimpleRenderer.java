@@ -80,7 +80,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         // Create shader program using helper
-        shaderProgram = new ShaderProgram(getVertexShaderCode(), getFragmentShaderCode());
+        shaderProgram = new ShaderProgram(ShaderProgram.getVertexShaderCode(), ShaderProgram.getFragmentShaderCode());
         shaderProgram.use();
 
         int prog = shaderProgram.getProgram();
@@ -154,34 +154,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Set scroll offset uniform (applied by all sprites with their own multiplier)
         GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
-        // Update gyro offset interpolation and set gyroscope offsets for device tilt movement
-        boolean gyroEnabled = MotionConfig.isGyroMotionEnabled();
-        if (gyroEnabled) {
-            float gyroOffsetX = gyroProcessor.updateAndGetCurrentOffsetX();
-            float gyroOffsetY = gyroProcessor.updateAndGetCurrentOffsetY();
-            GLES20.glUniform1f(handles.gyroOffsetXHandle, gyroOffsetX);
-            GLES20.glUniform1f(handles.gyroOffsetYHandle, gyroOffsetY);
-
-            // Apply sprite scaling for gyro motion if not already scaled
-            if (!spritesScaledForGyro) {
-                float scaleFactor = GyroSensorProcessor.calculateScaleFactor(
-                    gyroProcessor.getMotionOffsetLimit(),
-                    worldHeight
-                );
-                currentScene.applyGyroScaling(scaleFactor);
-                spritesScaledForGyro = true;
-            }
-        } else {
-            // When gyro is disabled, set offsets to zero
-            GLES20.glUniform1f(handles.gyroOffsetXHandle, 0f);
-            GLES20.glUniform1f(handles.gyroOffsetYHandle, 0f);
-
-            // Reset sprite scaling if previously scaled
-            if (spritesScaledForGyro) {
-                currentScene.resetGyroScaling();
-                spritesScaledForGyro = false;
-            }
-        }
+        // Update gyro offsets and apply uniforms; also manage sprite scaling for gyro motion
+        spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, worldHeight, spritesScaledForGyro);
 
         // Draw all sprites from current scene
         for (Sprite sprite : currentScene.getSprites()) {
@@ -315,38 +289,5 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         }
     }
 
-    private String getVertexShaderCode() {
-        return "uniform mat4 projectionMatrix;"
-                + "uniform float scrollOffset;"
-                + "uniform float gyroOffsetX;"
-                + "uniform float gyroOffsetY;"
-                + "uniform float alpha;"
-                + "attribute vec4 vPosition;"
-                + "attribute vec2 vTexCoord;"
-                + "attribute float parallaxMultiplier;"
-                + "varying vec2 texCoord;"
-                + "varying float fragAlpha;"
-
-                + "void main() {"
-                + "  vec4 position = vPosition;"
-                + "  position.x += scrollOffset * parallaxMultiplier + gyroOffsetX * parallaxMultiplier;"
-                + "  position.y += gyroOffsetY * parallaxMultiplier;"
-                + "  gl_Position = projectionMatrix * position;"
-                + "  texCoord = vTexCoord;"
-                + "  fragAlpha = alpha;"
-                + "}";
-    }
-
-    private String getFragmentShaderCode() {
-        return "precision mediump float;"
-                + "uniform sampler2D samplerTexture;"
-                + "varying vec2 texCoord;"
-                + "varying float fragAlpha;"
-                + "void main() {"
-                + "  vec4 texColor = texture2D(samplerTexture, texCoord);"
-                + "  texColor.a *= fragAlpha;"
-                + "  gl_FragColor = texColor;"
-                + "}";
-    }
 
 }

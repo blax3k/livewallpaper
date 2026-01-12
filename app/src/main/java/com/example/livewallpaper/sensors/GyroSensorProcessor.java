@@ -222,5 +222,45 @@ public class GyroSensorProcessor {
         }
         return out;
     }
+
+    /**
+     * Update gyro offsets and apply them as uniforms if gyro motion is enabled.
+     * Also handles sprite scaling for gyro motion to prevent visible edges.
+     *
+     * @param handles the shader handles for setting gyro uniforms
+     * @param scene the current scene to apply gyro scaling
+     * @param worldHeight the world-space height for scale factor calculation
+     * @param spritesScaledForGyro current scaling state (will be mutated)
+     * @return the updated spritesScaledForGyro state
+     */
+    public boolean updateAndApplyGyroUniforms(com.example.livewallpaper.gl.Handles handles,
+                                               com.example.livewallpaper.scene.Scene scene,
+                                               float worldHeight,
+                                               boolean spritesScaledForGyro) {
+        if (MotionConfig.isGyroMotionEnabled()) {
+            float gyroOffsetX = updateAndGetCurrentOffsetX();
+            float gyroOffsetY = updateAndGetCurrentOffsetY();
+            android.opengl.GLES20.glUniform1f(handles.gyroOffsetXHandle, gyroOffsetX);
+            android.opengl.GLES20.glUniform1f(handles.gyroOffsetYHandle, gyroOffsetY);
+
+            // Apply sprite scaling for gyro motion if not already scaled
+            if (!spritesScaledForGyro) {
+                float scaleFactor = calculateScaleFactor(motionOffsetLimit, worldHeight);
+                scene.applyGyroScaling(scaleFactor);
+                spritesScaledForGyro = true;
+            }
+        } else {
+            // When gyro is disabled, set offsets to zero
+            android.opengl.GLES20.glUniform1f(handles.gyroOffsetXHandle, 0f);
+            android.opengl.GLES20.glUniform1f(handles.gyroOffsetYHandle, 0f);
+
+            // Reset sprite scaling if previously scaled
+            if (spritesScaledForGyro) {
+                scene.resetGyroScaling();
+                spritesScaledForGyro = false;
+            }
+        }
+        return spritesScaledForGyro;
+    }
 }
 
