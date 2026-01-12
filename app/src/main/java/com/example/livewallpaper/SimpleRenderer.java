@@ -267,6 +267,11 @@ public class SimpleRenderer implements GLWallpaperRenderer {
             Scene newScene = sceneLoader.loadScene(nextSceneFile);
             Log.d(TAG, "Loaded new scene: " + newScene.getSceneName() + " (textures not yet initialized)");
 
+            // If the current scene is gyro-scaled, apply the same scaling to the new scene
+            if (spritesScaledForGyro && currentScene != null) {
+                gyroProcessor.applyGyroScalingToNewScene(newScene, worldHeight);
+            }
+
             // Start the transition with the transition manager
             transitionManager.startTransition(currentScene, newScene);
 

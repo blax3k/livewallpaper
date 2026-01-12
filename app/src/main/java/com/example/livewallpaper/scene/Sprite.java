@@ -35,9 +35,25 @@ public class Sprite {
     private float originalPositionX;
     private float originalPositionY;
 
+    // Track gyro scaling state
+    private boolean isGyroScaled = false;
+    private float currentGyroScaleFactor = 1.0f;
+
 
     /**
-     * Constructor with parallax multiplier and position.
+     * Constructor using a SpriteConfig object for cleaner initialization.
+     * This is the primary constructor; all other initialization paths delegate here.
+     *
+     * @param config the sprite configuration containing all initialization parameters
+     */
+    public Sprite(SpriteConfig config) {
+        this(config.textureResourceId, config.width, config.height,
+             config.parallaxMultiplier, config.positionX, config.positionY, 1.0f);
+    }
+
+    /**
+     * Constructor with parallax multiplier, position, and optional gyro scaling.
+     * Supports all initialization scenarios.
      *
      * @param textureResourceId the drawable resource ID for the texture
      * @param width the width in world units
@@ -45,8 +61,9 @@ public class Sprite {
      * @param parallaxMultiplier the parallax multiplier (1.0 = full scroll, 0.5 = half, etc.)
      * @param positionX the x position in world units
      * @param positionY the y position in world units
+     * @param gyroScaleFactor the gyro scale factor to apply (1.0 = no scaling, >1.0 = enlarged for gyro motion)
      */
-    public Sprite(int textureResourceId, float width, float height, float parallaxMultiplier, float positionX, float positionY) {
+    public Sprite(int textureResourceId, float width, float height, float parallaxMultiplier, float positionX, float positionY, float gyroScaleFactor) {
         this.textureResourceId = textureResourceId;
         this.width = width;
         this.height = height;
@@ -58,18 +75,13 @@ public class Sprite {
         this.originalPositionX = positionX;
         this.originalPositionY = positionY;
         initializeGeometry();
+        // Apply gyro scaling if provided
+        if (gyroScaleFactor > 1.0f) {
+            applyGyroScaling(gyroScaleFactor);
+        }
         // Texture loading is handled by TextureManager; caller should set textureId via setTextureId().
     }
 
-    /**
-     * Constructor using a SpriteConfig object for cleaner initialization.
-     *
-     * @param config the sprite configuration containing all initialization parameters
-     */
-    public Sprite(SpriteConfig config) {
-        this(config.textureResourceId, config.width, config.height,
-             config.parallaxMultiplier, config.positionX, config.positionY);
-    }
 
     /**
      * Initialize vertex and texture coordinate buffers with default geometry.
@@ -185,11 +197,39 @@ public class Sprite {
     }
 
     /**
+     * Internal method to apply gyro scaling during sprite initialization.
+     * Tracks the gyro scaling state so sprites know they're already scaled.
+     *
+     * @param scaleFactor the gyro scale factor (>1.0 to enlarge)
+     */
+    private void applyGyroScaling(float scaleFactor) {
+        this.isGyroScaled = true;
+        this.currentGyroScaleFactor = scaleFactor;
+        // Scale the sprite size
+        scaleFromOriginal(scaleFactor);
+        // Scale the position away from center (0, 0) to maintain relative spacing
+        float scaledX = originalPositionX * scaleFactor;
+        float scaledY = originalPositionY * scaleFactor;
+        this.positionX = scaledX;
+        this.positionY = scaledY;
+        updateVertexBuffer();
+    }
+
+    /**
+     * Check if this sprite is already scaled for gyro motion.
+     */
+    public boolean isGyroScaled() {
+        return isGyroScaled;
+    }
+
+    /**
      * Reset sprite size back to its original dimensions.
      */
     public void resetScale() {
         this.width = originalWidth;
         this.height = originalHeight;
+        this.isGyroScaled = false;
+        this.currentGyroScaleFactor = 1.0f;
         updateVertexBuffer();
     }
 

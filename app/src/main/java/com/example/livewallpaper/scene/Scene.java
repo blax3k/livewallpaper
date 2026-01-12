@@ -15,6 +15,8 @@ public class Scene {
     private final String sceneName;
     private final List<Sprite> sprites;
     private boolean isInitialized = false;
+    private float currentGyroScaleFactor = 1.0f;
+    private boolean isGyroScaled = false;
     public Scene(String sceneName) {
         this.sceneName = sceneName;
         this.sprites = new ArrayList<>();
@@ -40,6 +42,7 @@ public class Scene {
     /**
      * Initialize all sprites in this scene by loading their textures.
      * Should be called when the GL context is ready.
+     * Will apply stored gyro scaling if it was set.
      *
      * @param context the Android context for loading resources
      * @param textureManager the texture manager for loading textures
@@ -50,18 +53,63 @@ public class Scene {
             return;
         }
         Log.d(TAG, "Initializing scene '" + sceneName + "' with " + sprites.size() + " sprites");
-        // Resolve textures for each sprite through TextureManager
+
+        // Load textures and apply gyro scaling in a single pass
         for (Sprite sprite : sprites) {
-            int resourceId = sprite.getTextureResourceId();
-            int texId = textureManager.getTexture(context, resourceId);
-            sprite.setTextureId(texId);
-            Log.d(TAG, "Sprite textureResourceId=" + resourceId + " loaded with texId=" + texId);
-            if (texId == 0) {
-                Log.w(TAG, "WARNING: Texture ID is 0 for resourceId=" + resourceId + ". This sprite may not render.");
-            }
+            loadSpriteTexture(context, textureManager, sprite);
+            applyGyroScalingToSprite(sprite);
         }
+
         isInitialized = true;
         Log.d(TAG, "Scene '" + sceneName + "' initialized successfully");
+    }
+
+    /**
+     * Load the texture for a sprite through the TextureManager.
+     *
+     * @param context the Android context for loading resources
+     * @param textureManager the texture manager for loading textures
+     * @param sprite the sprite to load texture for
+     */
+    private void loadSpriteTexture(Context context, TextureManager textureManager, Sprite sprite) {
+        int resourceId = sprite.getTextureResourceId();
+        int texId = textureManager.getTexture(context, resourceId);
+        sprite.setTextureId(texId);
+        Log.d(TAG, "Sprite textureResourceId=" + resourceId + " loaded with texId=" + texId);
+        if (texId == 0) {
+            Log.w(TAG, "WARNING: Texture ID is 0 for resourceId=" + resourceId + ". This sprite may not render.");
+        }
+    }
+
+    /**
+     * Apply stored gyro scaling to a sprite if gyro scaling is enabled.
+     *
+     * @param sprite the sprite to apply gyro scaling to
+     */
+    private void applyGyroScalingToSprite(Sprite sprite) {
+        if (isGyroScaled && currentGyroScaleFactor > 1.0f && !sprite.isGyroScaled()) {
+            // Scale the sprite size
+            sprite.scaleFromOriginal(currentGyroScaleFactor);
+            // Scale the position away from center (0, 0) to maintain relative spacing
+            float currentX = sprite.getPositionX();
+            float currentY = sprite.getPositionY();
+            sprite.setPosition(currentX * currentGyroScaleFactor, currentY * currentGyroScaleFactor);
+            Log.d(TAG, "Applied gyro scaling to sprite. Scale factor: " + currentGyroScaleFactor);
+        }
+    }
+
+    /**
+     * Set the gyro scaling state that will be applied during initialization.
+     * Call this before initializing the scene to ensure sprites are created with proper scaling.
+     *
+     * @param scaleFactor the gyro scale factor to apply (1.0 = no scaling, >1.0 = enlarged)
+     */
+    public void setGyroScalingForInitialization(float scaleFactor) {
+        if (scaleFactor > 1.0f) {
+            this.currentGyroScaleFactor = scaleFactor;
+            this.isGyroScaled = true;
+            Log.d(TAG, "Scene '" + sceneName + "' marked to apply gyro scaling on initialization. Factor: " + scaleFactor);
+        }
     }
     /**
      * Check if this scene has been initialized.
@@ -95,6 +143,8 @@ public class Scene {
             // Reset position to original
             sprite.resetPosition();
         }
+        this.isGyroScaled = false;
+        this.currentGyroScaleFactor = 1.0f;
         Log.d(TAG, "Scene '" + sceneName + "' reset to original size and position");
     }
     /**
@@ -107,12 +157,6 @@ public class Scene {
         sprites.clear();
         isInitialized = false;
         Log.d(TAG, "Scene '" + sceneName + "' destroyed");
-    }
-    /**
-     * Get the number of sprites in this scene.
-     */
-    public int getSpriteCount() {
-        return sprites.size();
     }
 
     /**

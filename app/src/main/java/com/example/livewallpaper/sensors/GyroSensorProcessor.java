@@ -57,10 +57,6 @@ public class GyroSensorProcessor {
         this.motionOffsetLimit = limit;
     }
 
-    public float getMotionOffsetLimit() {
-        return motionOffsetLimit;
-    }
-
     public void setGyroSensitivity(float sensitivity) {
         this.gyroSensitivity = sensitivity;
     }
@@ -261,6 +257,20 @@ public class GyroSensorProcessor {
             }
         }
         return spritesScaledForGyro;
+    }
+
+    /**
+     * Apply current gyro scaling state to a new scene during transitions.
+     * If the processor has an active scale factor, it will be applied to the scene
+     * for initialization.
+     *
+     * @param newScene the scene to apply gyro scaling to
+     * @param worldHeight the world-space height for scale factor calculation
+     */
+    public void applyGyroScalingToNewScene(com.example.livewallpaper.scene.Scene newScene, float worldHeight) {
+            float scaleFactor = calculateScaleFactor(motionOffsetLimit, worldHeight);
+            newScene.setGyroScalingForInitialization(scaleFactor);
+            android.util.Log.d("GyroSensorProcessor", "New scene will be initialized with gyro scaling factor: " + scaleFactor);
     }
 }
 
