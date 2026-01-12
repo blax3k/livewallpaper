@@ -286,10 +286,12 @@ public class SimpleRenderer implements GLWallpaperRenderer {
                 + "uniform float scrollOffset;"
                 + "uniform float gyroOffsetX;"
                 + "uniform float gyroOffsetY;"
+                + "uniform float alpha;"
                 + "attribute vec4 vPosition;"
                 + "attribute vec2 vTexCoord;"
                 + "attribute float parallaxMultiplier;"
                 + "varying vec2 texCoord;"
+                + "varying float fragAlpha;"
 
                 + "void main() {"
                 + "  vec4 position = vPosition;"
@@ -297,6 +299,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
                 + "  position.y += gyroOffsetY * parallaxMultiplier;"
                 + "  gl_Position = projectionMatrix * position;"
                 + "  texCoord = vTexCoord;"
+                + "  fragAlpha = alpha;"
                 + "}";
     }
 
@@ -304,8 +307,10 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         return "precision mediump float;"
                 + "uniform sampler2D samplerTexture;"
                 + "varying vec2 texCoord;"
+                + "varying float fragAlpha;"
                 + "void main() {"
                 + "  vec4 texColor = texture2D(samplerTexture, texCoord);"
+                + "  texColor.a *= fragAlpha;"
                 + "  gl_FragColor = texColor;"
                 + "}";
     }

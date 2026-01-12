@@ -13,12 +13,14 @@ public class SpriteRenderer {
     private final int texCoordHandle;
     private final int samplerHandle;
     private final int parallaxMultiplierHandle;
+    private final int alphaHandle;
 
     public SpriteRenderer(Handles handles) {
         this.positionHandle = handles.positionHandle;
         this.texCoordHandle = handles.texCoordHandle;
         this.samplerHandle = handles.samplerHandle;
         this.parallaxMultiplierHandle = handles.parallaxMultiplierHandle;
+        this.alphaHandle = handles.alphaHandle;
     }
 
     public void drawSprite(Sprite sprite) {
@@ -32,6 +34,9 @@ public class SpriteRenderer {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
         GLES20.glUniform1i(samplerHandle, 0);
+
+        // Set alpha uniform
+        GLES20.glUniform1f(alphaHandle, sprite.getAlpha());
 
         // Enable vertex attribute array
         GLES20.glEnableVertexAttribArray(positionHandle);

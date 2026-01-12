@@ -28,6 +28,7 @@ public class Sprite {
     private float width;
     private float height;
     private float parallaxMultiplier = 1.0f;
+    private float alpha = 1.0f;
 
     // Store original dimensions and positions for scaling
     private final float originalWidth;
@@ -321,6 +322,23 @@ public class Sprite {
     @SuppressWarnings("unused")
     public float getParallaxMultiplier() {
         return parallaxMultiplier;
+    }
+
+    /**
+     * Set the alpha transparency value for this sprite.
+     * Value should be between 0.0 (fully transparent) and 1.0 (fully opaque).
+     *
+     * @param alpha the alpha transparency value
+     */
+    public void setAlpha(float alpha) {
+        this.alpha = Math.max(0.0f, Math.min(1.0f, alpha));
+    }
+
+    /**
+     * Get the alpha transparency value for this sprite.
+     */
+    public float getAlpha() {
+        return alpha;
     }
 
     /**
