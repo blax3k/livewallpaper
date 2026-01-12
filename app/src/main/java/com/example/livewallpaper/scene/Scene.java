@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.scene;
 import android.content.Context;
 import android.util.Log;
 import com.example.livewallpaper.gl.TextureManager;

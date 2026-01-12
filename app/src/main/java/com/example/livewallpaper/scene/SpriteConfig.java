@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.scene;
 
 /**
  * Configuration class for creating sprites with all necessary parameters.
@@ -30,40 +30,6 @@ public class SpriteConfig {
         this.parallaxMultiplier = parallaxMultiplier;
         this.positionX = positionX;
         this.positionY = positionY;
-    }
-
-    /**
-     * Builder pattern for more flexible sprite configuration.
-     */
-    public static class Builder {
-        private final int textureResourceId;
-        private float width;
-        private float height;
-        private float parallaxMultiplier = 1.0f;
-        private float positionX = 0f;
-        private float positionY = 0f;
-
-        public Builder(int textureResourceId, float width, float height) {
-            this.textureResourceId = textureResourceId;
-            this.width = width;
-            this.height = height;
-        }
-
-        public Builder parallaxMultiplier(float multiplier) {
-            this.parallaxMultiplier = multiplier;
-            return this;
-        }
-
-        public Builder position(float x, float y) {
-            this.positionX = x;
-            this.positionY = y;
-            return this;
-        }
-
-        public SpriteConfig build() {
-            return new SpriteConfig(textureResourceId, width, height,
-                                   parallaxMultiplier, positionX, positionY);
-        }
     }
 }
 

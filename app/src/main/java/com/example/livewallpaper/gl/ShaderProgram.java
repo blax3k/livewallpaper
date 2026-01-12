@@ -65,16 +65,6 @@ public class ShaderProgram {
         }
     }
 
-    public int getAttribLocation(String name) {
-        if (program == 0) return -1;
-        return GLES20.glGetAttribLocation(program, name);
-    }
-
-    public int getUniformLocation(String name) {
-        if (program == 0) return -1;
-        return GLES20.glGetUniformLocation(program, name);
-    }
-
     public int getProgram() {
         return program;
     }

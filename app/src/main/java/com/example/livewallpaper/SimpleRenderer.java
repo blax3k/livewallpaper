@@ -9,8 +9,11 @@ import com.example.livewallpaper.gl.ShaderProgram;
 import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.Handles;
+import com.example.livewallpaper.scene.Scene;
+import com.example.livewallpaper.scene.SceneLoader;
+import com.example.livewallpaper.scene.SceneTransitionManager;
+import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
-import com.example.livewallpaper.sensors.GyroScaleCalculator;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
 
@@ -161,7 +164,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
             // Apply sprite scaling for gyro motion if not already scaled
             if (!spritesScaledForGyro) {
-                float scaleFactor = GyroScaleCalculator.calculateScaleFactor(
+                float scaleFactor = GyroSensorProcessor.calculateScaleFactor(
                     gyroProcessor.getMotionOffsetLimit(),
                     worldHeight
                 );

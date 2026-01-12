@@ -265,15 +265,6 @@ public class TextureManager {
         }
     }
 
-    /**
-     * Get the current number of cached textures.
-     * Useful for monitoring GPU memory usage.
-     *
-     * @return number of textures currently in cache
-     */
-    public int getCachedTextureCount() {
-        return textureCache.size();
-    }
 
     public void destroyAll() {
         if (textureCache.isEmpty()) return;

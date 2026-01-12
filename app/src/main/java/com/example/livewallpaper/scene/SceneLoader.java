@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.scene;
 
 import android.content.Context;
 import android.util.Log;
@@ -110,23 +110,6 @@ public class SceneLoader {
             "drawable",
             context.getPackageName()
         );
-    }
-
-    /**
-     * Check if a scene file exists in the assets folder.
-     *
-     * @param fileName the name of the JSON file
-     * @return true if the file exists, false otherwise
-     */
-    public boolean sceneExists(String fileName) {
-        try {
-            String filePath = SCENES_FOLDER + "/" + fileName;
-            InputStream inputStream = context.getAssets().open(filePath);
-            inputStream.close();
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
     }
 }
 

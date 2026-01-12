@@ -2,7 +2,7 @@ package com.example.livewallpaper.gl;
 
 import android.opengl.GLES20;
 import android.util.Log;
-import com.example.livewallpaper.Sprite;
+import com.example.livewallpaper.scene.Sprite;
 
 /**
  * Responsible for issuing draw calls for sprites using a compiled shader program.

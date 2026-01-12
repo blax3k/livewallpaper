@@ -1,6 +1,5 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.scene;
 
-import android.content.Context;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -23,28 +22,19 @@ public class Sprite {
     private final int textureResourceId;
 
     // Sprite properties for positioning and sizing
-    private float positionX = 0f;
-    private float positionY = 0f;
+    private float positionX;
+    private float positionY;
     private float width;
     private float height;
-    private float parallaxMultiplier = 1.0f;
+    private float parallaxMultiplier;
     private float alpha = 1.0f;
 
     // Store original dimensions and positions for scaling
     private final float originalWidth;
     private final float originalHeight;
-    private float originalPositionX = 0f;
-    private float originalPositionY = 0f;
+    private float originalPositionX;
+    private float originalPositionY;
 
-    public Sprite(int textureResourceId, float width, float height) {
-        this.textureResourceId = textureResourceId;
-        this.width = width;
-        this.height = height;
-        this.originalWidth = width;
-        this.originalHeight = height;
-        initializeGeometry();
-        // Texture loading is handled by TextureManager; caller should set textureId via setTextureId().
-    }
 
     /**
      * Constructor with parallax multiplier and position.
@@ -180,83 +170,6 @@ public class Sprite {
         updateVertexBuffer();
     }
 
-    /**
-     * Set the size of the sprite.
-     *
-     * @param width  the new width in world units
-     * @param height the new height in world units
-     */
-    @SuppressWarnings("unused")
-    public void setSize(float width, float height) {
-        this.width = width;
-        this.height = height;
-        updateVertexBuffer();
-    }
-
-    /**
-     * Set texture coordinates (for texture atlasing or partial texture use).
-     *
-     * @param texCoords array of 8 floats representing 4 texture coordinates (u, v pairs)
-     */
-    @SuppressWarnings("unused")
-    public void setTextureCoordinates(float[] texCoords) {
-        if (texCoords.length != 8) {
-            Log.w(TAG, "Texture coordinates must be an array of 8 floats");
-            return;
-        }
-
-        texCoordBuffer.position(0);
-        texCoordBuffer.put(texCoords);
-        texCoordBuffer.position(0);
-    }
-
-    /**
-     * Get the current X position.
-     */
-    @SuppressWarnings("unused")
-    public float getPositionX() {
-        return positionX;
-    }
-
-    /**
-     * Get the current Y position.
-     */
-    @SuppressWarnings("unused")
-    public float getPositionY() {
-        return positionY;
-    }
-
-    /**
-     * Get the current width.
-     */
-    @SuppressWarnings("unused")
-    public float getWidth() {
-        return width;
-    }
-
-    /**
-     * Get the current height.
-     */
-    @SuppressWarnings("unused")
-    public float getHeight() {
-        return height;
-    }
-
-    /**
-     * Get the original width before any scaling.
-     */
-    @SuppressWarnings("unused")
-    public float getOriginalWidth() {
-        return originalWidth;
-    }
-
-    /**
-     * Get the original height before any scaling.
-     */
-    @SuppressWarnings("unused")
-    public float getOriginalHeight() {
-        return originalHeight;
-    }
 
     /**
      * Scale this sprite by a factor relative to its original dimensions.
@@ -281,6 +194,20 @@ public class Sprite {
     }
 
     /**
+     * Get the X position of the sprite.
+     */
+    public float getPositionX() {
+        return positionX;
+    }
+
+    /**
+     * Get the Y position of the sprite.
+     */
+    public float getPositionY() {
+        return positionY;
+    }
+
+    /**
      * Get the texture resource id (original drawable id).
      */
     public int getTextureResourceId() {
@@ -301,28 +228,6 @@ public class Sprite {
         return textureId;
     }
 
-    /**
-     * Set the parallax multiplier for this sprite.
-     * Controls how much this sprite responds to scroll offset (1.0 = full, 0.5 = half, etc.)
-     *
-     * @param multiplier the parallax multiplier value
-     */
-    public void setParallaxMultiplier(float multiplier) {
-        this.parallaxMultiplier = multiplier;
-        // Update all values in the buffer with the new multiplier
-        float[] parallaxMultipliers = {multiplier, multiplier, multiplier, multiplier};
-        parallaxMultiplierBuffer.position(0);
-        parallaxMultiplierBuffer.put(parallaxMultipliers);
-        parallaxMultiplierBuffer.position(0);
-    }
-
-    /**
-     * Get the parallax multiplier for this sprite.
-     */
-    @SuppressWarnings("unused")
-    public float getParallaxMultiplier() {
-        return parallaxMultiplier;
-    }
 
     /**
      * Set the alpha transparency value for this sprite.

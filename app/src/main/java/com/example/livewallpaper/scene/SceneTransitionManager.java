@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.scene;
 
 import android.util.Log;
 
@@ -37,12 +37,6 @@ public class SceneTransitionManager {
         return state != TransitionState.IDLE;
     }
 
-    /**
-     * Get the current state of the transition.
-     */
-    private TransitionState getState() {
-        return state;
-    }
 
     /**
      * Start a new scene transition. Call this when you want to switch scenes.
@@ -147,25 +141,6 @@ public class SceneTransitionManager {
      */
     public Scene getNewScene() {
         return newScene;
-    }
-
-    /**
-     * Cancel the current transition and reset to the provided scene.
-     * Useful for cleanup on errors.
-     *
-     * @param fallbackScene the scene to return to
-     */
-    public void cancelTransition(Scene fallbackScene) {
-        if (oldScene != null) {
-            setSceneAlpha(oldScene, 1.0f);
-        }
-        if (newScene != null) {
-            setSceneAlpha(newScene, 1.0f);
-        }
-        this.oldScene = null;
-        this.newScene = null;
-        this.state = TransitionState.IDLE;
-        Log.d(TAG, "Transition cancelled");
     }
 }
 

@@ -48,24 +48,6 @@ public class ScrollOffsetProcessor {
     }
 
     /**
-     * Explicitly set both current and target offsets to the same value.
-     * Useful for initialization or when you want to snap to a position.
-     */
-    public void setCurrentAndTargetOffset(float offsetX) {
-        float offset = calculateScrollOffset(offsetX);
-        this.currentScrollOffset = offset;
-        this.targetScrollOffset = offset;
-    }
-
-    /**
-     * Set smoothing duration in seconds. If set to 0 or negative, scrolling snaps instantly.
-     */
-    public void setScrollSmoothingDuration(float seconds) {
-        if (seconds < 0f) seconds = 0f;
-        this.scrollSmoothingDuration = seconds;
-    }
-
-    /**
      * Optional: adjust smoothing via a legacy fraction-based API.
      * Range should be (0,1]. Higher smoothing => faster => shorter duration.
      * Deprecated: prefer setScrollSmoothingDuration(float seconds).
@@ -105,21 +87,6 @@ public class ScrollOffsetProcessor {
      */
     private float calculateScrollOffset(float offsetX) {
         return (0.5f - offsetX) * SCROLL_SCALE;
-    }
-
-    /**
-     * Get the current scroll offset without updating it.
-     * Useful for debugging or if you need to read the value without advancing the frame.
-     */
-    public float getCurrentOffset() {
-        return currentScrollOffset;
-    }
-
-    /**
-     * Get the target scroll offset.
-     */
-    public float getTargetOffset() {
-        return targetScrollOffset;
     }
 
     /**
