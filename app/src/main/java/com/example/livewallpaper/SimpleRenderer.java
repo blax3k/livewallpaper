@@ -57,17 +57,20 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         this.context = context;
         this.sceneLoader = new SceneLoader(context);
 
-        // Try to load scene from JSON, fall back to empty scene if loading fails
+        // Initialize the scene manager first to determine the initial scene
+        this.sceneManager = new SceneManager(context, sceneLoader, textureManager);
+
+        // Try to load the initial scene from SceneManager, fall back to empty scene if loading fails
         try {
-            this.currentScene = sceneLoader.loadScene("girl_back.json");
+            String initialSceneFile = sceneManager.getInitialSceneFile();
+            this.currentScene = sceneLoader.loadScene(initialSceneFile);
             Log.d(TAG, "Loaded scene from JSON: " + currentScene.getSceneName());
         } catch (Exception e) {
             Log.e(TAG, "Failed to load scene from JSON, using empty scene", e);
             this.currentScene = new Scene("DefaultScene");
         }
 
-        // Initialize the scene manager for handling scene transitions
-        this.sceneManager = new SceneManager(context, sceneLoader, textureManager);
+        // Initialize the scene manager with the loaded scene
         this.sceneManager.initialize(currentScene);
     }
 

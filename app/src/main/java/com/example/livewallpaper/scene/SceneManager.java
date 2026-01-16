@@ -16,9 +16,11 @@ public class SceneManager {
 
     // Array of available scenes to cycle through
     private static final String[] SCENE_FILES = {
+            "girl_eating.json",
+            "girl_sleeping.json",
             "girl_back.json",
             "girl_leaning.json",
-            "girl_smoking.json"  // Third scene
+            "girl_smoking.json",
     };
 
     private Context context;
@@ -47,6 +49,14 @@ public class SceneManager {
         this.sceneLoader = sceneLoader;
         this.textureManager = textureManager;
         this.transitionManager = new SceneTransitionManager();
+    }
+
+    /**
+     * Get the default/initial scene file to load
+     * @return the filename of the first scene to display
+     */
+    public String getInitialSceneFile() {
+        return SCENE_FILES[0];
     }
 
     /**
