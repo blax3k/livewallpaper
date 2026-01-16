@@ -1,5 +1,5 @@
 {
-  "sceneName": "girlSmoking",
+  "sceneName": "girlEating",
   "sprites": [
     {
       "textureResource": "background",
@@ -18,11 +18,11 @@
       "positionY": 0.0
     },
     {
-      "textureResource": "girlsmoking",
-      "width": 2.3,
-      "height": 5.5,
-      "parallaxMultiplier": 0.95,
-      "positionX": 0.0,
+      "textureResource": "girleating",
+      "width": 2.2,
+      "height": 3.5,
+      "parallaxMultiplier": 1.0,
+      "positionX": 2.0,
       "positionY": 2.5
     },
     {

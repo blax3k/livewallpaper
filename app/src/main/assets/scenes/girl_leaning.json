@@ -27,7 +27,7 @@
     },
     {
       "textureResource": "bed",
-      "width": 14.0,
+      "width": 15.0,
       "height": 5.5,
       "parallaxMultiplier": 1.3,
       "positionX": 2.0,
