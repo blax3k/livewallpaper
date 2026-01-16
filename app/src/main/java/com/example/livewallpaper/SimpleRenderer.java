@@ -206,38 +206,41 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     @Override
     public void onRendererResume(long resumeTimeNs) {
-        // Delegate to the interpolator to invalidate its frame timer
+        // Resume gyro tracking from current position
+        gyroProcessor.resume();
         scrollOffsetProcessor.onRendererResume();
     }
 
     @Override
     public void onRendererPause() {
-        // Delegate to the interpolator to invalidate its frame timer
+        // Pause gyro tracking (stop processing sensor data)
+        gyroProcessor.pause();
         scrollOffsetProcessor.onRendererPause();
     }
 
     @Override
     public void onRendererSuspend() {
-        // Prepare for suspension - reset frame timers to avoid jumps when resuming
+        // Pause gyro tracking during suspension
+        gyroProcessor.pause();
         scrollOffsetProcessor.onRendererPause();
-        gyroProcessor.reset();
-        Log.d(TAG, "Renderer suspended - frame timers reset");
+        Log.d(TAG, "Renderer suspended - gyro tracking paused");
     }
 
     @Override
     public void onRendererSuspendResume() {
-        // Resume after suspension - reset frame timers for smooth animation
+        // Resume gyro tracking after suspension
+        gyroProcessor.resume();
         scrollOffsetProcessor.onRendererResume();
-        Log.d(TAG, "Renderer resumed after suspension");
+        Log.d(TAG, "Renderer resumed after suspension - gyro tracking resumed");
     }
 
     @Override
     public void onGyroscopeChanged(float rotationX, float rotationY, float rotationZ) {
-        // Only process gyroscope data if gyro motion is enabled
-        if (MotionConfig.isGyroMotionEnabled()) {
+        // Only process gyroscope data if gyro motion is enabled and not paused
+        if (MotionConfig.isGyroMotionEnabled() && !gyroProcessor.isPaused()) {
             // Forward raw sensor data to the processor which handles filtering, integration and limits
             gyroProcessor.onGyroscopeChanged(rotationX, rotationY, rotationZ);
-        } else {
+        } else if (!MotionConfig.isGyroMotionEnabled()) {
             // When gyro is disabled, reset the processor to avoid stale offsets
             gyroProcessor.reset();
         }

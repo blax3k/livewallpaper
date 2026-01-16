@@ -34,6 +34,9 @@ public class GyroSensorProcessor {
     private long lastFrameTimeNs = -1L;
     private float lastFrameDt = 1f / 60f; // Cache the delta time for this frame
 
+    // Track whether gyro tracking is paused (e.g., during renderer pause/suspend)
+    private boolean isPaused = false;
+
     public GyroSensorProcessor() {
     }
 
@@ -73,8 +76,14 @@ public class GyroSensorProcessor {
     /**
      * Call this with raw rotation rates from the gyroscope (radians/sec) for each axis.
      * This updates the target offsets based on cumulative integration.
+     * Does nothing if gyro tracking is paused.
      */
     public void onGyroscopeChanged(float rotationX, float rotationY, float rotationZ) {
+        // Skip processing if paused (e.g., during renderer pause/suspend)
+        if (isPaused) {
+            return;
+        }
+
         try {
             long now = System.nanoTime();
             float deltaTime = calculateDeltaTime(now);
@@ -192,6 +201,33 @@ public class GyroSensorProcessor {
 
     public float getOffsetY() {
         return currentOffsetY;
+    }
+
+    /**
+     * Pause gyro tracking. Sensor data will still arrive but will be ignored until resumed.
+     * This prevents gyro motion jumps when the renderer pauses and resumes.
+     */
+    public void pause() {
+        isPaused = true;
+        Log.d(TAG, "Gyro tracking paused");
+    }
+
+    /**
+     * Resume gyro tracking from the current position. Accumulated offsets are preserved.
+     */
+    public void resume() {
+        isPaused = false;
+        lastUpdateTimeNs = 0L; // Reset timing so next sensor event doesn't create a large delta
+        Log.d(TAG, "Gyro tracking resumed");
+    }
+
+    /**
+     * Check if gyro tracking is currently paused.
+     *
+     * @return true if paused, false if actively tracking
+     */
+    public boolean isPaused() {
+        return isPaused;
     }
 
     /**
