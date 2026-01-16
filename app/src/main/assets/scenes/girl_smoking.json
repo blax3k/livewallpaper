@@ -5,7 +5,7 @@
       "textureResource": "background",
       "width": 10.0,
       "height": 10.0,
-      "parallaxMultiplier": 0.8,
+      "parallaxMultiplier": 0.5,
       "positionX": 0.0,
       "positionY": 0.0
     },
@@ -13,7 +13,7 @@
       "textureResource": "room",
       "width": 10.0,
       "height": 10.0,
-      "parallaxMultiplier": 1.0,
+      "parallaxMultiplier": 0.8,
       "positionX": 0.0,
       "positionY": 0.0
     },
@@ -21,7 +21,7 @@
       "textureResource": "girlsmoking",
       "width": 2.3,
       "height": 5.5,
-      "parallaxMultiplier": 1.1,
+      "parallaxMultiplier": 0.95,
       "positionX": 0.0,
       "positionY": 2.5
     },

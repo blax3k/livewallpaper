@@ -11,7 +11,7 @@ import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.scene.Scene;
 import com.example.livewallpaper.scene.SceneLoader;
-import com.example.livewallpaper.scene.SceneTransitionManager;
+import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
 import com.example.livewallpaper.sensors.MotionConfig;
@@ -45,16 +45,12 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     // Track whether sprites are currently scaled for gyro motion
     private boolean spritesScaledForGyro = false;
 
-    // Track the currently loaded scene file for toggling between scenes
-    private String currentSceneFile = "default_scene.json";
-    private static final String SCENE_ONE = "default_scene.json";
-    private static final String SCENE_TWO = "simple_scene.json";
+    // Manages scene cycling and switching logic
+    private SceneManager sceneManager;
 
     // Flag to request scene switch on GL thread (set from UI thread, consumed on GL thread)
     private volatile boolean sceneSwitchRequested = false;
 
-    // Manages smooth scene transitions with texture preloading and crossfade
-    private SceneTransitionManager transitionManager = new SceneTransitionManager();
 
 
     public SimpleRenderer(Context context) {
@@ -63,12 +59,16 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
         // Try to load scene from JSON, fall back to empty scene if loading fails
         try {
-            this.currentScene = sceneLoader.loadScene(currentSceneFile);
+            this.currentScene = sceneLoader.loadScene("girl_back.json");
             Log.d(TAG, "Loaded scene from JSON: " + currentScene.getSceneName());
         } catch (Exception e) {
             Log.e(TAG, "Failed to load scene from JSON, using empty scene", e);
             this.currentScene = new Scene("DefaultScene");
         }
+
+        // Initialize the scene manager for handling scene transitions
+        this.sceneManager = new SceneManager(context, sceneLoader, textureManager);
+        this.sceneManager.initialize(currentScene);
     }
 
     @Override
@@ -89,6 +89,17 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Create texture manager and sprite renderer
         textureManager = new TextureManager();
         spriteRenderer = new SpriteRenderer(handles);
+
+        // Initialize scene manager with texture manager for scene transitions
+        sceneManager = new SceneManager(context, sceneLoader, textureManager);
+        sceneManager.initialize(currentScene);
+
+        // Set up gyro scaling callback
+        sceneManager.setGyroScalingCallback((newScene, worldHeight) -> {
+            if (spritesScaledForGyro) {
+                gyroProcessor.applyGyroScalingToNewScene(newScene, worldHeight);
+            }
+        });
 
         // Initialize the scene and load textures
         currentScene.initialize(context, textureManager);
@@ -118,31 +129,13 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Check if scene switch was requested (from UI thread) and perform it here on GL thread
         if (sceneSwitchRequested) {
             sceneSwitchRequested = false;
-            startSceneTransition();
+            sceneManager.cycleToNextScene(currentScene, worldHeight);
         }
 
-        // Update scene transition (handles texture preload and crossfade)
-        if (transitionManager.isTransitioning()) {
-            Scene nextScene = transitionManager.updateTransition(currentScene);
-
-            // Check if transition just completed
-            if (!transitionManager.isTransitioning() && nextScene != currentScene) {
-                // Transition is complete, switch to the new scene
-                java.util.Set<Integer> oldSceneTextureIds = currentScene.getUsedTextureResourceIds();
-                currentScene = nextScene;
-
-                // Clean up textures from old scene
-                java.util.Set<Integer> newSceneTextureIds = currentScene.getUsedTextureResourceIds();
-                textureManager.unloadUnusedTextures(oldSceneTextureIds, newSceneTextureIds);
-                Log.d(TAG, "Scene switched successfully to: " + currentScene.getSceneName());
-            } else if (transitionManager.isTransitioning()) {
-                // Still transitioning, update but don't switch yet
-                currentScene = nextScene;
-            }
-        }
+        // Update scene transition (handles texture preload, crossfade, and scene switching)
+        currentScene = sceneManager.updateTransition();
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-
         shaderProgram.use();
 
         // Set projection matrix
@@ -162,20 +155,9 @@ public class SimpleRenderer implements GLWallpaperRenderer {
             spriteRenderer.drawSprite(sprite);
         }
 
-        // If transitioning, render both old and new scene sprites with their respective alpha values
-        if (transitionManager.isTransitioning()) {
-            if (transitionManager.getOldScene() != null) {
-                Scene oldScene = transitionManager.getOldScene();
-                for (Sprite sprite : oldScene.getSprites()) {
-                    spriteRenderer.drawSprite(sprite);
-                }
-            }
-            if (transitionManager.getNewScene() != null) {
-                Scene newScene = transitionManager.getNewScene();
-                for (Sprite sprite : newScene.getSprites()) {
-                    spriteRenderer.drawSprite(sprite);
-                }
-            }
+        // Draw transition overlay sprites (old and new scene sprites during crossfade)
+        for (Sprite sprite : sceneManager.getTransitionSprites()) {
+            spriteRenderer.drawSprite(sprite);
         }
     }
 
@@ -251,50 +233,6 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         Log.d(TAG, "Double tap received at screen coordinates (" + x + ", " + y + ")");
         // Request scene switch - will be performed on GL thread during next onDrawFrame
         sceneSwitchRequested = true;
-    }
-
-    /**
-     * Start a smooth scene transition. Creates the new scene with uninitialized textures,
-     * then lets the transition manager handle preloading and crossfading.
-     * Must be called on the GL thread.
-     */
-    private void startSceneTransition() {
-        // Update currentSceneFile first so next double-tap loads the correct scene
-        String nextSceneFile = currentSceneFile.equals(SCENE_ONE) ? SCENE_TWO : SCENE_ONE;
-        currentSceneFile = nextSceneFile;
-
-        Log.d(TAG, "Starting scene transition: " + (currentSceneFile.equals(SCENE_ONE) ? SCENE_TWO : SCENE_ONE) + " -> " + nextSceneFile);
-
-        try {
-            // Load the next scene WITHOUT initializing textures yet
-            Scene newScene = sceneLoader.loadScene(nextSceneFile);
-            Log.d(TAG, "Loaded new scene: " + newScene.getSceneName() + " (textures not yet initialized)");
-
-            // If the current scene is gyro-scaled, apply the same scaling to the new scene
-            if (spritesScaledForGyro && currentScene != null) {
-                gyroProcessor.applyGyroScalingToNewScene(newScene, worldHeight);
-            }
-
-            // Start the transition with the transition manager
-            transitionManager.startTransition(currentScene, newScene);
-
-            // Preload textures for the new scene on the GL thread
-            // This happens while the old scene continues to render
-            if (textureManager != null) {
-                newScene.initialize(context, textureManager);
-                Log.d(TAG, "Textures initialized for new scene: " + newScene.getSceneName());
-
-                // Set all sprites in the new scene to alpha=0 so they start invisible
-                // This prevents the glitchy flash of the new scene at full opacity
-                // The transition manager will fade them in over the FADE_DURATION_MS period
-                for (Sprite sprite : newScene.getSprites()) {
-                    sprite.setAlpha(0.0f);
-                }
-            }
-
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to load new scene for transition", e);
-        }
     }
 
 
