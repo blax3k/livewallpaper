@@ -81,22 +81,6 @@ public class SceneManager {
         this.gyroCallback = callback;
     }
 
-    /**
-     * Update the current scene reference (called externally when scene is switched)
-     * Also updates the currentSceneIndex to match the new scene.
-     */
-    public void setCurrentScene(Scene scene) {
-        this.currentScene = scene;
-        // Update the index to match the new scene so future transitions are correct
-        String sceneName = scene.getSceneName();
-        for (int i = 0; i < SCENE_FILES.length; i++) {
-            if (SCENE_FILES[i].equals(sceneName) || sceneName.contains(SCENE_FILES[i])) {
-                currentSceneIndex = i;
-                Log.d(TAG, "Updated currentSceneIndex to " + i + " for scene: " + sceneName);
-                break;
-            }
-        }
-    }
 
     /**
      * Cycle to the next scene in the sequence.
