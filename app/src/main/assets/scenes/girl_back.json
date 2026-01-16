@@ -1,5 +1,5 @@
 {
-  "sceneName": "SimpleScene",
+  "sceneName": "girlBack",
   "sprites": [
     {
       "textureResource": "background",
@@ -18,10 +18,10 @@
       "positionY": 0.0
     },
     {
-      "textureResource": "girlleaning",
-      "width": 3.3,
-      "height": 5.0,
-      "parallaxMultiplier": 1.0,
+      "textureResource": "girlback",
+      "width": 4.0,
+      "height": 6.0,
+      "parallaxMultiplier": 1.2,
       "positionX": 0.0,
       "positionY": 2.5
     },

@@ -1,5 +1,5 @@
 {
-  "sceneName": "DefaultScene",
+  "sceneName": "girlSmoking",
   "sprites": [
     {
       "textureResource": "background",
@@ -18,10 +18,10 @@
       "positionY": 0.0
     },
     {
-      "textureResource": "girlback",
-      "width": 4.0,
-      "height": 6.0,
-      "parallaxMultiplier": 1.2,
+      "textureResource": "girlsmoking",
+      "width": 2.3,
+      "height": 5.5,
+      "parallaxMultiplier": 1.1,
       "positionX": 0.0,
       "positionY": 2.5
     },
