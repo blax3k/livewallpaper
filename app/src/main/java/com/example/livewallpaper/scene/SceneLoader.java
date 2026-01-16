@@ -28,7 +28,7 @@ public class SceneLoader {
     /**
      * Load a scene from a JSON file in the assets/scenes folder.
      *
-     * @param fileName the name of the JSON file (e.g., "default_scene.json")
+     * @param fileName the name of the JSON file (e.g., "girl_back.json")
      * @return a Scene object populated with sprites from the JSON data
      * @throws IOException if the file cannot be read
      * @throws IllegalArgumentException if the JSON is invalid or missing required fields
