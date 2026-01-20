@@ -190,5 +190,15 @@ public class SceneManager {
 
         return sprites;
     }
+
+    /**
+     * Get the next scene that is currently being transitioned to, if one exists.
+     * Returns null if no transition is in progress.
+     *
+     * @return the new scene in the transition, or null if not transitioning
+     */
+    public Scene getTransitioningScene() {
+        return transitionManager.getNewScene();
+    }
 }
 

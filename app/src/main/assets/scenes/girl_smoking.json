@@ -1,5 +1,6 @@
 {
   "sceneName": "girlSmoking",
+  "xFocus": 1.0,
   "sprites": [
     {
       "textureResource": "background",

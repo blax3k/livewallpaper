@@ -14,11 +14,16 @@ public class ScrollOffsetProcessor {
     private float targetScrollOffset = 0f;
     // Scale for converting wallpaper offset [0..1] into world units
     private static final float SCROLL_SCALE = 5.0f;
-    // Time-based smoothing: duration in seconds over which we'll reach the target. Default ~120ms.
+    // Time-based smoothing: duration in seconds over which we'll reach the target. Default ~120ms for user input.
     private float scrollSmoothingDuration = 0.05f;
+    // Duration for xFocus transitions: longer for smoother, more deliberate motion. Default ~1.5 seconds.
+    private static final float XFOCUS_SMOOTHING_DURATION = 1.5f;
     // Last frame timestamp (nanoseconds) used to compute delta time between frames.
     // Mark volatile because it may be updated from the UI thread (start/stop) while read from the render thread.
     private volatile long lastFrameTimeNs = -1L;
+    // Track whether the current scroll target is from xFocus (use eased interpolation)
+    // or from user input (use linear interpolation)
+    private boolean isXFocusTarget = false;
 
     /**
      * Update the scroll offset for the current frame based on elapsed time.
@@ -32,9 +37,15 @@ public class ScrollOffsetProcessor {
         float dt = TimeBasedInterpolator.calculateDeltaTime(nowNs, lastFrameTimeNs);
         lastFrameTimeNs = nowNs;
 
-        // Smoothly approach the target scroll offset using time-based interpolation
-        currentScrollOffset = TimeBasedInterpolator.interpolateTowardsTarget(
-            currentScrollOffset, targetScrollOffset, dt, scrollSmoothingDuration);
+        // Use eased interpolation for xFocus targets (smoother, accelerate-then-decelerate)
+        // Use linear interpolation for user scroll input (responsive, direct)
+        if (isXFocusTarget) {
+            currentScrollOffset = TimeBasedInterpolator.interpolateTowardsTargetEased(
+                currentScrollOffset, targetScrollOffset, dt, XFOCUS_SMOOTHING_DURATION);
+        } else {
+            currentScrollOffset = TimeBasedInterpolator.interpolateTowardsTarget(
+                currentScrollOffset, targetScrollOffset, dt, scrollSmoothingDuration);
+        }
 
         return currentScrollOffset;
     }
@@ -45,6 +56,18 @@ public class ScrollOffsetProcessor {
      */
     public void setScrollTarget(float offsetX) {
         this.targetScrollOffset = calculateScrollOffset(offsetX);
+        this.isXFocusTarget = false;  // User scroll input uses linear interpolation
+    }
+
+    /**
+     * Set the scroll target from xFocus value using eased interpolation for smoother motion.
+     * The value will accelerate quickly towards the target, then slow down near the destination.
+     *
+     * @param offsetX the xFocus offset in [0..1] (0.0 = left, 0.5 = center, 1.0 = right)
+     */
+    public void setScrollTargetFromXFocus(float offsetX) {
+        this.targetScrollOffset = calculateScrollOffset(offsetX);
+        this.isXFocusTarget = true;  // xFocus uses eased interpolation
     }
 
     /**

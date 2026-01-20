@@ -51,6 +51,10 @@ public class SimpleRenderer implements GLWallpaperRenderer {
     // Flag to request scene switch on GL thread (set from UI thread, consumed on GL thread)
     private volatile boolean sceneSwitchRequested = false;
 
+    // Automatic scene cycling based on time
+    private static final long SCENE_CYCLE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
+    private long lastSceneChangeTimeMs = System.currentTimeMillis();
+
 
 
     public SimpleRenderer(Context context) {
@@ -107,6 +111,9 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Initialize the scene and load textures
         currentScene.initialize(context, textureManager);
 
+        // Reset the scene change timer
+        lastSceneChangeTimeMs = System.currentTimeMillis();
+
         Log.d(TAG, "Surface created and scene initialized");
     }
 
@@ -133,10 +140,23 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         if (sceneSwitchRequested) {
             sceneSwitchRequested = false;
             sceneManager.cycleToNextScene(currentScene, worldHeight);
+            lastSceneChangeTimeMs = System.currentTimeMillis();
         }
 
         // Update scene transition (handles texture preload, crossfade, and scene switching)
         currentScene = sceneManager.updateTransition();
+
+        // Apply xFocus offset when scroll motion is disabled
+        if (!MotionConfig.isScrollMotionEnabled()) {
+            // If we're in a transition, smoothly transition to the next scene's xFocus
+            // Otherwise, use the current scene's xFocus
+            Scene transitioningScene = sceneManager.getTransitioningScene();
+            if (transitioningScene != null) {
+                scrollOffsetProcessor.setScrollTargetFromXFocus(transitioningScene.getXFocus());
+            } else {
+                scrollOffsetProcessor.setScrollTargetFromXFocus(currentScene.getXFocus());
+            }
+        }
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         shaderProgram.use();
@@ -177,16 +197,14 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         }
         Log.d(TAG, "Renderer destroyed");
     }
-
     @Override
     public void onScrollOffsetChanged(float offsetX) {
         // Only update scroll target if scroll motion is enabled
         if (MotionConfig.isScrollMotionEnabled()) {
             scrollOffsetProcessor.setScrollTarget(offsetX);
-        } else {
-            // If scroll motion is disabled, reset to neutral position
-            scrollOffsetProcessor.disableScrollMotion();
         }
+        // When scroll motion is disabled, completely ignore scroll input
+        // The xFocus value will be applied in onDrawFrame
     }
 
     @Override
@@ -216,6 +234,15 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Resume gyro tracking after suspension
         gyroProcessor.resume();
         scrollOffsetProcessor.onRendererResume();
+
+        // Check if it's time for automatic scene cycling (every 5 minutes)
+        long currentTimeMs = System.currentTimeMillis();
+        if (currentTimeMs - lastSceneChangeTimeMs >= SCENE_CYCLE_INTERVAL_MS) {
+            sceneManager.cycleToNextScene(currentScene, worldHeight);
+            lastSceneChangeTimeMs = currentTimeMs;
+            Log.d(TAG, "Auto-cycling to next scene (5 minutes elapsed)");
+        }
+
         Log.d(TAG, "Renderer resumed after suspension - gyro tracking resumed");
     }
 

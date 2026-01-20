@@ -60,6 +60,11 @@ public class SceneLoader {
         // Create Scene object
         Scene scene = new Scene(sceneData.sceneName);
 
+        // Set xFocus if specified in the JSON
+        if (sceneData.xFocus >= 0.0f && sceneData.xFocus <= 1.0f) {
+            scene.setXFocus(sceneData.xFocus);
+        }
+
         // Convert each SpriteData to a Sprite and add to scene
         for (SceneData.SpriteData spriteData : sceneData.sprites) {
             if (spriteData.textureResource == null || spriteData.textureResource.isEmpty()) {

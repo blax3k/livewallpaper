@@ -1,5 +1,6 @@
 {
   "sceneName": "girlEating",
+  "xFocus": 0.7,
   "sprites": [
     {
       "textureResource": "background",

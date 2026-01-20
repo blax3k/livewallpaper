@@ -1,5 +1,6 @@
 {
   "sceneName": "girlLeaning",
+  "xFocus": 0.5,
   "sprites": [
     {
       "textureResource": "background",

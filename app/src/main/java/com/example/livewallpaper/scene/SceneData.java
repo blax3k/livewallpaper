@@ -9,6 +9,7 @@ import java.util.List;
 public class SceneData {
     public String sceneName;
     public List<SpriteData> sprites;
+    public float xFocus = 0.5f; // Default to center if not specified in JSON
 
     /**
      * Data class representing sprite configuration in JSON.

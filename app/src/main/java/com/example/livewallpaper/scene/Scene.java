@@ -17,6 +17,7 @@ public class Scene {
     private boolean isInitialized = false;
     private float currentGyroScaleFactor = 1.0f;
     private boolean isGyroScaled = false;
+    private float xFocus = 0.5f; // Default to center; represents the x-position to focus on (0.0 = left, 0.5 = center, 1.0 = right)
     public Scene(String sceneName) {
         this.sceneName = sceneName;
         this.sprites = new ArrayList<>();
@@ -27,6 +28,22 @@ public class Scene {
     public String getSceneName() {
         return sceneName;
     }
+
+    /**
+     * Get the x-focus position for this scene (0.0 = left, 0.5 = center, 1.0 = right).
+     * This is used to automatically set the scroll offset when scroll motion is disabled.
+     */
+    public float getXFocus() {
+        return xFocus;
+    }
+
+    /**
+     * Set the x-focus position for this scene.
+     */
+    public void setXFocus(float xFocus) {
+        this.xFocus = xFocus;
+    }
+
     /**
      * Get all sprites in this scene.
      */

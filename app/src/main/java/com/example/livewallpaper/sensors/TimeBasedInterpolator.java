@@ -60,5 +60,42 @@ public class TimeBasedInterpolator {
 
         return newValue;
     }
+
+    /**
+     * Interpolate a value towards a target using time-based easing (ease-out cubic).
+     * The value will accelerate quickly towards the target, then slow down as it approaches.
+     * This provides smoother, more natural motion than linear interpolation.
+     * The value will reach the target in approximately `duration` seconds.
+     *
+     * @param current  the current value
+     * @param target   the target value to chase towards
+     * @param dt       delta time in seconds since last interpolation
+     * @param duration duration in seconds to reach target (if <= 0, snaps instantly)
+     * @return interpolated value
+     */
+    public static float interpolateTowardsTargetEased(float current, float target, float dt, float duration) {
+        float diff = target - current;
+
+        // Early exit if no meaningful difference
+        if (Math.abs(diff) <= DIFFERENCE_THRESHOLD) {
+            return target;
+        }
+
+        // Calculate raw interpolation factor (0.0 to 1.0)
+        float t = (duration <= 0f) ? 1f : Math.min(1f, dt / duration);
+
+        // Apply ease-out cubic easing: 1 - (1-t)^3
+        // This accelerates quickly at first (t=0 has high derivative) and slows down near target
+        float eased = 1f - (1f - t) * (1f - t) * (1f - t);
+
+        float newValue = current + diff * eased;
+
+        // Snap when very close to target to avoid endless tiny adjustments
+        if (Math.abs(target - newValue) < SNAP_THRESHOLD) {
+            return target;
+        }
+
+        return newValue;
+    }
 }
 
