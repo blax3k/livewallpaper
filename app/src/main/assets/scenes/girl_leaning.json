@@ -3,9 +3,9 @@
   "xFocus": 0.5,
   "sprites": [
     {
-      "textureResource": "background",
-      "width": 10.0,
-      "height": 10.0,
+      "textureResource": "background2",
+      "width": 5.0,
+      "height": 5.0,
       "parallaxMultiplier": 0.5,
       "positionX": 0.0,
       "positionY": 0.0
