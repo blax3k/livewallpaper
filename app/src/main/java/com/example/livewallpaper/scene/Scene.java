@@ -94,13 +94,10 @@ public class Scene {
             // Secondary sort at same parallax level:
             // 1. Wiping-out sprites (old) drawn first (behind)
             // 2. Wiping-in sprites (new) drawn second (in front)
-            // 3. Non-transitioning sprites drawn last (fully in front)
             if (a.isWipingOut() && !b.isWipingOut()) return -1;  // a is wiping out, b is not
             if (!a.isWipingOut() && b.isWipingOut()) return 1;   // b is wiping out, a is not
             if (a.isWipingIn() && !b.isWipingIn()) return -1;    // a is wiping in, b is not
             if (!a.isWipingIn() && b.isWipingIn()) return 1;     // b is wiping in, a is not
-            if (a.isTransitioning() && !b.isTransitioning()) return -1;  // a transitioning, b not
-            if (!a.isTransitioning() && b.isTransitioning()) return 1;   // b transitioning, a not
             return 0;
         });
 
@@ -184,18 +181,13 @@ public class Scene {
             Log.d(TAG, "Scene '" + sceneName + "' marked to apply gyro scaling on initialization. Factor: " + scaleFactor);
         }
     }
-    /**
-     * Check if this scene has been initialized.
-     */
-    public boolean isInitialized() {
-        return isInitialized;
-    }
+    
     /**
      * Apply gyro scaling to all sprites in this scene.
      *
      * @param scaleFactor the scale factor to apply (>1.0 to enlarge)
      */
-    public void applyGyroScaling(float scaleFactor) {
+    public void updateGyroScaling(float scaleFactor) {
         for (Sprite sprite : sprites) {
             // Scale the sprite size
             sprite.scaleFromOriginal(scaleFactor);

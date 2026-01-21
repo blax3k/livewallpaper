@@ -20,6 +20,7 @@ public class TextureManager {
     private static final String TAG = "TextureManager";
     private final Map<Integer, Integer> textureCache = new HashMap<>(); // resourceId -> textureId
     private final Queue<Integer> freedTextureIds = new LinkedList<>(); // Pool of freed texture IDs for reuse
+    final int MAX_TEXTURE_SIZE = 1024;
 
     /**
      * Get or load a texture by resource ID. Cached textures are returned immediately,
@@ -33,7 +34,11 @@ public class TextureManager {
         // Check cache first
         if (textureCache.containsKey(resourceId)) {
             Log.d(TAG, "Texture for resourceId=" + resourceId + " found in cache, returning texId=" + textureCache.get(resourceId));
-            return textureCache.get(resourceId);
+            Integer cached = textureCache.get(resourceId);
+            if (cached != null) {
+                Log.d(TAG, "Texture for resourceId=" + resourceId + " found in cache, returning texId=" + cached);
+                return cached;
+            }
         }
 
         // Allocate texture ID (from pool or generate new)
@@ -73,9 +78,11 @@ public class TextureManager {
     private int allocateTextureId() {
         // Try to reuse a freed texture ID first
         if (!freedTextureIds.isEmpty()) {
-            int reusedId = freedTextureIds.poll();
-            Log.d(TAG, "Reusing freed texture ID: " + reusedId + " (remaining in pool: " + freedTextureIds.size() + ")");
-            return reusedId;
+            Integer reusedId = freedTextureIds.poll();
+            if (reusedId != null) {
+                Log.d(TAG, "Reusing freed texture ID: " + reusedId + " (remaining in pool: " + freedTextureIds.size() + ")");
+                return reusedId;
+            }
         }
 
         // No freed IDs available, generate a new one
@@ -143,7 +150,6 @@ public class TextureManager {
      * @return inSampleSize (1, 2, 4, 8, etc.)
      */
     private int calculateInSampleSize(int width, int height, int resourceId) {
-        final int MAX_TEXTURE_SIZE = 1024;
         int inSampleSize = 1;
 
         if (height > MAX_TEXTURE_SIZE || width > MAX_TEXTURE_SIZE) {
@@ -239,10 +245,13 @@ public class TextureManager {
             }
 
             // Mark this texture for deletion
-            if (textureCache.containsKey(resourceId)) {
-                int texId = textureCache.remove(resourceId);
-                texturesToDelete.add(texId);
-                Log.d(TAG, "Marked for deletion: resourceId=" + resourceId + " (texId=" + texId + ")");
+            if (textureCache.containsKey(resourceId)) {// Mark this texture for deletion
+                Integer texIdObj = textureCache.remove(resourceId);
+                if (texIdObj != null) {
+                    int texId = texIdObj;
+                    texturesToDelete.add(texId);
+                    Log.d(TAG, "Marked for deletion: resourceId=" + resourceId + " (texId=" + texId + ")");
+                }
             }
         }
 

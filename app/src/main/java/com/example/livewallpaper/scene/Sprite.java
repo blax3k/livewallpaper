@@ -27,11 +27,10 @@ public class Sprite {
     private float positionY;
     private float width;
     private float height;
-    private float parallaxMultiplier;
-    private float wipeProgress = 0.0f;  // 0.0 = no wipe, 1.0 = fully wiped
-    private float wipeDirection = 0.0f; // 0.0 = no wipe, 1.0 = fade out, -1.0 = fade in
-    private boolean isWipingOut = false;
-    private boolean isWipingIn = false;
+    private final float parallaxMultiplier;
+
+    // Wipe animation handling
+    private final SpriteWipe spriteWipe = new SpriteWipe();
 
     // Store original dimensions and positions for scaling
     private final float originalWidth;
@@ -41,8 +40,6 @@ public class Sprite {
 
     // Track gyro scaling state
     private boolean isGyroScaled = false;
-    private float currentGyroScaleFactor = 1.0f;
-
 
     /**
      * Constructor using a SpriteConfig object for cleaner initialization.
@@ -50,7 +47,7 @@ public class Sprite {
      *
      * @param config the sprite configuration containing all initialization parameters
      */
-    public Sprite(SpriteConfig config) {
+    public Sprite(SpriteData config) {
         this(config.textureResourceId, config.name, config.width, config.height,
              config.parallaxMultiplier, config.positionX, config.positionY, 1.0f);
     }
@@ -188,7 +185,6 @@ public class Sprite {
         updateVertexBuffer();
     }
 
-
     /**
      * Scale this sprite by a factor relative to its original dimensions.
      * For example, a factor of 1.2f will scale the sprite to 120% of its original size.
@@ -210,7 +206,6 @@ public class Sprite {
      */
     private void applyGyroScaling(float scaleFactor) {
         this.isGyroScaled = true;
-        this.currentGyroScaleFactor = scaleFactor;
         // Scale the sprite size
         scaleFromOriginal(scaleFactor);
         // Scale the position away from center (0, 0) to maintain relative spacing
@@ -235,45 +230,30 @@ public class Sprite {
         this.width = originalWidth;
         this.height = originalHeight;
         this.isGyroScaled = false;
-        this.currentGyroScaleFactor = 1.0f;
         updateVertexBuffer();
     }
 
-    /**
-     * Get the X position of the sprite.
-     */
     public float getPositionX() {
         return positionX;
     }
-
-    /**
-     * Get the Y position of the sprite.
-     */
     public float getPositionY() {
         return positionY;
     }
-
+    public String getName() {
+        return name;
+    }
     /**
      * Get the texture resource id (original drawable id).
      */
     public int getTextureResourceId() {
         return textureResourceId;
     }
-
-    /**
-     * Get the name of this sprite (for debugging purposes).
-     */
-    public String getName() {
-        return name;
-    }
-
     /**
      * Set the GL texture ID that will be used for rendering. Typically obtained from TextureManager.
      */
     public void setTextureId(int textureId) {
         this.textureId = textureId;
     }
-
     /**
      * Get the GL texture ID assigned to this sprite.
      */
@@ -289,86 +269,63 @@ public class Sprite {
      * @param progress the wipe progress value
      */
     public void setWipeProgress(float progress) {
-        this.wipeProgress = Math.max(0.0f, Math.min(1.0f, progress));
+        spriteWipe.setWipeProgress(progress);
     }
 
     /**
      * Get the wipe transition progress for this sprite.
      */
     public float getWipeProgress() {
-        return wipeProgress;
-    }
-
-    /**
-     * Set the wipe direction for this sprite.
-     * 0.0 = no wipe effect (fully visible)
-     * 1.0 = fade out (top-left to bottom-right becomes transparent)
-     * -1.0 = fade in (top-left to bottom-right becomes opaque)
-     *
-     * @param direction the wipe direction value
-     */
-    public void setWipeDirection(float direction) {
-        this.wipeDirection = direction;
+        return spriteWipe.getWipeProgress();
     }
 
     /**
      * Get the wipe direction for this sprite.
      */
     public float getWipeDirection() {
-        return wipeDirection;
+        return spriteWipe.getWipeDirection();
     }
 
     /**
      * Reset wipe state to default (no wipe effect, fully visible).
      */
     public void resetWipe() {
-        this.wipeProgress = 0.0f;
-        this.wipeDirection = 0.0f;
-        this.isWipingOut = false;
-        this.isWipingIn = false;
+        spriteWipe.resetWipe();
     }
 
     /**
      * Mark this sprite as wiping out (fading away).
      */
     public void setWipingOut(boolean wipingOut) {
-        this.isWipingOut = wipingOut;
-        if (wipingOut) {
-            this.wipeDirection = 1.0f;
-            this.isWipingIn = false;
-        }
+        spriteWipe.setWipingOut(wipingOut);
     }
 
     /**
      * Check if this sprite is wiping out.
      */
     public boolean isWipingOut() {
-        return isWipingOut;
+        return spriteWipe.isWipingOut();
     }
 
     /**
      * Mark this sprite as wiping in (fading in).
      */
     public void setWipingIn(boolean wipingIn) {
-        this.isWipingIn = wipingIn;
-        if (wipingIn) {
-            this.wipeDirection = -1.0f;
-            this.isWipingOut = false;
-        }
+        spriteWipe.setWipingIn(wipingIn);
     }
 
     /**
      * Check if this sprite is wiping in.
      */
     public boolean isWipingIn() {
-        return isWipingIn;
+        return spriteWipe.isWipingIn();
     }
 
     /**
      * Check if this sprite is transitioning (either wiping in or out).
      */
     public boolean isTransitioning() {
-        return isWipingIn || isWipingOut;
+        return spriteWipe.isTransitioning();
     }
 
     /**

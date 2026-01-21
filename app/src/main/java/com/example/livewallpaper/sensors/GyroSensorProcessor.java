@@ -2,6 +2,8 @@ package com.example.livewallpaper.sensors;
 
 import android.util.Log;
 
+import com.example.livewallpaper.scene.Scene;
+
 /**
  * Processes raw gyroscope rotation rates and converts them into stable offsets that can be
  * passed to a renderer. Handles low-pass filtering, integration to cumulative angles, and
@@ -42,7 +44,6 @@ public class GyroSensorProcessor {
 
     /**
      * Calculate the scale factor needed to expand sprites for gyro motion.
-     *
      * The scale factor accounts for the maximum gyro motion offset and expands sprites
      * accordingly to prevent visible edges from appearing during device tilt.
      *
@@ -278,7 +279,7 @@ public class GyroSensorProcessor {
             // Apply sprite scaling for gyro motion if not already scaled
             if (!spritesScaledForGyro) {
                 float scaleFactor = calculateScaleFactor(motionOffsetLimit, worldHeight);
-                scene.applyGyroScaling(scaleFactor);
+                scene.updateGyroScaling(scaleFactor);
                 spritesScaledForGyro = true;
             }
         } else {
@@ -303,7 +304,7 @@ public class GyroSensorProcessor {
      * @param newScene the scene to apply gyro scaling to
      * @param worldHeight the world-space height for scale factor calculation
      */
-    public void applyGyroScalingToNewScene(com.example.livewallpaper.scene.Scene newScene, float worldHeight) {
+    public void applyGyroScalingToNewScene(Scene newScene, float worldHeight) {
             float scaleFactor = calculateScaleFactor(motionOffsetLimit, worldHeight);
             newScene.setGyroScalingForInitialization(scaleFactor);
             android.util.Log.d("GyroSensorProcessor", "New scene will be initialized with gyro scaling factor: " + scaleFactor);

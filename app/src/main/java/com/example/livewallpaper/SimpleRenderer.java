@@ -10,7 +10,6 @@ import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.scene.Scene;
-import com.example.livewallpaper.scene.SceneLoader;
 import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
@@ -23,30 +22,28 @@ import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
 public class SimpleRenderer implements GLWallpaperRenderer {
     private static final String TAG = "SimpleRenderer";
 
-    private Context context;
+    private final Context context;
     private ShaderProgram shaderProgram;
 
     private Scene currentScene;
-    private SceneLoader sceneLoader;
 
     private Handles handles;
-    private float[] projectionMatrix = new float[16];
+    private final float[] projectionMatrix = new float[16];
     // Manages smooth scrolling interpolation with time-based easing
-    private ScrollOffsetProcessor scrollOffsetProcessor = new ScrollOffsetProcessor();
+    private final ScrollOffsetProcessor scrollOffsetProcessor = new ScrollOffsetProcessor();
 
-    private GyroSensorProcessor gyroProcessor = new GyroSensorProcessor();
-    private TextureManager textureManager;
+    private final GyroSensorProcessor gyroProcessor = new GyroSensorProcessor();
     private SpriteRenderer spriteRenderer;
 
     // World-space height which maps to the device's vertical view. A sprite with height == worldHeight
     // will fill the vertical screen on any device. Change this to zoom in/out uniformly.
-    private float worldHeight = 10f;
+    private final float WORLD_HEIGHT = 10f;
 
     // Track whether sprites are currently scaled for gyro motion
     private boolean spritesScaledForGyro = false;
 
     // Manages scene cycling and switching logic
-    private SceneManager sceneManager;
+    private final SceneManager sceneManager;
 
     // Flag to request scene switch on GL thread (set from UI thread, consumed on GL thread)
     private volatile boolean sceneSwitchRequested = false;
@@ -59,18 +56,14 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     public SimpleRenderer(Context context) {
         this.context = context;
-        this.sceneLoader = new SceneLoader(context);
+        this.sceneManager = new SceneManager(context);
 
-        // Initialize the scene manager first to determine the initial scene
-        this.sceneManager = new SceneManager(context, sceneLoader, textureManager);
-
-        // Try to load the initial scene from SceneManager, fall back to empty scene if loading fails
+        // Load the initial scene
         try {
-            String initialSceneFile = sceneManager.getInitialSceneFile();
-            this.currentScene = sceneLoader.loadScene(initialSceneFile);
-            Log.d(TAG, "Loaded scene from JSON: " + currentScene.getSceneName());
+            this.currentScene = sceneManager.loadInitialScene();
+            Log.d(TAG, "Loaded initial scene: " + currentScene.getSceneName());
         } catch (Exception e) {
-            Log.e(TAG, "Failed to load scene from JSON, using empty scene", e);
+            Log.e(TAG, "Failed to load initial scene, using empty scene", e);
             this.currentScene = new Scene("DefaultScene");
         }
 
@@ -93,13 +86,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         int prog = shaderProgram.getProgram();
         handles = new Handles(prog);
 
-        // Create texture manager and sprite renderer
-        textureManager = new TextureManager();
+        // Create sprite renderer
         spriteRenderer = new SpriteRenderer(handles);
-
-        // Initialize scene manager with texture manager for scene transitions
-        sceneManager = new SceneManager(context, sceneLoader, textureManager);
-        sceneManager.initialize(currentScene);
 
         // Set up gyro scaling callback
         sceneManager.setGyroScalingCallback((newScene, worldHeight) -> {
@@ -109,7 +97,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         });
 
         // Initialize the scene and load textures
-        currentScene.initialize(context, textureManager);
+        currentScene.initialize(context, sceneManager.getTextureManager());
 
         // Reset the scene change timer
         lastSceneChangeTimeMs = System.currentTimeMillis();
@@ -125,7 +113,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
         // Compute projection so that vertical span == worldHeight units
         // half extents in world units
-        float halfWorldH = worldHeight * 0.5f;
+        float halfWorldH = WORLD_HEIGHT * 0.5f;
         float halfWorldW = halfWorldH * aspectRatio;
 
         // left, right, bottom, top using world-space extents
@@ -139,7 +127,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Check if scene switch was requested (from UI thread) and perform it here on GL thread
         if (sceneSwitchRequested) {
             sceneSwitchRequested = false;
-            sceneManager.cycleToNextScene(currentScene, worldHeight);
+            sceneManager.cycleToNextScene(currentScene, WORLD_HEIGHT);
             lastSceneChangeTimeMs = System.currentTimeMillis();
         }
 
@@ -171,7 +159,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
         // Update gyro offsets and apply uniforms; also manage sprite scaling for gyro motion
-        spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, worldHeight, spritesScaledForGyro);
+        spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, WORLD_HEIGHT, spritesScaledForGyro);
 
         // Draw all sprites from current scene
         // During transitions, the SceneTransitionManager adds new scene sprites to the old scene
@@ -189,6 +177,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         if (shaderProgram != null) {
             shaderProgram.delete();
         }
+
+        TextureManager textureManager = sceneManager.getTextureManager();
         if (textureManager != null) {
             textureManager.destroyAll();
         }
@@ -235,7 +225,7 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         // Check if it's time for automatic scene cycling (every 5 minutes)
         long currentTimeMs = System.currentTimeMillis();
         if (currentTimeMs - lastSceneChangeTimeMs >= SCENE_CYCLE_INTERVAL_MS) {
-            sceneManager.cycleToNextScene(currentScene, worldHeight);
+            sceneManager.cycleToNextScene(currentScene, WORLD_HEIGHT);
             lastSceneChangeTimeMs = currentTimeMs;
             Log.d(TAG, "Auto-cycling to next scene (5 minutes elapsed)");
         }

@@ -22,9 +22,10 @@ public class SceneManager {
             "girl_smoking.json",
     };
 
-    private Context context;
-    private SceneLoader sceneLoader;
-    private SceneTransitionManager transitionManager;
+    private final Context context;
+    private final SceneLoader sceneLoader;
+    private final TextureManager textureManager;
+    private final SceneTransitionManager transitionManager;
 
     // Current index in the SCENE_FILES array
     private int currentSceneIndex = 0;
@@ -42,9 +43,10 @@ public class SceneManager {
         void applyGyroScalingToNewScene(Scene newScene, float worldHeight);
     }
 
-    public SceneManager(Context context, SceneLoader sceneLoader, TextureManager textureManager) {
+    public SceneManager(Context context) {
         this.context = context;
-        this.sceneLoader = sceneLoader;
+        this.sceneLoader = new SceneLoader(context);
+        this.textureManager = new TextureManager();
         this.transitionManager = new SceneTransitionManager(textureManager);
     }
 
@@ -54,6 +56,17 @@ public class SceneManager {
      */
     public String getInitialSceneFile() {
         return SCENE_FILES[0];
+    }
+
+    /**
+     * Load the initial scene from the configured initial scene file.
+     *
+     * @return the loaded Scene
+     * @throws Exception if scene loading fails
+     */
+    public Scene loadInitialScene() throws Exception {
+        String initialSceneFile = getInitialSceneFile();
+        return sceneLoader.loadScene(initialSceneFile);
     }
 
     /**
@@ -69,6 +82,14 @@ public class SceneManager {
                 break;
             }
         }
+    }
+
+    /**
+     * Get the texture manager owned by this scene manager.
+     * Used by the renderer to initialize scenes and handle texture loading.
+     */
+    public TextureManager getTextureManager() {
+        return textureManager;
     }
 
     /**
@@ -127,7 +148,6 @@ public class SceneManager {
     /**
      * Update scene transition state. Call this every frame from onDrawFrame.
      * Handles texture preloading completion, alpha fading, and scene switching.
-     *
      * Must be called on the GL thread.
      *
      * @return the scene that should be rendered this frame
