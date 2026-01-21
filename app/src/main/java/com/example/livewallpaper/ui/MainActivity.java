@@ -36,6 +36,15 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "UI initialization failed", Toast.LENGTH_SHORT).show();
             }
 
+            Button viewScenesButton = findViewById(R.id.btn_view_scenes);
+            if (viewScenesButton != null) {
+                Log.d(TAG, "View Scenes button found, setting click listener");
+                viewScenesButton.setOnClickListener(v -> viewScenes());
+                Log.d(TAG, "View Scenes button click listener set");
+            } else {
+                Log.e(TAG, "View Scenes button not found in layout!");
+            }
+
             Switch scrollToggle = findViewById(R.id.toggle_scroll_motion);
             if (scrollToggle != null) {
                 Log.d(TAG, "Scroll toggle switch found, setting listener");
@@ -88,6 +97,14 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Failed to set wallpaper: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void viewScenes() {
+        try {
+            Intent intent = new Intent(this, SceneListActivity.class);
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Error navigating to scenes: " + e.getMessage(), e);
+            Toast.makeText(this, "Failed to open scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
 }
-
-

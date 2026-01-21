@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">livewallpaper</string>
     <string name="set_wallpaper">Set as Wallpaper</string>
+    <string name="view_scenes">View Scenes</string>
 </resources>
