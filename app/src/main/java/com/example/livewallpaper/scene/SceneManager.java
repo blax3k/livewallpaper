@@ -4,7 +4,6 @@ import android.content.Context;
 import android.util.Log;
 
 import com.example.livewallpaper.gl.TextureManager;
-import java.util.Set;
 
 /**
  * Manages scene switching logic, cycling between multiple scenes on demand.
@@ -26,7 +25,6 @@ public class SceneManager {
     private Context context;
     private SceneLoader sceneLoader;
     private SceneTransitionManager transitionManager;
-    private TextureManager textureManager;
 
     // Current index in the SCENE_FILES array
     private int currentSceneIndex = 0;
@@ -47,8 +45,7 @@ public class SceneManager {
     public SceneManager(Context context, SceneLoader sceneLoader, TextureManager textureManager) {
         this.context = context;
         this.sceneLoader = sceneLoader;
-        this.textureManager = textureManager;
-        this.transitionManager = new SceneTransitionManager();
+        this.transitionManager = new SceneTransitionManager(textureManager);
     }
 
     /**
@@ -119,19 +116,8 @@ public class SceneManager {
             }
 
             // Start the transition with the transition manager
-            transitionManager.startTransition(this.currentScene, newScene);
-
-            // Preload textures for the new scene on the GL thread
-            if (textureManager != null) {
-                newScene.initialize(context, textureManager);
-                Log.d(TAG, "Textures initialized for new scene: " + newScene.getSceneName());
-
-                // Set all sprites in the new scene to alpha=0 so they start invisible
-                // The transition manager will fade them in over the FADE_DURATION_MS period
-                for (Sprite sprite : newScene.getSprites()) {
-                    sprite.setAlpha(0.0f);
-                }
-            }
+            // The transition manager will handle texture preloading when the new scene initializes
+            transitionManager.startTransition(this.currentScene, newScene, context);
 
         } catch (Exception e) {
             Log.e(TAG, "Failed to load new scene for transition", e);
@@ -151,44 +137,15 @@ public class SceneManager {
             return currentScene;
         }
 
-        Scene nextScene = transitionManager.updateTransition(currentScene);
+        Scene sceneToRender = transitionManager.updateTransition();
 
-        // Check if transition just completed
-        if (!transitionManager.isTransitioning() && nextScene != currentScene) {
-            // Transition is complete, switch to the new scene
-            Set<Integer> oldSceneTextureIds = currentScene.getUsedTextureResourceIds();
-            currentScene = nextScene;
-
-            // Clean up textures from old scene
-            Set<Integer> newSceneTextureIds = currentScene.getUsedTextureResourceIds();
-            if (textureManager != null) {
-                textureManager.unloadUnusedTextures(oldSceneTextureIds, newSceneTextureIds);
-            }
+        // If transition just finished, update our reference
+        if (!transitionManager.isTransitioning() && sceneToRender != currentScene) {
+            currentScene = sceneToRender;
             Log.d(TAG, "Scene switched successfully to: " + currentScene.getSceneName());
         }
 
-        return currentScene;
-    }
-
-    /**
-     * Get all sprites that should be rendered during a transition.
-     * Returns sprites from both old and new scenes if transitioning, otherwise empty list.
-     *
-     * @return list of sprites to render for transition overlays
-     */
-    public java.util.List<Sprite> getTransitionSprites() {
-        java.util.List<Sprite> sprites = new java.util.ArrayList<>();
-
-        if (!transitionManager.isTransitioning()) {
-            return sprites;
-        }
-
-        // Add sprites from new scene during transition
-        if (transitionManager.getNewScene() != null) {
-            sprites.addAll(transitionManager.getNewScene().getSprites());
-        }
-
-        return sprites;
+        return sceneToRender;
     }
 
     /**

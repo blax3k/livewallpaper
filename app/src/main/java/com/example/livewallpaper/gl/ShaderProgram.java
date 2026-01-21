@@ -81,12 +81,10 @@ public class ShaderProgram {
                 + "uniform float scrollOffset;"
                 + "uniform float gyroOffsetX;"
                 + "uniform float gyroOffsetY;"
-                + "uniform float alpha;"
                 + "attribute vec4 vPosition;"
                 + "attribute vec2 vTexCoord;"
                 + "attribute float parallaxMultiplier;"
                 + "varying vec2 texCoord;"
-                + "varying float fragAlpha;"
 
                 + "void main() {"
                 + "  vec4 position = vPosition;"
@@ -94,18 +92,41 @@ public class ShaderProgram {
                 + "  position.y += gyroOffsetY * parallaxMultiplier;"
                 + "  gl_Position = projectionMatrix * position;"
                 + "  texCoord = vTexCoord;"
-                + "  fragAlpha = alpha;"
                 + "}";
     }
 
     public static String getFragmentShaderCode() {
+        // wipeProgress: 0.0 to 1.0 transition progress
+        // wipeDirection: 1.0 = fade out (wipe erases from top-left to bottom-right)
+        //               -1.0 = fade in (wipe reveals from top-left to bottom-right)
+        //                0.0 = no wipe effect (fully visible)
         return "precision mediump float;"
                 + "uniform sampler2D samplerTexture;"
+                + "uniform float wipeProgress;"
+                + "uniform float wipeDirection;"
                 + "varying vec2 texCoord;"
-                + "varying float fragAlpha;"
                 + "void main() {"
                 + "  vec4 texColor = texture2D(samplerTexture, texCoord);"
-                + "  texColor.a *= fragAlpha;"
+                // Calculate diagonal position: 0.0 at top-left, 1.0 at bottom-right
+                // texCoord: x goes 0->1 left to right, y goes 0->1 bottom to top
+                // So top-left is (0,1), bottom-right is (1,0)
+                // diagonal = (x + (1-y)) / 2 gives us 0 at top-left, 1 at bottom-right
+                + "  float diagonal = (texCoord.x + (1.0 - texCoord.y)) / 2.0;"
+                + "  float alpha = 1.0;"
+                + "  float softness = 0.4;"
+                + "  if (wipeDirection > 0.5) {"
+                // Fade out: as progress goes 0->1, erase from top-left to bottom-right
+                // Map progress so wipe line travels from before top-left to past bottom-right
+                + "    float wipePos = wipeProgress * (1.0 + softness) - softness * 0.5;"
+                // Alpha is 1 where diagonal > wipePos, 0 where diagonal < wipePos
+                + "    alpha = smoothstep(wipePos - softness * 0.5, wipePos + softness * 0.5, diagonal);"
+                + "  } else if (wipeDirection < -0.5) {"
+                // Fade in: as progress goes 0->1, reveal from top-left to bottom-right
+                + "    float wipePos = wipeProgress * (1.0 + softness) - softness * 0.5;"
+                // Alpha is 0 where diagonal > wipePos, 1 where diagonal < wipePos
+                + "    alpha = 1.0 - smoothstep(wipePos - softness * 0.5, wipePos + softness * 0.5, diagonal);"
+                + "  }"
+                + "  texColor.a *= alpha;"
                 + "  gl_FragColor = texColor;"
                 + "}";
     }

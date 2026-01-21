@@ -85,6 +85,7 @@ public class SceneLoader {
             // Create sprite configuration
             SpriteConfig config = new SpriteConfig(
                 resourceId,
+                spriteData.textureResource,
                 spriteData.width,
                 spriteData.height,
                 spriteData.parallaxMultiplier,

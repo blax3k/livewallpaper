@@ -13,14 +13,16 @@ public class SpriteRenderer {
     private final int texCoordHandle;
     private final int samplerHandle;
     private final int parallaxMultiplierHandle;
-    private final int alphaHandle;
+    private final int wipeProgressHandle;
+    private final int wipeDirectionHandle;
 
     public SpriteRenderer(Handles handles) {
         this.positionHandle = handles.positionHandle;
         this.texCoordHandle = handles.texCoordHandle;
         this.samplerHandle = handles.samplerHandle;
         this.parallaxMultiplierHandle = handles.parallaxMultiplierHandle;
-        this.alphaHandle = handles.alphaHandle;
+        this.wipeProgressHandle = handles.wipeProgressHandle;
+        this.wipeDirectionHandle = handles.wipeDirectionHandle;
     }
 
     public void drawSprite(Sprite sprite) {
@@ -35,8 +37,9 @@ public class SpriteRenderer {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
         GLES20.glUniform1i(samplerHandle, 0);
 
-        // Set alpha uniform
-        GLES20.glUniform1f(alphaHandle, sprite.getAlpha());
+        // Set wipe uniforms
+        GLES20.glUniform1f(wipeProgressHandle, sprite.getWipeProgress());
+        GLES20.glUniform1f(wipeDirectionHandle, sprite.getWipeDirection());
 
         // Enable vertex attribute array
         GLES20.glEnableVertexAttribArray(positionHandle);

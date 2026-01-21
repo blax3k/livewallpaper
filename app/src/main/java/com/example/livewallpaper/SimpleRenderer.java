@@ -174,12 +174,9 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, worldHeight, spritesScaledForGyro);
 
         // Draw all sprites from current scene
+        // During transitions, the SceneTransitionManager adds new scene sprites to the old scene
+        // with proper parallax sorting, so we only need to draw from currentScene
         for (Sprite sprite : currentScene.getSprites()) {
-            spriteRenderer.drawSprite(sprite);
-        }
-
-        // Draw transition overlay sprites (old and new scene sprites during crossfade)
-        for (Sprite sprite : sceneManager.getTransitionSprites()) {
             spriteRenderer.drawSprite(sprite);
         }
     }

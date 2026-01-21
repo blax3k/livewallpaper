@@ -14,7 +14,8 @@ public class Handles {
     public int gyroOffsetXHandle;
     public int gyroOffsetYHandle;
     public int positionHandle;
-    public int alphaHandle;
+    public int wipeProgressHandle;
+    public int wipeDirectionHandle;
 
     public Handles(int program)
     {
@@ -42,8 +43,11 @@ public class Handles {
         gyroOffsetYHandle = GLES20.glGetUniformLocation(program, "gyroOffsetY");
         Log.d(TAG, "gyroOffsetYHandle: " + gyroOffsetYHandle);
 
-        alphaHandle = GLES20.glGetUniformLocation(program, "alpha");
-        Log.d(TAG, "alphaHandle: " + alphaHandle);
+        wipeProgressHandle = GLES20.glGetUniformLocation(program, "wipeProgress");
+        Log.d(TAG, "wipeProgressHandle: " + wipeProgressHandle);
+
+        wipeDirectionHandle = GLES20.glGetUniformLocation(program, "wipeDirection");
+        Log.d(TAG, "wipeDirectionHandle: " + wipeDirectionHandle);
 
         // Check for any -1 values which indicate errors
         if (positionHandle == -1 || texCoordHandle == -1 || samplerHandle == -1) {

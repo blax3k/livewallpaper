@@ -56,6 +56,62 @@ public class Scene {
     public void addSprite(Sprite sprite) {
         sprites.add(sprite);
     }
+
+    /**
+     * Update wipe progress on all transitioning sprites in this scene.
+     * @param progress the wipe progress (0.0 to 1.0)
+     */
+    public void updateWipeProgress(float progress) {
+        for (Sprite sprite : sprites) {
+            if (sprite.isTransitioning()) {
+                sprite.setWipeProgress(progress);
+            }
+        }
+    }
+
+    /**
+     * Sort sprites by parallax multiplier to ensure correct draw order.
+     * Lower parallax values (further back) are drawn first.
+     * At the same parallax level, draw order is:
+     * 1. Wiping-out sprites - drawn first (behind)
+     * 2. Wiping-in sprites - drawn second
+     * 3. Non-transitioning sprites - drawn last (in front)
+     */
+    public void sortSpritesByParallax() {
+        // Log before sorting
+        Log.d(TAG, "=== BEFORE SORT ===");
+        for (int i = 0; i < sprites.size(); i++) {
+            Sprite s = sprites.get(i);
+            Log.d(TAG, "  [" + i + "] " + s.getName() + " | parallax=" + s.getParallaxMultiplier() +
+                  " | wipingOut=" + s.isWipingOut() + " | wipingIn=" + s.isWipingIn());
+        }
+
+        sprites.sort((a, b) -> {
+            int parallaxCompare = Float.compare(a.getParallaxMultiplier(), b.getParallaxMultiplier());
+            if (parallaxCompare != 0) {
+                return parallaxCompare;
+            }
+            // Secondary sort at same parallax level:
+            // 1. Wiping-out sprites (old) drawn first (behind)
+            // 2. Wiping-in sprites (new) drawn second (in front)
+            // 3. Non-transitioning sprites drawn last (fully in front)
+            if (a.isWipingOut() && !b.isWipingOut()) return -1;  // a is wiping out, b is not
+            if (!a.isWipingOut() && b.isWipingOut()) return 1;   // b is wiping out, a is not
+            if (a.isWipingIn() && !b.isWipingIn()) return -1;    // a is wiping in, b is not
+            if (!a.isWipingIn() && b.isWipingIn()) return 1;     // b is wiping in, a is not
+            if (a.isTransitioning() && !b.isTransitioning()) return -1;  // a transitioning, b not
+            if (!a.isTransitioning() && b.isTransitioning()) return 1;   // b transitioning, a not
+            return 0;
+        });
+
+        // Log after sorting
+        Log.d(TAG, "=== AFTER SORT ===");
+        for (int i = 0; i < sprites.size(); i++) {
+            Sprite s = sprites.get(i);
+            Log.d(TAG, "  [" + i + "] " + s.getName() + " | parallax=" + s.getParallaxMultiplier() +
+                  " | wipingOut=" + s.isWipingOut() + " | wipingIn=" + s.isWipingIn());
+        }
+    }
     /**
      * Initialize all sprites in this scene by loading their textures.
      * Should be called when the GL context is ready.

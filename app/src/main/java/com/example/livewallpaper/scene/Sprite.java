@@ -20,6 +20,7 @@ public class Sprite {
     private FloatBuffer parallaxMultiplierBuffer;
     private int textureId = 0;
     private final int textureResourceId;
+    private final String name;
 
     // Sprite properties for positioning and sizing
     private float positionX;
@@ -27,7 +28,10 @@ public class Sprite {
     private float width;
     private float height;
     private float parallaxMultiplier;
-    private float alpha = 1.0f;
+    private float wipeProgress = 0.0f;  // 0.0 = no wipe, 1.0 = fully wiped
+    private float wipeDirection = 0.0f; // 0.0 = no wipe, 1.0 = fade out, -1.0 = fade in
+    private boolean isWipingOut = false;
+    private boolean isWipingIn = false;
 
     // Store original dimensions and positions for scaling
     private final float originalWidth;
@@ -47,7 +51,7 @@ public class Sprite {
      * @param config the sprite configuration containing all initialization parameters
      */
     public Sprite(SpriteConfig config) {
-        this(config.textureResourceId, config.width, config.height,
+        this(config.textureResourceId, config.name, config.width, config.height,
              config.parallaxMultiplier, config.positionX, config.positionY, 1.0f);
     }
 
@@ -56,6 +60,7 @@ public class Sprite {
      * Supports all initialization scenarios.
      *
      * @param textureResourceId the drawable resource ID for the texture
+     * @param name the name of the sprite for debugging
      * @param width the width in world units
      * @param height the height in world units
      * @param parallaxMultiplier the parallax multiplier (1.0 = full scroll, 0.5 = half, etc.)
@@ -63,8 +68,9 @@ public class Sprite {
      * @param positionY the y position in world units
      * @param gyroScaleFactor the gyro scale factor to apply (1.0 = no scaling, >1.0 = enlarged for gyro motion)
      */
-    public Sprite(int textureResourceId, float width, float height, float parallaxMultiplier, float positionX, float positionY, float gyroScaleFactor) {
+    public Sprite(int textureResourceId, String name, float width, float height, float parallaxMultiplier, float positionX, float positionY, float gyroScaleFactor) {
         this.textureResourceId = textureResourceId;
+        this.name = name;
         this.width = width;
         this.height = height;
         this.originalWidth = width;
@@ -255,6 +261,13 @@ public class Sprite {
     }
 
     /**
+     * Get the name of this sprite (for debugging purposes).
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
      * Set the GL texture ID that will be used for rendering. Typically obtained from TextureManager.
      */
     public void setTextureId(int textureId) {
@@ -270,20 +283,92 @@ public class Sprite {
 
 
     /**
-     * Set the alpha transparency value for this sprite.
-     * Value should be between 0.0 (fully transparent) and 1.0 (fully opaque).
+     * Set the wipe transition progress for this sprite.
+     * Value should be between 0.0 (no wipe) and 1.0 (fully wiped).
      *
-     * @param alpha the alpha transparency value
+     * @param progress the wipe progress value
      */
-    public void setAlpha(float alpha) {
-        this.alpha = Math.max(0.0f, Math.min(1.0f, alpha));
+    public void setWipeProgress(float progress) {
+        this.wipeProgress = Math.max(0.0f, Math.min(1.0f, progress));
     }
 
     /**
-     * Get the alpha transparency value for this sprite.
+     * Get the wipe transition progress for this sprite.
      */
-    public float getAlpha() {
-        return alpha;
+    public float getWipeProgress() {
+        return wipeProgress;
+    }
+
+    /**
+     * Set the wipe direction for this sprite.
+     * 0.0 = no wipe effect (fully visible)
+     * 1.0 = fade out (top-left to bottom-right becomes transparent)
+     * -1.0 = fade in (top-left to bottom-right becomes opaque)
+     *
+     * @param direction the wipe direction value
+     */
+    public void setWipeDirection(float direction) {
+        this.wipeDirection = direction;
+    }
+
+    /**
+     * Get the wipe direction for this sprite.
+     */
+    public float getWipeDirection() {
+        return wipeDirection;
+    }
+
+    /**
+     * Reset wipe state to default (no wipe effect, fully visible).
+     */
+    public void resetWipe() {
+        this.wipeProgress = 0.0f;
+        this.wipeDirection = 0.0f;
+        this.isWipingOut = false;
+        this.isWipingIn = false;
+    }
+
+    /**
+     * Mark this sprite as wiping out (fading away).
+     */
+    public void setWipingOut(boolean wipingOut) {
+        this.isWipingOut = wipingOut;
+        if (wipingOut) {
+            this.wipeDirection = 1.0f;
+            this.isWipingIn = false;
+        }
+    }
+
+    /**
+     * Check if this sprite is wiping out.
+     */
+    public boolean isWipingOut() {
+        return isWipingOut;
+    }
+
+    /**
+     * Mark this sprite as wiping in (fading in).
+     */
+    public void setWipingIn(boolean wipingIn) {
+        this.isWipingIn = wipingIn;
+        if (wipingIn) {
+            this.wipeDirection = -1.0f;
+            this.isWipingOut = false;
+        }
+    }
+
+    /**
+     * Check if this sprite is wiping in.
+     */
+    public boolean isWipingIn() {
+        return isWipingIn;
+    }
+
+    /**
+     * Check if this sprite is transitioning (either wiping in or out).
+     */
+    public boolean isTransitioning() {
+        return isWipingIn || isWipingOut;
     }
 
     /**
@@ -293,6 +378,12 @@ public class Sprite {
     public FloatBuffer getTexCoordBuffer() { return texCoordBuffer; }
     public FloatBuffer getParallaxMultiplierBuffer() { return parallaxMultiplierBuffer; }
     public int getVertexCount() { return VERTEX_COUNT; }
+
+    /**
+     * Get the parallax multiplier value for this sprite.
+     * Used for draw order sorting (lower values = further back, drawn first).
+     */
+    public float getParallaxMultiplier() { return parallaxMultiplier; }
 
     /**
      * Destroy this sprite and release its CPU-side resources.
