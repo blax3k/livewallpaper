@@ -135,7 +135,8 @@ public class Scene {
     }
 
     /**
-     * Load the texture for a sprite through the TextureManager.
+     * Load the texture for a sprite through the TextureManager asynchronously.
+     * The texture will be applied to the sprite via callback when ready.
      *
      * @param context the Android context for loading resources
      * @param textureManager the texture manager for loading textures
@@ -143,12 +144,14 @@ public class Scene {
      */
     private void loadSpriteTexture(Context context, TextureManager textureManager, Sprite sprite) {
         int resourceId = sprite.getTextureResourceId();
-        int texId = textureManager.getTexture(context, resourceId);
-        sprite.setTextureId(texId);
-        Log.d(TAG, "Sprite textureResourceId=" + resourceId + " loaded with texId=" + texId);
-        if (texId == 0) {
-            Log.w(TAG, "WARNING: Texture ID is 0 for resourceId=" + resourceId + ". This sprite may not render.");
-        }
+
+        textureManager.getTextureAsync(context, resourceId, (resId, texId) -> {
+            sprite.setTextureId(texId);
+            Log.d(TAG, "Sprite textureResourceId=" + resourceId + " loaded with texId=" + texId);
+            if (texId == 0) {
+                Log.w(TAG, "WARNING: Failed to load texture for resourceId=" + resourceId + ". This sprite may not render.");
+            }
+        });
     }
 
     /**

@@ -124,6 +124,12 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     @Override
     public void onDrawFrame() {
+        // Process any pending async texture uploads that are ready (must be on GL thread)
+        TextureManager textureManager = sceneManager.getTextureManager();
+        if (textureManager != null) {
+            textureManager.processPendingUploads();
+        }
+
         // Check if scene switch was requested (from UI thread) and perform it here on GL thread
         if (sceneSwitchRequested) {
             sceneSwitchRequested = false;

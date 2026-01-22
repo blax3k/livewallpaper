@@ -11,6 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * Loads and caches GL textures by resource id. Callers should call destroyAll when the GL context
@@ -20,7 +24,59 @@ public class TextureManager {
     private static final String TAG = "TextureManager";
     private final Map<Integer, Integer> textureCache = new HashMap<>(); // resourceId -> textureId
     private final Queue<Integer> freedTextureIds = new LinkedList<>(); // Pool of freed texture IDs for reuse
-    final int MAX_TEXTURE_SIZE = 1024;
+    private int maxTextureSize = 1024; // Default fallback, will be queried from GPU
+    private boolean gpuLimitsQueried = false;
+
+    // Async loading infrastructure
+    private final Executor backgroundExecutor = Executors.newFixedThreadPool(2); // 2 threads for concurrent bitmap decoding
+    private final Queue<PendingTextureUpload> pendingUploads = new LinkedBlockingQueue<>(); // Thread-safe queue for pending GPU uploads
+    private final Map<Integer, Bitmap> pendingBitmaps = new ConcurrentHashMap<>(); // resourceId -> decoded bitmap (pending upload)
+    private final Map<Integer, TextureLoadCallback> textureCallbacks = new ConcurrentHashMap<>(); // resourceId -> callback
+
+    /**
+     * Callback interface for async texture loading completion.
+     */
+    public interface TextureLoadCallback {
+        /**
+         * Called when a texture has finished loading and is ready for use.
+         *
+         * @param resourceId the resource ID of the texture
+         * @param textureId the GL texture ID (0 if loading failed)
+         */
+        void onTextureLoaded(int resourceId, int textureId);
+    }
+
+    /**
+     * Internal class to represent a pending GPU upload operation.
+     */
+    private static class PendingTextureUpload {
+        int resourceId;
+        int textureId;
+        Bitmap bitmap;
+
+        PendingTextureUpload(int resourceId, int textureId, Bitmap bitmap) {
+            this.resourceId = resourceId;
+            this.textureId = textureId;
+            this.bitmap = bitmap;
+        }
+    }
+
+    /**
+     * Query the GPU's actual maximum texture size. This should be called once before
+     * loading textures. Uses glGetIntegerv to query GL_MAX_TEXTURE_SIZE.
+     */
+    private void queryGPULimits() {
+        if (gpuLimitsQueried) {
+            return; // Already queried
+        }
+
+        int[] maxSize = new int[1];
+        GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, maxSize, 0);
+        maxTextureSize = maxSize[0];
+
+        Log.d(TAG, "GPU max texture size queried: " + maxTextureSize + " pixels");
+        gpuLimitsQueried = true;
+    }
 
     /**
      * Get or load a texture by resource ID. Cached textures are returned immediately,
@@ -31,6 +87,11 @@ public class TextureManager {
      * @return GL texture ID (0 if failed)
      */
     public int getTexture(Context context, int resourceId) {
+        // Query GPU limits on first use
+        if (!gpuLimitsQueried) {
+            queryGPULimits();
+        }
+
         // Check cache first
         if (textureCache.containsKey(resourceId)) {
             Log.d(TAG, "Texture for resourceId=" + resourceId + " found in cache, returning texId=" + textureCache.get(resourceId));
@@ -68,6 +129,126 @@ public class TextureManager {
         textureCache.put(resourceId, textureId);
         Log.d(TAG, "Texture uploaded to GPU for resourceId=" + resourceId + ", assigned texId=" + textureId + " (pool size: " + freedTextureIds.size() + ")");
         return textureId;
+    }
+
+    /**
+     * Load a texture asynchronously. Bitmap decoding happens on a background thread,
+     * while GPU upload happens on the GL thread via processPendingUploads().
+     *
+     * The callback will be invoked when the texture is ready for use.
+     *
+     * @param context Android context for loading resources
+     * @param resourceId drawable resource ID
+     * @param callback callback to invoke when texture is loaded (called on GL thread)
+     */
+    public void getTextureAsync(final Context context, final int resourceId, final TextureLoadCallback callback) {
+        // Check cache first - if already loaded, call callback immediately
+        if (textureCache.containsKey(resourceId)) {
+            Integer cached = textureCache.get(resourceId);
+            if (cached != null) {
+                Log.d(TAG, "Async texture for resourceId=" + resourceId + " found in cache, invoking callback with texId=" + cached);
+                if (callback != null) {
+                    callback.onTextureLoaded(resourceId, cached);
+                }
+                return;
+            }
+        }
+
+        // Check if already being loaded - if so, just register callback
+        if (pendingBitmaps.containsKey(resourceId)) {
+            Log.d(TAG, "Async texture for resourceId=" + resourceId + " already being loaded, registered callback");
+            if (callback != null) {
+                textureCallbacks.put(resourceId, callback);
+            }
+            return;
+        }
+
+        // Register callback before starting background load
+        if (callback != null) {
+            textureCallbacks.put(resourceId, callback);
+        }
+
+        // Decode on background thread
+        backgroundExecutor.execute(() -> {
+            try {
+                Log.d(TAG, "Starting async decode for resourceId=" + resourceId + " on background thread");
+                Bitmap bitmap = decodeBitmap(context, resourceId);
+                if (bitmap != null) {
+                    pendingBitmaps.put(resourceId, bitmap);
+                    Log.d(TAG, "Async decode complete for resourceId=" + resourceId + ", queued for GPU upload");
+                } else {
+                    Log.e(TAG, "Failed to decode bitmap for resourceId=" + resourceId);
+                    // Still invoke callback with failure
+                    TextureLoadCallback cb = textureCallbacks.remove(resourceId);
+                    if (cb != null) {
+                        cb.onTextureLoaded(resourceId, 0);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Exception during async decode for resourceId=" + resourceId, e);
+                TextureLoadCallback cb = textureCallbacks.remove(resourceId);
+                if (cb != null) {
+                    cb.onTextureLoaded(resourceId, 0);
+                }
+            }
+        });
+    }
+
+    /**
+     * Process pending texture uploads from the async loading queue. This MUST be called
+     * on the GL thread during rendering. Call this every frame to upload any textures that
+     * finished decoding on background threads.
+     */
+    public void processPendingUploads() {
+        // Query GPU limits on first use (might not have happened if only using async)
+        if (!gpuLimitsQueried) {
+            queryGPULimits();
+        }
+
+        // Process all pending uploads that are ready
+        while (!pendingUploads.isEmpty()) {
+            PendingTextureUpload pending = pendingUploads.poll();
+            if (pending == null) break;
+
+            if (uploadTextureToGPU(pending.textureId, pending.bitmap, pending.resourceId)) {
+                // Upload successful
+                textureCache.put(pending.resourceId, pending.textureId);
+                Log.d(TAG, "Async texture uploaded to GPU for resourceId=" + pending.resourceId + ", texId=" + pending.textureId);
+
+                // Invoke callback
+                TextureLoadCallback callback = textureCallbacks.remove(pending.resourceId);
+                if (callback != null) {
+                    callback.onTextureLoaded(pending.resourceId, pending.textureId);
+                }
+            } else {
+                // Upload failed
+                Log.e(TAG, "Failed to upload texture for resourceId=" + pending.resourceId);
+                freeTextureId(pending.textureId);
+
+                // Invoke callback with failure
+                TextureLoadCallback callback = textureCallbacks.remove(pending.resourceId);
+                if (callback != null) {
+                    callback.onTextureLoaded(pending.resourceId, 0);
+                }
+            }
+
+            pending.bitmap.recycle();
+        }
+
+        // Check if any pending bitmaps are ready to be queued for upload
+        for (int resourceId : pendingBitmaps.keySet()) {
+            Bitmap bitmap = pendingBitmaps.get(resourceId);
+            if (bitmap != null) {
+                // Allocate texture ID
+                int textureId = allocateTextureId();
+                if (textureId != 0) {
+                    // Queue for upload
+                    pendingUploads.offer(new PendingTextureUpload(resourceId, textureId, bitmap));
+                    pendingBitmaps.remove(resourceId);
+                    Log.d(TAG, "Queued async texture for upload: resourceId=" + resourceId + ", texId=" + textureId);
+                }
+            }
+        }
     }
 
     /**
@@ -142,7 +323,7 @@ public class TextureManager {
 
     /**
      * Calculate the inSampleSize needed to scale down large textures.
-     * Caps maximum texture dimension at 1024 to prevent GPU memory exhaustion.
+     * Caps maximum texture dimension at the GPU's reported limit to prevent GPU memory exhaustion.
      *
      * @param width original width
      * @param height original height
@@ -152,15 +333,16 @@ public class TextureManager {
     private int calculateInSampleSize(int width, int height, int resourceId) {
         int inSampleSize = 1;
 
-        if (height > MAX_TEXTURE_SIZE || width > MAX_TEXTURE_SIZE) {
+        if (height > maxTextureSize || width > maxTextureSize) {
             final int halfHeight = height / 2;
             final int halfWidth = width / 2;
-            while ((halfHeight / inSampleSize) >= MAX_TEXTURE_SIZE ||
-                   (halfWidth / inSampleSize) >= MAX_TEXTURE_SIZE) {
+            while ((halfHeight / inSampleSize) >= maxTextureSize ||
+                   (halfWidth / inSampleSize) >= maxTextureSize) {
                 inSampleSize *= 2;
             }
             Log.d(TAG, "Large texture detected for resourceId=" + resourceId +
                   ": original=" + width + "x" + height +
+                  ", max allowed=" + maxTextureSize +
                   ", scaling with inSampleSize=" + inSampleSize);
         }
 
@@ -276,6 +458,9 @@ public class TextureManager {
 
 
     public void destroyAll() {
+        // Process any final pending uploads before destroying
+        processPendingUploads();
+
         if (textureCache.isEmpty()) return;
         int[] ids = new int[textureCache.size()];
         int i = 0;
@@ -288,7 +473,19 @@ public class TextureManager {
         // Clear the pool since GL context is being destroyed
         freedTextureIds.clear();
 
-        Log.d(TAG, "All textures deleted");
+        // Clean up async loading resources
+        pendingUploads.clear();
+
+        // Recycle any pending bitmaps
+        for (Bitmap bitmap : pendingBitmaps.values()) {
+            if (bitmap != null && !bitmap.isRecycled()) {
+                bitmap.recycle();
+            }
+        }
+        pendingBitmaps.clear();
+        textureCallbacks.clear();
+
+        Log.d(TAG, "All textures deleted and async resources cleaned up");
     }
 }
 
