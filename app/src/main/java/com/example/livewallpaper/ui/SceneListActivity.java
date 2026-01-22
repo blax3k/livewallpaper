@@ -1,5 +1,6 @@
 package com.example.livewallpaper.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListView;
@@ -29,6 +30,14 @@ public class SceneListActivity extends AppCompatActivity {
             List<String> sceneFileNames = loadSceneFileNames();
             SceneListAdapter adapter = new SceneListAdapter(this, sceneFileNames);
             scenesList.setAdapter(adapter);
+
+            // Set up click listener for list items
+            scenesList.setOnItemClickListener((parent, view, position, id) -> {
+                String selectedScene = sceneFileNames.get(position);
+                Log.d(TAG, "Scene selected: " + selectedScene);
+                openEditScene(selectedScene);
+            });
+
             Log.d(TAG, "Loaded " + sceneFileNames.size() + " scenes");
         } else {
             Log.e(TAG, "Scenes ListView not found!");
@@ -61,5 +70,16 @@ public class SceneListActivity extends AppCompatActivity {
             Toast.makeText(this, "Failed to load scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
         return sceneFileNames;
+    }
+
+    private void openEditScene(String sceneFileName) {
+        try {
+            Intent intent = new Intent(this, EditSceneActivity.class);
+            intent.putExtra(EditSceneActivity.EXTRA_SCENE_FILE_NAME, sceneFileName);
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e(TAG, "Error opening edit scene: " + e.getMessage(), e);
+            Toast.makeText(this, "Failed to open scene editor: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 }

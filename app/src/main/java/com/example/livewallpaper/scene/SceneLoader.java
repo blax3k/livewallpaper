@@ -40,9 +40,12 @@ public class SceneLoader {
         SceneData sceneData = parseSceneData(filePath);
         validateSceneData(sceneData, filePath);
 
-        Scene scene = new Scene(sceneData.sceneName);
+        // Derive scene name from filename (remove .json extension if present)
+        String sceneName = fileName.endsWith(".json") ? fileName.substring(0, fileName.length() - 5) : fileName;
+
+        Scene scene = new Scene(sceneName);
         applySceneSettings(scene, sceneData);
-        populateSprites(scene, sceneData);
+        populateSprites(scene, sceneData, sceneName);
 
         Log.d(TAG, "Successfully loaded scene '" + scene.getSceneName() + "' with "
             + scene.getSprites().size() + " sprites");
@@ -69,9 +72,6 @@ public class SceneLoader {
             throw new IllegalArgumentException("Failed to parse JSON from: " + filePath);
         }
 
-        if (sceneData.sceneName == null || sceneData.sceneName.isEmpty()) {
-            throw new IllegalArgumentException("Scene name is required in JSON: " + filePath);
-        }
 
         if (sceneData.sprites == null) {
             throw new IllegalArgumentException("Sprites array is required in JSON: " + filePath);
@@ -90,9 +90,9 @@ public class SceneLoader {
     /**
      * Create and add sprites to the scene from sprite data.
      */
-    private void populateSprites(Scene scene, SceneData sceneData) {
+    private void populateSprites(Scene scene, SceneData sceneData, String sceneName) {
         for (SpriteData spriteData : sceneData.sprites) {
-            Sprite sprite = createSpriteFromData(spriteData, sceneData.sceneName);
+            Sprite sprite = createSpriteFromData(spriteData, sceneName);
             if (sprite != null) {
                 scene.addSprite(sprite);
             }

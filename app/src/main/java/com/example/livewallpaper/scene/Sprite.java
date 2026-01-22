@@ -21,13 +21,14 @@ public class Sprite {
     private int textureId = 0;
     private final int textureResourceId;
     private final String name;
+    private final String textureResource;
 
     // Sprite properties for positioning and sizing
     private float positionX;
     private float positionY;
     private float width;
     private float height;
-    private final float parallaxMultiplier;
+    private float parallaxMultiplier;
 
     // Wipe animation handling
     private final SpriteWipe spriteWipe = new SpriteWipe();
@@ -49,7 +50,7 @@ public class Sprite {
      */
     public Sprite(SpriteData config) {
         this(config.textureResourceId, config.name, config.width, config.height,
-             config.parallaxMultiplier, config.positionX, config.positionY, 1.0f);
+             config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource);
     }
 
     /**
@@ -64,10 +65,12 @@ public class Sprite {
      * @param positionX the x position in world units
      * @param positionY the y position in world units
      * @param gyroScaleFactor the gyro scale factor to apply (1.0 = no scaling, >1.0 = enlarged for gyro motion)
+     * @param textureResource the texture resource name (e.g., "background", "player")
      */
-    public Sprite(int textureResourceId, String name, float width, float height, float parallaxMultiplier, float positionX, float positionY, float gyroScaleFactor) {
+    public Sprite(int textureResourceId, String name, float width, float height, float parallaxMultiplier, float positionX, float positionY, float gyroScaleFactor, String textureResource) {
         this.textureResourceId = textureResourceId;
         this.name = name;
+        this.textureResource = textureResource;
         this.width = width;
         this.height = height;
         this.originalWidth = width;
@@ -186,6 +189,62 @@ public class Sprite {
     }
 
     /**
+     * Set only the X position of this sprite.
+     *
+     * @param x the x position in world units
+     */
+    public void setPositionX(float x) {
+        setPosition(x, this.positionY);
+    }
+
+    /**
+     * Set only the Y position of this sprite.
+     *
+     * @param y the y position in world units
+     */
+    public void setPositionY(float y) {
+        setPosition(this.positionX, y);
+    }
+
+    /**
+     * Set the width of this sprite.
+     *
+     * @param width the width in world units
+     */
+    public void setWidth(float width) {
+        this.width = width;
+        updateVertexBuffer();
+    }
+
+    /**
+     * Set the height of this sprite.
+     *
+     * @param height the height in world units
+     */
+    public void setHeight(float height) {
+        this.height = height;
+        updateVertexBuffer();
+    }
+
+    /**
+     * Set the parallax multiplier for this sprite.
+     * Controls how much the sprite moves relative to scrolling (1.0 = full scroll, 0.5 = half, etc.)
+     *
+     * @param parallaxMultiplier the parallax multiplier value
+     */
+    public void setParallaxMultiplier(float parallaxMultiplier) {
+        this.parallaxMultiplier = parallaxMultiplier;
+
+        // Update the parallax multiplier buffer for rendering
+        if (parallaxMultiplierBuffer != null) {
+            float[] parallaxMultipliers = {parallaxMultiplier, parallaxMultiplier, parallaxMultiplier, parallaxMultiplier};
+            parallaxMultiplierBuffer.clear();
+            parallaxMultiplierBuffer.put(parallaxMultipliers);
+            parallaxMultiplierBuffer.position(0);
+        }
+    }
+
+    /**
      * Scale this sprite by a factor relative to its original dimensions.
      * For example, a factor of 1.2f will scale the sprite to 120% of its original size.
      * This is useful for expanding sprites when gyro motion is enabled.
@@ -239,8 +298,17 @@ public class Sprite {
     public float getPositionY() {
         return positionY;
     }
+    public float getWidth() {
+        return width;
+    }
+    public float getHeight() {
+        return height;
+    }
     public String getName() {
         return name;
+    }
+    public String getTextureResource() {
+        return textureResource;
     }
     /**
      * Get the texture resource id (original drawable id).

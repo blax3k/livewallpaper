@@ -12,22 +12,17 @@ import com.example.livewallpaper.gl.TextureManager;
  */
 public class SceneManager {
     private static final String TAG = "SceneManager";
-
-    // Array of available scenes to cycle through
-    private static final String[] SCENE_FILES = {
-            "girl_eating.json",
-            "girl_sleeping.json",
-            "girl_back.json",
-            "girl_leaning.json",
-            "girl_smoking.json",
-    };
+    private static final String SCENES_FOLDER = "scenes";
 
     private final Context context;
     private final SceneLoader sceneLoader;
     private final TextureManager textureManager;
     private final SceneTransitionManager transitionManager;
 
-    // Current index in the SCENE_FILES array
+    // Dynamically loaded list of available scene files
+    private String[] sceneFiles;
+
+    // Current index in the sceneFiles array
     private int currentSceneIndex = 0;
 
     // Reference to the current scene (updated externally)
@@ -48,6 +43,45 @@ public class SceneManager {
         this.sceneLoader = new SceneLoader(context);
         this.textureManager = new TextureManager();
         this.transitionManager = new SceneTransitionManager(textureManager);
+        this.sceneFiles = loadAvailableSceneFiles();
+    }
+
+    /**
+     * Load all available .json files from the scenes folder in assets.
+     *
+     * @return array of scene filenames, sorted alphabetically
+     */
+    private String[] loadAvailableSceneFiles() {
+        try {
+            String[] files = context.getAssets().list(SCENES_FOLDER);
+            if (files == null || files.length == 0) {
+                Log.w(TAG, "No scene files found in assets/" + SCENES_FOLDER);
+                return new String[0];
+            }
+
+            // Filter for .json files and sort
+            java.util.List<String> jsonFiles = new java.util.ArrayList<>();
+            for (String file : files) {
+                if (file.endsWith(".json")) {
+                    jsonFiles.add(file);
+                }
+            }
+
+            if (jsonFiles.isEmpty()) {
+                Log.w(TAG, "No .json files found in assets/" + SCENES_FOLDER);
+                return new String[0];
+            }
+
+            // Sort alphabetically for consistent ordering
+            java.util.Collections.sort(jsonFiles);
+
+            Log.d(TAG, "Found " + jsonFiles.size() + " scene files: " + jsonFiles);
+            return jsonFiles.toArray(new String[0]);
+
+        } catch (java.io.IOException e) {
+            Log.e(TAG, "Failed to load scene files from assets", e);
+            return new String[0];
+        }
     }
 
     /**
@@ -55,7 +89,10 @@ public class SceneManager {
      * @return the filename of the first scene to display
      */
     public String getInitialSceneFile() {
-        return SCENE_FILES[0];
+        if (sceneFiles.length == 0) {
+            throw new RuntimeException("No scene files found in assets/" + SCENES_FOLDER);
+        }
+        return sceneFiles[0];
     }
 
     /**
@@ -74,11 +111,16 @@ public class SceneManager {
      */
     public void initialize(Scene initialScene) {
         this.currentScene = initialScene;
-        // Find the index of the current scene
+        // Find the index of the current scene in the dynamically loaded list
         String sceneName = initialScene.getSceneName();
-        for (int i = 0; i < SCENE_FILES.length; i++) {
-            if (SCENE_FILES[i].equals(sceneName) || sceneName.contains(SCENE_FILES[i])) {
+        for (int i = 0; i < sceneFiles.length; i++) {
+            String fileName = sceneFiles[i];
+            String fileNameWithoutExtension = fileName.endsWith(".json") ?
+                fileName.substring(0, fileName.length() - 5) : fileName;
+
+            if (fileNameWithoutExtension.equals(sceneName)) {
                 currentSceneIndex = i;
+                Log.d(TAG, "Initialized scene manager at index " + i + " (" + fileName + ")");
                 break;
             }
         }
@@ -108,23 +150,32 @@ public class SceneManager {
      * @param worldHeight The world height for gyro scaling calculations
      */
     public void cycleToNextScene(Scene currentScene, float worldHeight) {
+        if (sceneFiles.length == 0) {
+            Log.w(TAG, "No scene files available to cycle through");
+            return;
+        }
+
         // Ensure currentScene is set to what's actually being displayed
         this.currentScene = currentScene;
 
         // Update index to match the current scene being displayed
         String sceneName = currentScene.getSceneName();
-        for (int i = 0; i < SCENE_FILES.length; i++) {
-            if (SCENE_FILES[i].equals(sceneName) || sceneName.contains(SCENE_FILES[i])) {
+        for (int i = 0; i < sceneFiles.length; i++) {
+            String fileName = sceneFiles[i];
+            String fileNameWithoutExtension = fileName.endsWith(".json") ?
+                fileName.substring(0, fileName.length() - 5) : fileName;
+
+            if (fileNameWithoutExtension.equals(sceneName)) {
                 currentSceneIndex = i;
                 break;
             }
         }
 
         // Move to next scene index, wrapping around
-        currentSceneIndex = (currentSceneIndex + 1) % SCENE_FILES.length;
-        String nextSceneFile = SCENE_FILES[currentSceneIndex];
+        currentSceneIndex = (currentSceneIndex + 1) % sceneFiles.length;
+        String nextSceneFile = sceneFiles[currentSceneIndex];
 
-        Log.d(TAG, "Cycling to next scene: " + nextSceneFile + " (from index " + ((currentSceneIndex - 1 + SCENE_FILES.length) % SCENE_FILES.length) + ")");
+        Log.d(TAG, "Cycling to next scene: " + nextSceneFile + " (index " + currentSceneIndex + ")");
 
         try {
             // Load the next scene WITHOUT initializing textures yet
