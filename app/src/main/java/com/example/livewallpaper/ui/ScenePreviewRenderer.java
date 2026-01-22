@@ -101,6 +101,11 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
             return;
         }
 
+        // Process any pending texture uploads from async loading
+        if (textureManager != null) {
+            textureManager.processPendingUploads();
+        }
+
         // Check if we need to re-sort sprites (from main thread request)
         if (shouldResortSprites) {
             currentScene.sortSpritesByParallax();
