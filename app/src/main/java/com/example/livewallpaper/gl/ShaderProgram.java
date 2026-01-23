@@ -100,13 +100,21 @@ public class ShaderProgram {
         // wipeDirection: 1.0 = fade out (wipe erases from top-left to bottom-right)
         //               -1.0 = fade in (wipe reveals from top-left to bottom-right)
         //                0.0 = no wipe effect (fully visible)
+        // useColorOverride: 1.0 = use overrideColor instead of texture
         return "precision mediump float;"
                 + "uniform sampler2D samplerTexture;"
                 + "uniform float wipeProgress;"
                 + "uniform float wipeDirection;"
+                + "uniform vec4 overrideColor;"
+                + "uniform float useColorOverride;"
                 + "varying vec2 texCoord;"
                 + "void main() {"
-                + "  vec4 texColor = texture2D(samplerTexture, texCoord);"
+                + "  vec4 texColor;"
+                + "  if (useColorOverride > 0.5) {"
+                + "    texColor = overrideColor;"
+                + "  } else {"
+                + "    texColor = texture2D(samplerTexture, texCoord);"
+                + "  }"
                 // Calculate diagonal position: 0.0 at top-left, 1.0 at bottom-right
                 // texCoord: x goes 0->1 left to right, y goes 0->1 bottom to top
                 // So top-left is (0,1), bottom-right is (1,0)

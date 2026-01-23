@@ -16,6 +16,8 @@ public class Handles {
     public int positionHandle;
     public int wipeProgressHandle;
     public int wipeDirectionHandle;
+    public int overrideColorHandle;
+    public int useColorOverrideHandle;
 
     public Handles(int program)
     {
@@ -48,6 +50,12 @@ public class Handles {
 
         wipeDirectionHandle = GLES20.glGetUniformLocation(program, "wipeDirection");
         Log.d(TAG, "wipeDirectionHandle: " + wipeDirectionHandle);
+
+        overrideColorHandle = GLES20.glGetUniformLocation(program, "overrideColor");
+        Log.d(TAG, "overrideColorHandle: " + overrideColorHandle);
+
+        useColorOverrideHandle = GLES20.glGetUniformLocation(program, "useColorOverride");
+        Log.d(TAG, "useColorOverrideHandle: " + useColorOverrideHandle);
 
         // Check for any -1 values which indicate errors
         if (positionHandle == -1 || texCoordHandle == -1 || samplerHandle == -1) {

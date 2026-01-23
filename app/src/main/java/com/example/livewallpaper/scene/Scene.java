@@ -135,6 +135,23 @@ public class Scene {
     }
 
     /**
+     * Reload textures for all sprites after surface recreation (e.g., pause/resume).
+     * Preserves all sprite properties and doesn't reset initialization state.
+     *
+     * @param context the Android context for loading resources
+     * @param textureManager the texture manager for loading textures
+     */
+    public void reloadTextures(Context context, TextureManager textureManager) {
+        Log.d(TAG, "Reloading textures for scene '" + sceneName + "' with " + sprites.size() + " sprites");
+
+        for (Sprite sprite : sprites) {
+            loadSpriteTexture(context, textureManager, sprite);
+        }
+
+        Log.d(TAG, "Textures reloaded for scene '" + sceneName + "'");
+    }
+
+    /**
      * Load the texture for a sprite through the TextureManager asynchronously.
      * The texture will be applied to the sprite via callback when ready.
      *

@@ -18,6 +18,8 @@ public class Sprite {
     private FloatBuffer vertexBuffer;
     private FloatBuffer texCoordBuffer;
     private FloatBuffer parallaxMultiplierBuffer;
+    private FloatBuffer edgeLineBuffer;
+    private FloatBuffer edgeLineParallaxMultiplierBuffer;
     private int textureId = 0;
     private final int textureResourceId;
     private final String name;
@@ -42,6 +44,9 @@ public class Sprite {
     // Track gyro scaling state
     private boolean isGyroScaled = false;
 
+    // Edge highlight toggle for debug/edit view
+    private boolean showEdgeHighlight = false;
+
     /**
      * Constructor using a SpriteConfig object for cleaner initialization.
      * This is the primary constructor; all other initialization paths delegate here.
@@ -50,7 +55,7 @@ public class Sprite {
      */
     public Sprite(SpriteData config) {
         this(config.textureResourceId, config.name, config.width, config.height,
-             config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource);
+             config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource, config.texCoordinates);
     }
 
     /**
@@ -66,8 +71,9 @@ public class Sprite {
      * @param positionY the y position in world units
      * @param gyroScaleFactor the gyro scale factor to apply (1.0 = no scaling, >1.0 = enlarged for gyro motion)
      * @param textureResource the texture resource name (e.g., "background", "player")
+     * @param texCoordinates the texture coordinates array (8 floats) or null/empty for default
      */
-    public Sprite(int textureResourceId, String name, float width, float height, float parallaxMultiplier, float positionX, float positionY, float gyroScaleFactor, String textureResource) {
+    public Sprite(int textureResourceId, String name, float width, float height, float parallaxMultiplier, float positionX, float positionY, float gyroScaleFactor, String textureResource, float[] texCoordinates) {
         this.textureResourceId = textureResourceId;
         this.name = name;
         this.textureResource = textureResource;
@@ -80,7 +86,7 @@ public class Sprite {
         this.positionY = positionY;
         this.originalPositionX = positionX;
         this.originalPositionY = positionY;
-        initializeGeometry();
+        initializeGeometry(texCoordinates);
         // Apply gyro scaling if provided
         if (gyroScaleFactor > 1.0f) {
             applyGyroScaling(gyroScaleFactor);
@@ -92,8 +98,10 @@ public class Sprite {
     /**
      * Initialize vertex and texture coordinate buffers with default geometry.
      * Creates a unit square centered at the origin.
+     *
+     * @param customTexCoordinates optional custom texture coordinates (8 floats) or null for default
      */
-    private void initializeGeometry() {
+    private void initializeGeometry(float[] customTexCoordinates) {
         // Define square vertices (centered at position, width/height on each side)
         float halfWidth = width / 2f;
         float halfHeight = height / 2f;
@@ -111,13 +119,19 @@ public class Sprite {
         vertexBuffer.put(squareCoords);
         vertexBuffer.position(0);
 
-        // Define texture coordinates (full texture mapping)
-        float[] texCoords = {
-            0.0f, 1.0f,  // top left
-            0.0f, 0.0f,  // bottom left
-            1.0f, 1.0f,  // top right
-            1.0f, 0.0f   // bottom right
-        };
+        // Define texture coordinates (use custom if provided and non-empty, otherwise use default)
+        float[] texCoords;
+        if (customTexCoordinates != null && customTexCoordinates.length == 8) {
+            texCoords = customTexCoordinates;
+        } else {
+            // Default: full texture mapping
+            texCoords = new float[] {
+                0.0f, 1.0f,  // top left
+                0.0f, 0.0f,  // bottom left
+                1.0f, 1.0f,  // top right
+                1.0f, 0.0f   // bottom right
+            };
+        }
 
         ByteBuffer tbb = ByteBuffer.allocateDirect(texCoords.length * 4);
         tbb.order(ByteOrder.nativeOrder());
@@ -132,6 +146,28 @@ public class Sprite {
         parallaxMultiplierBuffer = pmbb.asFloatBuffer();
         parallaxMultiplierBuffer.put(parallaxMultipliers);
         parallaxMultiplierBuffer.position(0);
+
+        // Initialize edge line buffer for highlight outline (5 vertices to draw a closed box)
+        float[] edgeLineCoords = {
+            positionX - halfWidth,  positionY + halfHeight, 0.0f,  // top left
+            positionX + halfWidth,  positionY + halfHeight, 0.0f,  // top right
+            positionX + halfWidth,  positionY - halfHeight, 0.0f,  // bottom right
+            positionX - halfWidth,  positionY - halfHeight, 0.0f,  // bottom left
+            positionX - halfWidth,  positionY + halfHeight, 0.0f   // back to top left
+        };
+        ByteBuffer ebb = ByteBuffer.allocateDirect(edgeLineCoords.length * 4);
+        ebb.order(ByteOrder.nativeOrder());
+        edgeLineBuffer = ebb.asFloatBuffer();
+        edgeLineBuffer.put(edgeLineCoords);
+        edgeLineBuffer.position(0);
+
+        // Initialize parallax multiplier buffer for edge lines (5 vertices)
+        float[] edgeLineParallaxMultipliers = {parallaxMultiplier, parallaxMultiplier, parallaxMultiplier, parallaxMultiplier, parallaxMultiplier};
+        ByteBuffer epmbb = ByteBuffer.allocateDirect(edgeLineParallaxMultipliers.length * 4);
+        epmbb.order(ByteOrder.nativeOrder());
+        edgeLineParallaxMultiplierBuffer = epmbb.asFloatBuffer();
+        edgeLineParallaxMultiplierBuffer.put(edgeLineParallaxMultipliers);
+        edgeLineParallaxMultiplierBuffer.position(0);
     }
 
     /**
@@ -152,6 +188,18 @@ public class Sprite {
         vertexBuffer.position(0);
         vertexBuffer.put(squareCoords);
         vertexBuffer.position(0);
+
+        // Update edge line buffer as well
+        float[] edgeLineCoords = {
+            positionX - halfWidth,  positionY + halfHeight, 0.0f,  // top left
+            positionX + halfWidth,  positionY + halfHeight, 0.0f,  // top right
+            positionX + halfWidth,  positionY - halfHeight, 0.0f,  // bottom right
+            positionX - halfWidth,  positionY - halfHeight, 0.0f,  // bottom left
+            positionX - halfWidth,  positionY + halfHeight, 0.0f   // back to top left
+        };
+        edgeLineBuffer.position(0);
+        edgeLineBuffer.put(edgeLineCoords);
+        edgeLineBuffer.position(0);
     }
 
     /**
@@ -241,6 +289,14 @@ public class Sprite {
             parallaxMultiplierBuffer.clear();
             parallaxMultiplierBuffer.put(parallaxMultipliers);
             parallaxMultiplierBuffer.position(0);
+        }
+
+        // Update the edge line parallax multiplier buffer as well (5 vertices)
+        if (edgeLineParallaxMultiplierBuffer != null) {
+            float[] edgeLineParallaxMultipliers = {parallaxMultiplier, parallaxMultiplier, parallaxMultiplier, parallaxMultiplier, parallaxMultiplier};
+            edgeLineParallaxMultiplierBuffer.clear();
+            edgeLineParallaxMultiplierBuffer.put(edgeLineParallaxMultipliers);
+            edgeLineParallaxMultiplierBuffer.position(0);
         }
     }
 
@@ -402,13 +458,31 @@ public class Sprite {
     public FloatBuffer getVertexBuffer() { return vertexBuffer; }
     public FloatBuffer getTexCoordBuffer() { return texCoordBuffer; }
     public FloatBuffer getParallaxMultiplierBuffer() { return parallaxMultiplierBuffer; }
+    public FloatBuffer getEdgeLineBuffer() { return edgeLineBuffer; }
+    public FloatBuffer getEdgeLineParallaxMultiplierBuffer() { return edgeLineParallaxMultiplierBuffer; }
     public int getVertexCount() { return VERTEX_COUNT; }
+    public int getEdgeLineVertexCount() { return 5; }
 
     /**
      * Get the parallax multiplier value for this sprite.
      * Used for draw order sorting (lower values = further back, drawn first).
      */
     public float getParallaxMultiplier() { return parallaxMultiplier; }
+
+    /**
+     * Set whether to show the edge highlight for this sprite.
+     * @param show true to show green outline, false to hide
+     */
+    public void setShowEdgeHighlight(boolean show) {
+        this.showEdgeHighlight = show;
+    }
+
+    /**
+     * Check if edge highlight is enabled for this sprite.
+     */
+    public boolean isShowEdgeHighlight() {
+        return showEdgeHighlight;
+    }
 
     /**
      * Destroy this sprite and release its CPU-side resources.

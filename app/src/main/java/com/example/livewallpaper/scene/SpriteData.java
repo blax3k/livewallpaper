@@ -13,6 +13,7 @@ public class SpriteData {
     public float parallaxMultiplier;
     public float positionX;
     public float positionY;
+    public float[] texCoordinates;
 
     // Set after resource resolution
     public int textureResourceId;

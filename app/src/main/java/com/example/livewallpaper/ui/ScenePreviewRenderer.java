@@ -73,8 +73,18 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
         spriteRenderer = new SpriteRenderer(handles);
         Log.d(TAG, "SpriteRenderer created");
 
-        // Load the scene from the JSON file
-        loadScene();
+        // Load the scene from the JSON file only if not already loaded
+        // If the scene already exists, just reload textures and edge highlights
+        if (currentScene == null) {
+            loadScene();
+        } else {
+            Log.d(TAG, "Scene already loaded, reloading textures only");
+            currentScene.reloadTextures(context, textureManager);
+            // Re-enable edge highlights after surface recreation
+            for (Sprite sprite : currentScene.getSprites()) {
+                sprite.setShowEdgeHighlight(true);
+            }
+        }
 
         Log.d(TAG, "Surface created and scene loaded");
     }
@@ -141,6 +151,12 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
             if (currentScene != null) {
                 Log.d(TAG, "Scene loaded, initializing with " + currentScene.getSprites().size() + " sprites");
                 currentScene.initialize(context, textureManager);
+
+                // Enable edge highlights by default for all sprites in preview
+                for (Sprite sprite : currentScene.getSprites()) {
+                    sprite.setShowEdgeHighlight(true);
+                }
+
                 Log.d(TAG, "Successfully loaded and initialized scene: " + currentScene.getSceneName());
             } else {
                 Log.e(TAG, "SceneLoader returned null for scene: " + sceneFileName);
@@ -176,6 +192,32 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
      */
     public void requestSpriteResort() {
         shouldResortSprites = true;
+    }
+
+    /**
+     * Toggle edge highlights for all sprites in the current scene.
+     * Useful for viewing sprite boundaries in the edit view.
+     * This is safe to call from the main thread.
+     *
+     * @param showEdges true to show green outlines around sprites, false to hide them
+     */
+    public void toggleAllSpriteEdgeHighlights(boolean showEdges) {
+        if (currentScene != null) {
+            for (Sprite sprite : currentScene.getSprites()) {
+                sprite.setShowEdgeHighlight(showEdges);
+            }
+        }
+    }
+
+    /**
+     * Check if edge highlights are currently shown for any sprite.
+     * Returns the state of the first sprite (if all are consistent).
+     */
+    public boolean areEdgeHighlightsShown() {
+        if (currentScene != null && !currentScene.getSprites().isEmpty()) {
+            return currentScene.getSprites().get(0).isShowEdgeHighlight();
+        }
+        return false;
     }
 
     /**
