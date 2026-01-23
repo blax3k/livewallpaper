@@ -12,11 +12,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ListView;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -39,9 +41,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     private SensorManager sensorManager;
     private Sensor gyroscopeSensor;
     private List<Sprite> allSprites;
+    private Spinner spritesSpinner;
     private LinearLayout spritesListContainer;
-    private LinearLayout spriteDetailsContainer;
-    private Button backToListButton;
+    private ScrollView spriteDetailsContainer;
     private Sprite currentSprite;
     private SeekBar positionXSlider;
     private TextView positionXValue;
@@ -100,9 +102,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         Log.d(TAG, "Edit scene layout inflated successfully");
 
         // Initialize view references
+        spritesSpinner = findViewById(R.id.sprites_spinner);
         spritesListContainer = findViewById(R.id.sprites_list_container);
         spriteDetailsContainer = findViewById(R.id.sprite_details_container);
-        backToListButton = findViewById(R.id.back_to_list_button);
         positionXSlider = findViewById(R.id.position_x_slider);
         positionXValue = findViewById(R.id.position_x_value);
         positionYSlider = findViewById(R.id.position_y_slider);
@@ -113,11 +115,6 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         heightValue = findViewById(R.id.height_value);
         parallaxMultiplierSlider = findViewById(R.id.parallax_multiplier_slider);
         parallaxMultiplierValue = findViewById(R.id.parallax_multiplier_value);
-
-        // Set up back button
-        if (backToListButton != null) {
-            backToListButton.setOnClickListener(v -> showSpritesList());
-        }
 
         // Initialize sensor manager
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -181,8 +178,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     }
 
     private void populateSpritesListView() {
-        ListView spritesList = findViewById(R.id.sprites_list_view);
-        if (spritesList != null && renderer != null) {
+        if (spritesSpinner != null && renderer != null) {
             try {
                 // Get the scene from the renderer
                 allSprites = new ArrayList<>(renderer.getCurrentScene().getSprites());
@@ -196,21 +192,28 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 // Create and set the adapter
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(
                     this,
-                    android.R.layout.simple_list_item_1,
+                    android.R.layout.simple_spinner_item,
                     spriteNames
                 );
-                spritesList.setAdapter(adapter);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spritesSpinner.setAdapter(adapter);
 
-                // Set up item click listener
-                spritesList.setOnItemClickListener((parent, view, position, id) -> {
-                    if (position < allSprites.size()) {
-                        showSpriteDetails(allSprites.get(position));
+                // Set up item selection listener
+                spritesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        if (position < allSprites.size()) {
+                            showSpriteDetails(allSprites.get(position));
+                        }
                     }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {}
                 });
 
-                Log.d(TAG, "Sprites list populated with " + spriteNames.size() + " items");
+                Log.d(TAG, "Sprites spinner populated with " + spriteNames.size() + " items");
             } catch (Exception e) {
-                Log.e(TAG, "Error populating sprites list: " + e.getMessage(), e);
+                Log.e(TAG, "Error populating sprites spinner: " + e.getMessage(), e);
                 Toast.makeText(this, "Error loading sprite list: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
@@ -259,9 +262,8 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 true
             ));
 
-            // Switch to details view
-            if (spritesListContainer != null && spriteDetailsContainer != null) {
-                spritesListContainer.setVisibility(View.GONE);
+            // Show details view
+            if (spriteDetailsContainer != null) {
                 spriteDetailsContainer.setVisibility(View.VISIBLE);
                 Log.d(TAG, "Showing details for sprite: " + sprite.getName());
             }
@@ -397,13 +399,6 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         table.addView(row);
     }
 
-    private void showSpritesList() {
-        if (spritesListContainer != null && spriteDetailsContainer != null) {
-            spriteDetailsContainer.setVisibility(View.GONE);
-            spritesListContainer.setVisibility(View.VISIBLE);
-            Log.d(TAG, "Showing sprites list");
-        }
-    }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
