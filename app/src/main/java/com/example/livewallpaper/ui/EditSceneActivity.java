@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
@@ -43,17 +44,17 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     private Sensor gyroscopeSensor;
     private List<Sprite> allSprites;
     private Spinner spritesSpinner;
-    private LinearLayout spritesListContainer;
     private ScrollView spriteDetailsContainer;
     private Sprite currentSprite;
+    private float originalAspectRatio = 1.0f;
     private SeekBar positionXSlider;
     private TextView positionXValue;
     private SeekBar positionYSlider;
     private TextView positionYValue;
-    private SeekBar widthSlider;
-    private TextView widthValue;
-    private SeekBar heightSlider;
-    private TextView heightValue;
+    private SeekBar scaleSlider;
+    private TextView scaleValue;
+    private EditText widthEdit;
+    private EditText heightEdit;
     private SeekBar parallaxMultiplierSlider;
     private TextView parallaxMultiplierValue;
 
@@ -104,16 +105,15 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
         // Initialize view references
         spritesSpinner = findViewById(R.id.sprites_spinner);
-        spritesListContainer = findViewById(R.id.sprites_list_container);
         spriteDetailsContainer = findViewById(R.id.sprite_details_container);
         positionXSlider = findViewById(R.id.position_x_slider);
         positionXValue = findViewById(R.id.position_x_value);
         positionYSlider = findViewById(R.id.position_y_slider);
         positionYValue = findViewById(R.id.position_y_value);
-        widthSlider = findViewById(R.id.width_slider);
-        widthValue = findViewById(R.id.width_value);
-        heightSlider = findViewById(R.id.height_slider);
-        heightValue = findViewById(R.id.height_value);
+        scaleSlider = findViewById(R.id.scale_slider);
+        scaleValue = findViewById(R.id.scale_value);
+        widthEdit = findViewById(R.id.width_edit);
+        heightEdit = findViewById(R.id.height_edit);
         parallaxMultiplierSlider = findViewById(R.id.parallax_multiplier_slider);
         parallaxMultiplierValue = findViewById(R.id.parallax_multiplier_value);
 
@@ -240,22 +240,21 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             ));
 
             setupGenericSlider(new SliderConfig(
-                positionYSlider, positionYValue, -5f, 5f, 0.1f, "Position Y",
+                positionYSlider, positionYValue, -15f, 15f, 0.25f, "Position Y",
                 v -> currentSprite.setPositionY(v),
                 () -> currentSprite.getPositionY()
             ));
 
-            setupGenericSlider(new SliderConfig(
-                widthSlider, widthValue, 0.5f, 20f, 0.1f, "Width",
-                v -> currentSprite.setWidth(v),
-                () -> currentSprite.getWidth()
-            ));
+            // Store original aspect ratio for scale functionality
+            float currentWidth = currentSprite.getWidth();
+            float currentHeight = currentSprite.getHeight();
+            originalAspectRatio = currentHeight > 0 ? currentWidth / currentHeight : 1.0f;
 
-            setupGenericSlider(new SliderConfig(
-                heightSlider, heightValue, 0.5f, 20f, 0.1f, "Height",
-                v -> currentSprite.setHeight(v),
-                () -> currentSprite.getHeight()
-            ));
+            // Set up scale slider (0.1x to 5.0x)
+            setupScaleSlider();
+
+            // Set up width and height edit fields with proportional updates
+            setupDimensionEditFields();
 
             setupGenericSlider(new SliderConfig(
                 parallaxMultiplierSlider, parallaxMultiplierValue, 0.1f, 2.0f, 0.01f, "Parallax Multiplier",
@@ -370,6 +369,272 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         builder.show();
     }
 
+    /**
+     * Set up the scale slider that scales both width and height proportionally
+     * while maintaining the original aspect ratio.
+     * Scale range: 0.2x to 15x
+     * Increments: 0.1x per tick
+     */
+    private void setupScaleSlider() {
+        if (scaleSlider == null || scaleValue == null || currentSprite == null) {
+            return;
+        }
+
+        scaleSlider.setOnSeekBarChangeListener(null);
+
+        // Fixed scale range for all sprites
+        float minScale = 0.2f;
+        float maxScale = 15.0f;
+        float increment = 0.1f;
+
+        // Calculate initial scale based on the larger dimension
+        float currentWidth = currentSprite.getWidth();
+        float currentHeight = currentSprite.getHeight();
+        float largerDimension = Math.max(currentWidth, currentHeight);
+        float initialScale = largerDimension; // Scale = larger dimension / 1.0
+
+        // Clamp to valid range
+        initialScale = Math.max(minScale, Math.min(maxScale, initialScale));
+
+        // Calculate scale range and slider max
+        float scaleRange = maxScale - minScale;
+        int maxProgress = (int) (scaleRange / increment);
+
+        // Set slider position
+        int sliderProgress = (int) ((initialScale - minScale) / increment);
+        sliderProgress = Math.max(0, Math.min(maxProgress, sliderProgress));
+        scaleSlider.setMax(maxProgress);
+        scaleSlider.setProgress(sliderProgress);
+
+        // Update the display text with the initial scale
+        updateScaleDisplay(initialScale);
+
+        // Set up click listener for manual editing
+        scaleValue.setOnClickListener(v -> showScaleEditDialog(currentWidth, currentHeight));
+
+        // Set up slider listener with calculated range
+        setupScaleSliderListener(minScale, maxScale, increment);
+    }
+
+    /**
+     * Set up the width and height edit fields with proportional update logic.
+     * When one is edited, the other updates to maintain aspect ratio.
+     */
+    private void setupDimensionEditFields() {
+        if (widthEdit == null || heightEdit == null || currentSprite == null) {
+            return;
+        }
+
+        float currentWidth = currentSprite.getWidth();
+        float currentHeight = currentSprite.getHeight();
+
+        updateDimensionDisplays(currentWidth, currentHeight);
+
+        // Width field focus change listener
+        widthEdit.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && currentSprite != null) {
+                try {
+                    float newWidth = Float.parseFloat(widthEdit.getText().toString());
+                    float newHeight = newWidth / originalAspectRatio;
+
+                    currentSprite.setWidth(newWidth);
+                    currentSprite.setHeight(newHeight);
+
+                    updateDimensionDisplays(newWidth, newHeight);
+
+                    Log.d(TAG, "Width updated from EditText: " + newWidth + ", Height: " + newHeight);
+                } catch (NumberFormatException e) {
+                    Log.e(TAG, "Invalid width input");
+                    updateDimensionDisplays(currentSprite.getWidth(), currentSprite.getHeight());
+                }
+            }
+        });
+
+        // Height field focus change listener
+        heightEdit.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && currentSprite != null) {
+                try {
+                    float newHeight = Float.parseFloat(heightEdit.getText().toString());
+                    float newWidth = newHeight * originalAspectRatio;
+
+                    currentSprite.setWidth(newWidth);
+                    currentSprite.setHeight(newHeight);
+
+                    updateDimensionDisplays(newWidth, newHeight);
+
+                    Log.d(TAG, "Height updated from EditText: " + newHeight + ", Width: " + newWidth);
+                } catch (NumberFormatException e) {
+                    Log.e(TAG, "Invalid height input");
+                    updateDimensionDisplays(currentSprite.getWidth(), currentSprite.getHeight());
+                }
+            }
+        });
+    }
+
+    /**
+     * Show dialog for manually editing the scale value.
+     */
+    private void showScaleEditDialog(float baseWidth, float baseHeight) {
+        final android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Edit Scale");
+
+        final android.widget.EditText input = new android.widget.EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER |
+                          android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setText("1.00");
+        input.selectAll();
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            try {
+                float scale = Float.parseFloat(input.getText().toString());
+
+                float newWidth = baseWidth * scale;
+                float newHeight = baseHeight * scale;
+
+                currentSprite.setWidth(newWidth);
+                currentSprite.setHeight(newHeight);
+
+                updateScaleDisplay(scale);
+                updateDimensionDisplays(newWidth, newHeight);
+
+                // Recalculate scale slider range and update display
+                updateScaleSliderDisplay();
+
+                Log.d(TAG, "Scale manually edited to: " + scale);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Invalid number", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Invalid scale input: " + e.getMessage());
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
+
+    /**
+     * Update the scale display value.
+     */
+    private void updateScaleDisplay(float scale) {
+        if (scaleValue != null) {
+            scaleValue.setText(String.format("%.2fx", scale));
+        }
+    }
+
+    /**
+     * Update both width and height display fields.
+     */
+    private void updateDimensionDisplays(float width, float height) {
+        if (widthEdit != null) {
+            widthEdit.setText(String.format("%.2f", width));
+        }
+        if (heightEdit != null) {
+            heightEdit.setText(String.format("%.2f", height));
+        }
+    }
+
+    /**
+     * Update the scale slider and display to match the current sprite dimensions.
+     * This synchronizes the scale slider when sprite properties are loaded or updated
+     * from external sources (e.g., EditTextureActivity).
+     */
+    private void updateScaleSliderDisplay() {
+        if (currentSprite == null || scaleSlider == null || scaleValue == null) {
+            return;
+        }
+
+        // Fixed scale range for all sprites
+        float minScale = 0.2f;
+        float maxScale = 15.0f;
+        float increment = 0.1f;
+
+        // Get current dimensions
+        float currentWidth = currentSprite.getWidth();
+        float currentHeight = currentSprite.getHeight();
+
+        // Calculate scale based on the larger dimension divided by 1.0
+        // This represents how much larger the sprite is than the base size of 1.0
+        float largerDimension = Math.max(currentWidth, currentHeight);
+        float scale = largerDimension; // Scale = larger dimension / 1.0
+
+        // Clamp scale to valid range
+        scale = Math.max(minScale, Math.min(maxScale, scale));
+
+        // Calculate the scale range and slider max
+        float scaleRange = maxScale - minScale;
+        int maxProgress = (int) (scaleRange / increment);
+
+        // Update slider position: (scale - minScale) / increment = progress
+        int sliderProgress = (int) ((scale - minScale) / increment);
+        sliderProgress = Math.max(0, Math.min(maxProgress, sliderProgress));
+
+        scaleSlider.setOnSeekBarChangeListener(null); // Temporarily disable listener
+        scaleSlider.setMax(maxProgress);
+        scaleSlider.setProgress(sliderProgress);
+
+        // Re-enable listener with updated range
+        setupScaleSliderListener(minScale, maxScale, increment);
+
+        // Update display text
+        updateScaleDisplay(scale);
+        updateDimensionDisplays(currentWidth, currentHeight);
+
+        Log.d(TAG, "Updated scale slider display - Scale: " + scale + "x, Width: " + currentWidth + ", Height: " + currentHeight);
+    }
+
+    /**
+     * Set up the slider listener for scale changes.
+     * Extracted as a separate method to allow re-enabling after updates.
+     *
+     * @param minScale the minimum scale value
+     * @param maxScale the maximum scale value
+     * @param increment the increment per slider unit
+     */
+    private void setupScaleSliderListener(float minScale, float maxScale, float increment) {
+        if (scaleSlider == null || currentSprite == null) {
+            return;
+        }
+
+        scaleSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser && currentSprite != null) {
+                    // Calculate desired scale based on slider progress and dynamic range
+                    float desiredScale = minScale + (progress * increment);
+                    desiredScale = Math.max(minScale, Math.min(maxScale, desiredScale));
+
+                    // Get current dimensions and calculate the base size (when larger dimension = 1.0)
+                    float currentWidth = currentSprite.getWidth();
+                    float currentHeight = currentSprite.getHeight();
+                    float largerDimension = Math.max(currentWidth, currentHeight);
+
+                    // Calculate what the base dimensions would be (where larger = 1.0)
+                    float scaleFactor = 1.0f / largerDimension;
+                    float baseWidth = currentWidth * scaleFactor;
+                    float baseHeight = currentHeight * scaleFactor;
+
+                    // Apply desired scale to base dimensions
+                    float newWidth = baseWidth * desiredScale;
+                    float newHeight = baseHeight * desiredScale;
+
+                    currentSprite.setWidth(newWidth);
+                    currentSprite.setHeight(newHeight);
+
+                    updateScaleDisplay(desiredScale);
+                    updateDimensionDisplays(newWidth, newHeight);
+
+                    Log.d(TAG, "Scale changed to: " + desiredScale + "x, Width: " + newWidth + ", Height: " + newHeight);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+    }
+
     private void addPropertyRow(TableLayout table, String label, String value) {
         TableRow row = new TableRow(this);
         row.setLayoutParams(new TableLayout.LayoutParams(
@@ -439,6 +704,12 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         Intent intent = new Intent(this, EditTextureActivity.class);
         intent.putExtra(EditTextureActivity.EXTRA_SPRITE_NAME, currentSprite.getName());
         intent.putExtra(EditTextureActivity.EXTRA_SCENE_FILE_NAME, getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME));
+        // Pass current sprite dimensions and texture coordinate values so they're preserved in the preview
+        intent.putExtra(EditTextureActivity.EXTRA_WIDTH, currentSprite.getWidth());
+        intent.putExtra(EditTextureActivity.EXTRA_HEIGHT, currentSprite.getHeight());
+        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_SCALE, currentSprite.getTextureScale());
+        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_OFFSET_U, currentSprite.getTextureOffsetU());
+        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_OFFSET_V, currentSprite.getTextureOffsetV());
         startActivityForResult(intent, 100); // Request code 100 for texture editing
     }
 
@@ -559,12 +830,15 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             spriteData.positionX = sprite.getPositionX();
             spriteData.positionY = sprite.getPositionY();
             spriteData.parallaxMultiplier = sprite.getParallaxMultiplier();
+            spriteData.texCoordinates = sprite.getTextureCoordinates();
             spriteDatas.add(spriteData);
         }
         sceneData.sprites = spriteDatas.toArray(new com.example.livewallpaper.scene.SpriteData[0]);
 
-        // Serialize to JSON
-        com.google.gson.Gson gson = new com.google.gson.Gson();
+        // Serialize to JSON with pretty printing for readability
+        com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
+            .setPrettyPrinting()
+            .create();
         String sceneJson = gson.toJson(sceneData);
 
         // Get Downloads folder
@@ -613,6 +887,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 Log.d(TAG, "Applied texture edits from EditTextureActivity to sprite: " + spriteName +
                       " - Width: " + width + ", Height: " + height + ", TextureScale: " + textureScale +
                       ", OffsetU: " + textureOffsetU + ", OffsetV: " + textureOffsetV);
+
+                // Synchronize the scale slider and dimension displays with the new sprite dimensions
+                updateScaleSliderDisplay();
 
                 Toast.makeText(this, "Texture changes applied to sprite", Toast.LENGTH_SHORT).show();
 

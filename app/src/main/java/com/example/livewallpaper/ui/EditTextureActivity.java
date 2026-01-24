@@ -28,6 +28,11 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     private static final String TAG = "EditTextureActivity";
     public static final String EXTRA_SPRITE_NAME = "sprite_name";
     public static final String EXTRA_SCENE_FILE_NAME = "scene_file_name";
+    public static final String EXTRA_WIDTH = "width";
+    public static final String EXTRA_HEIGHT = "height";
+    public static final String EXTRA_TEXTURE_SCALE = "texture_scale";
+    public static final String EXTRA_TEXTURE_OFFSET_U = "texture_offset_u";
+    public static final String EXTRA_TEXTURE_OFFSET_V = "texture_offset_v";
 
     // Result data keys for passing sprite changes back to EditSceneActivity
     public static final String RESULT_SPRITE_NAME = "result_sprite_name";
@@ -55,6 +60,11 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     private float lastTouchY = 0;
     private boolean isTouching = false;
     private boolean hasUnsavedChanges = false;
+    private float passedWidth = 0.0f;
+    private float passedHeight = 0.0f;
+    private float passedTextureScale = 1.0f;
+    private float passedTextureOffsetU = 0.0f;
+    private float passedTextureOffsetV = 0.0f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +98,16 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             return;
         }
 
-        Log.d(TAG, "Sprite name: " + spriteName + ", Scene file: " + sceneFileName);
+        // Get texture coordinates from intent (if provided)
+        passedWidth = getIntent().getFloatExtra(EXTRA_WIDTH, 0.0f);
+        passedHeight = getIntent().getFloatExtra(EXTRA_HEIGHT, 0.0f);
+        passedTextureScale = getIntent().getFloatExtra(EXTRA_TEXTURE_SCALE, 1.0f);
+        passedTextureOffsetU = getIntent().getFloatExtra(EXTRA_TEXTURE_OFFSET_U, 0.0f);
+        passedTextureOffsetV = getIntent().getFloatExtra(EXTRA_TEXTURE_OFFSET_V, 0.0f);
+
+        Log.d(TAG, "Sprite name: " + spriteName + ", Scene file: " + sceneFileName +
+              ", Width: " + passedWidth + ", Height: " + passedHeight +
+              ", TextureScale: " + passedTextureScale + ", OffsetU: " + passedTextureOffsetU + ", OffsetV: " + passedTextureOffsetV);
 
         // Initialize sensor manager
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -154,6 +173,25 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 currentSprite = scene.getSprites().get(0);
 
                 if (currentSprite != null) {
+                    // Apply dimensions passed from EditSceneActivity
+                    if (passedWidth > 0) {
+                        currentSprite.setWidth(passedWidth);
+                    }
+                    if (passedHeight > 0) {
+                        currentSprite.setHeight(passedHeight);
+                    }
+
+                    // Apply texture coordinates passed from EditSceneActivity
+                    if (passedTextureScale > 0) {
+                        currentSprite.setTextureScale(passedTextureScale);
+                    }
+                    if (passedTextureOffsetU != 0) {
+                        currentSprite.setTextureOffsetU(passedTextureOffsetU);
+                    }
+                    if (passedTextureOffsetV != 0) {
+                        currentSprite.setTextureOffsetV(passedTextureOffsetV);
+                    }
+
                     // Set initial values
                     float currentWidth = currentSprite.getWidth();
                     float currentHeight = currentSprite.getHeight();
@@ -163,8 +201,10 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     widthSlider.setProgress(Math.round(currentWidth / 0.2f));
                     heightSlider.setProgress(Math.round(currentHeight / 0.2f));
 
-                    // Texture Scale: 0.0 to 8.0, increments of 0.2 (max slider value = 40)
-                    textureScaleSlider.setProgress(Math.round(currentTextureScale / 0.2f));
+                    // Texture Scale: 1.0 to 8.0, increments of 0.1 (max slider value = 70)
+                    // Formula: (currentTextureScale - 1.0) / 0.1 to get slider progress
+                    int textureScaleProgress = Math.round((currentTextureScale - 1.0f) / 0.1f);
+                    textureScaleSlider.setProgress(Math.max(0, Math.min(70, textureScaleProgress)));
 
                     updateWidthDisplay(currentWidth);
                     updateHeightDisplay(currentHeight);
@@ -217,7 +257,8 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                         @Override
                         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                             if (fromUser && currentSprite != null) {
-                                float scale = progress * 0.2f;
+                                // Texture scale: 1.0 + (progress * 0.1), range 1.0 to 8.0
+                                float scale = 1.0f + (progress * 0.1f);
                                 currentSprite.setTextureScale(scale);
                                 updateTextureScaleDisplay(scale);
                                 hasUnsavedChanges = true;

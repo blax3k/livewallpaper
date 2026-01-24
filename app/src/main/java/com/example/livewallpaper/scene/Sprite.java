@@ -677,6 +677,22 @@ public class Sprite {
     }
 
     /**
+     * Get the current texture coordinates as a float array (8 floats).
+     * Returns the current state of the texture coordinate buffer.
+     *
+     * @return an array of 8 floats representing the texture coordinates
+     */
+    public float[] getTextureCoordinates() {
+        if (texCoordBuffer == null) {
+            return null;
+        }
+        float[] texCoords = new float[8];
+        texCoordBuffer.position(0);
+        texCoordBuffer.get(texCoords);
+        return texCoords;
+    }
+
+    /**
      * Accessors for renderer to use the geometry buffers.
      */
     public FloatBuffer getVertexBuffer() { return vertexBuffer; }
