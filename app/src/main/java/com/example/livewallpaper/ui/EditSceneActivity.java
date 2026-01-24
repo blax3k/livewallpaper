@@ -1,6 +1,7 @@
 package com.example.livewallpaper.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -225,11 +226,13 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         if (propertiesTable != null) {
             propertiesTable.removeAllViews();
 
-            // Add only read-only properties to the table
+            // Add name as read-only property
             addPropertyRow(propertiesTable, "Name", sprite.getName());
-            addPropertyRow(propertiesTable, "Texture Resource", sprite.getTextureResource());
 
-            // Set up all editable sliders using generic method
+            // Add texture resource as a button
+            addPropertyButtonRow(propertiesTable, "Texture Resource");
+
+            // ...existing code...
             setupGenericSlider(new SliderConfig(
                 positionXSlider, positionXValue, -15f, 15f, 0.25f, "Position X",
                 v -> currentSprite.setPositionX(v),
@@ -399,6 +402,46 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         table.addView(row);
     }
 
+    private void addPropertyButtonRow(TableLayout table, String label) {
+        TableRow row = new TableRow(this);
+        row.setLayoutParams(new TableLayout.LayoutParams(
+            TableLayout.LayoutParams.MATCH_PARENT,
+            TableLayout.LayoutParams.WRAP_CONTENT
+        ));
+
+        // Label text view
+        TextView labelView = new TextView(this);
+        labelView.setText(label + ":");
+        labelView.setLayoutParams(new TableRow.LayoutParams(
+            TableRow.LayoutParams.WRAP_CONTENT,
+            TableRow.LayoutParams.WRAP_CONTENT
+        ));
+        labelView.setTypeface(null, Typeface.BOLD);
+        labelView.setPadding(8, 8, 8, 8);
+
+        // Button to open texture picker
+        Button textureButton = new Button(this);
+        textureButton.setText("Edit Texture");
+        textureButton.setLayoutParams(new TableRow.LayoutParams(
+            TableRow.LayoutParams.WRAP_CONTENT,
+            TableRow.LayoutParams.WRAP_CONTENT,
+            1.0f
+        ));
+        textureButton.setPadding(8, 8, 8, 8);
+        textureButton.setOnClickListener(v -> openTexturePicker());
+
+        row.addView(labelView);
+        row.addView(textureButton);
+        table.addView(row);
+    }
+
+    private void openTexturePicker() {
+        Intent intent = new Intent(this, EditTextureActivity.class);
+        intent.putExtra(EditTextureActivity.EXTRA_SPRITE_NAME, currentSprite.getName());
+        intent.putExtra(EditTextureActivity.EXTRA_SCENE_FILE_NAME, getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME));
+        startActivityForResult(intent, 100); // Request code 100 for texture editing
+    }
+
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -543,5 +586,40 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         }
 
         Log.d(TAG, "Scene saved to: " + sceneFile.getAbsolutePath());
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Handle result from EditTextureActivity (request code 100)
+        if (requestCode == 100 && resultCode == RESULT_OK && data != null && currentSprite != null) {
+            try {
+                // Extract the edited sprite data from the result intent
+                String spriteName = data.getStringExtra(EditTextureActivity.RESULT_SPRITE_NAME);
+                float width = data.getFloatExtra(EditTextureActivity.RESULT_WIDTH, currentSprite.getWidth());
+                float height = data.getFloatExtra(EditTextureActivity.RESULT_HEIGHT, currentSprite.getHeight());
+                float textureScale = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_SCALE, currentSprite.getTextureScale());
+                float textureOffsetU = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_U, 0f);
+                float textureOffsetV = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_V, 0f);
+
+                // Apply the changes to the current sprite
+                currentSprite.setWidth(width);
+                currentSprite.setHeight(height);
+                currentSprite.setTextureScale(textureScale);
+                currentSprite.setTextureOffsetU(textureOffsetU);
+                currentSprite.setTextureOffsetV(textureOffsetV);
+
+                Log.d(TAG, "Applied texture edits from EditTextureActivity to sprite: " + spriteName +
+                      " - Width: " + width + ", Height: " + height + ", TextureScale: " + textureScale +
+                      ", OffsetU: " + textureOffsetU + ", OffsetV: " + textureOffsetV);
+
+                Toast.makeText(this, "Texture changes applied to sprite", Toast.LENGTH_SHORT).show();
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error applying texture changes: " + e.getMessage(), e);
+                Toast.makeText(this, "Error applying changes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

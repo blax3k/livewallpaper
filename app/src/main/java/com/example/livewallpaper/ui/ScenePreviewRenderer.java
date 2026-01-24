@@ -29,7 +29,9 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
 
     private final Context context;
     private final String sceneFileName;
+    private final Scene preloadedScene;
     private Scene currentScene;
+    private String spriteNameToDisplay;
     private ShaderProgram shaderProgram;
     private Handles handles;
     private SpriteRenderer spriteRenderer;
@@ -42,6 +44,16 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
     public ScenePreviewRenderer(Context context, String sceneFileName) {
         this.context = context;
         this.sceneFileName = sceneFileName;
+        this.preloadedScene = null;
+        this.spriteNameToDisplay = null;
+        this.gyroProcessor = new GyroSensorProcessor();
+    }
+
+    public ScenePreviewRenderer(Context context, String sceneFileName, String spriteName) {
+        this.context = context;
+        this.sceneFileName = sceneFileName;
+        this.preloadedScene = null;
+        this.spriteNameToDisplay = spriteName;
         this.gyroProcessor = new GyroSensorProcessor();
     }
 
@@ -136,6 +148,7 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
         spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, WORLD_HEIGHT, spritesScaledForGyro);
 
         // Draw all sprites in the scene
+        // (If a specific sprite was requested, the scene was already filtered to contain only that sprite)
         for (Sprite sprite : currentScene.getSprites()) {
             spriteRenderer.drawSprite(sprite);
         }
@@ -143,14 +156,32 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
 
     private void loadScene() {
         try {
-            Log.d(TAG, "Loading scene: " + sceneFileName);
-            SceneLoader sceneLoader = new SceneLoader(context);
-            currentScene = sceneLoader.loadScene(sceneFileName);
+            // If a preloaded scene was provided, use it directly
+            if (preloadedScene != null) {
+                Log.d(TAG, "Using preloaded scene: " + preloadedScene.getSceneName());
+                currentScene = preloadedScene;
+            } else {
+                // Otherwise load from file
+                Log.d(TAG, "Loading scene from file: " + sceneFileName);
+                SceneLoader sceneLoader = new SceneLoader(context);
+                currentScene = sceneLoader.loadScene(sceneFileName);
+            }
 
             // Initialize the scene with TextureManager
             if (currentScene != null) {
                 Log.d(TAG, "Scene loaded, initializing with " + currentScene.getSprites().size() + " sprites");
                 currentScene.initialize(context, textureManager);
+
+                // If a specific sprite name is set, remove all other sprites and center it
+                if (spriteNameToDisplay != null) {
+                    currentScene.keepOnlySprite(spriteNameToDisplay);
+                    // Center the sprite at (0, 0) when viewing it alone
+                    if (!currentScene.getSprites().isEmpty()) {
+                        Sprite sprite = currentScene.getSprites().get(0);
+                        sprite.setPosition(0f, 0f);
+                        Log.d(TAG, "Sprite positioned at (0, 0) for single sprite preview");
+                    }
+                }
 
                 // Enable edge highlights by default for all sprites in preview
                 for (Sprite sprite : currentScene.getSprites()) {
@@ -159,7 +190,7 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
 
                 Log.d(TAG, "Successfully loaded and initialized scene: " + currentScene.getSceneName());
             } else {
-                Log.e(TAG, "SceneLoader returned null for scene: " + sceneFileName);
+                Log.e(TAG, "Failed to load scene");
                 currentScene = new Scene("Error");
             }
         } catch (Exception e) {

@@ -58,6 +58,17 @@ public class Scene {
     }
 
     /**
+     * Remove all sprites except the one with the specified name.
+     * Useful for preview rendering when you only want to display a single sprite.
+     *
+     * @param spriteName the name of the sprite to keep
+     */
+    public void keepOnlySprite(String spriteName) {
+        sprites.removeIf(sprite -> !sprite.getName().equals(spriteName));
+        Log.d(TAG, "Filtered scene to keep only sprite: " + spriteName + ". Remaining sprites: " + sprites.size());
+    }
+
+    /**
      * Update wipe progress on all transitioning sprites in this scene.
      * @param progress the wipe progress (0.0 to 1.0)
      */

@@ -2,4 +2,9 @@
     <string name="app_name">livewallpaper</string>
     <string name="set_wallpaper">Set as Wallpaper</string>
     <string name="view_scenes">View Scenes</string>
+    <string name="back_button_desc">Go back</string>
+    <string name="unsaved_changes_title">Unsaved Changes</string>
+    <string name="unsaved_changes_message">You have unsaved changes. Do you want to save them before leaving?</string>
+    <string name="save_button">Save</string>
+    <string name="discard_button">Discard</string>
 </resources>
