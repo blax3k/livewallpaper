@@ -29,6 +29,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.Sprite;
+import com.example.livewallpaper.scene.TextureEditState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -704,12 +705,16 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         Intent intent = new Intent(this, EditTextureActivity.class);
         intent.putExtra(EditTextureActivity.EXTRA_SPRITE_NAME, currentSprite.getName());
         intent.putExtra(EditTextureActivity.EXTRA_SCENE_FILE_NAME, getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME));
-        // Pass current sprite dimensions and texture coordinate values so they're preserved in the preview
+        // Pass current sprite dimensions
         intent.putExtra(EditTextureActivity.EXTRA_WIDTH, currentSprite.getWidth());
         intent.putExtra(EditTextureActivity.EXTRA_HEIGHT, currentSprite.getHeight());
-        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_SCALE, currentSprite.getTextureScale());
-        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_OFFSET_U, currentSprite.getTextureOffsetU());
-        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_OFFSET_V, currentSprite.getTextureOffsetV());
+
+        // Extract current texture state from the sprite's actual texture coordinates
+        TextureEditState currentState = currentSprite.getCurrentTextureEditState();
+        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_SCALE, currentState.getTextureScale());
+        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_OFFSET_U, currentState.getTextureOffsetU());
+        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_OFFSET_V, currentState.getTextureOffsetV());
+
         startActivityForResult(intent, 100); // Request code 100 for texture editing
     }
 
@@ -824,7 +829,6 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             com.example.livewallpaper.scene.SpriteData spriteData = new com.example.livewallpaper.scene.SpriteData();
             spriteData.name = sprite.getName();
             spriteData.textureResource = sprite.getTextureResource();
-            spriteData.textureResourceId = sprite.getTextureResourceId();
             spriteData.width = sprite.getWidth();
             spriteData.height = sprite.getHeight();
             spriteData.positionX = sprite.getPositionX();
@@ -873,16 +877,18 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 String spriteName = data.getStringExtra(EditTextureActivity.RESULT_SPRITE_NAME);
                 float width = data.getFloatExtra(EditTextureActivity.RESULT_WIDTH, currentSprite.getWidth());
                 float height = data.getFloatExtra(EditTextureActivity.RESULT_HEIGHT, currentSprite.getHeight());
-                float textureScale = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_SCALE, currentSprite.getTextureScale());
+                float textureScale = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_SCALE, 1.0f);
                 float textureOffsetU = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_U, 0f);
                 float textureOffsetV = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_V, 0f);
 
-                // Apply the changes to the current sprite
+                // Apply width and height changes
                 currentSprite.setWidth(width);
                 currentSprite.setHeight(height);
-                currentSprite.setTextureScale(textureScale);
-                currentSprite.setTextureOffsetU(textureOffsetU);
-                currentSprite.setTextureOffsetV(textureOffsetV);
+
+                // Create TextureEditState with the returned values and apply to sprite
+                com.example.livewallpaper.scene.TextureEditState textureState =
+                    new com.example.livewallpaper.scene.TextureEditState(textureScale, textureOffsetU, textureOffsetV);
+                currentSprite.updateTextureCoordinates(textureState);
 
                 Log.d(TAG, "Applied texture edits from EditTextureActivity to sprite: " + spriteName +
                       " - Width: " + width + ", Height: " + height + ", TextureScale: " + textureScale +

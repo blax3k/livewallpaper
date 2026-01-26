@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.Scene;
 import com.example.livewallpaper.scene.Sprite;
+import com.example.livewallpaper.scene.TextureEditState;
 
 public class EditTextureActivity extends AppCompatActivity implements SensorEventListener {
     private static final String TAG = "EditTextureActivity";
@@ -56,6 +57,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     private TextView heightValueText;
     private TextView textureScaleValueText;
     private Sprite currentSprite;
+    private TextureEditState textureEditState;
     private float lastTouchX = 0;
     private float lastTouchY = 0;
     private boolean isTouching = false;
@@ -173,6 +175,9 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 currentSprite = scene.getSprites().get(0);
 
                 if (currentSprite != null) {
+                    // Initialize TextureEditState with passed values
+                    textureEditState = new TextureEditState(passedTextureScale, passedTextureOffsetU, passedTextureOffsetV);
+
                     // Apply dimensions passed from EditSceneActivity
                     if (passedWidth > 0) {
                         currentSprite.setWidth(passedWidth);
@@ -181,21 +186,13 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                         currentSprite.setHeight(passedHeight);
                     }
 
-                    // Apply texture coordinates passed from EditSceneActivity
-                    if (passedTextureScale > 0) {
-                        currentSprite.setTextureScale(passedTextureScale);
-                    }
-                    if (passedTextureOffsetU != 0) {
-                        currentSprite.setTextureOffsetU(passedTextureOffsetU);
-                    }
-                    if (passedTextureOffsetV != 0) {
-                        currentSprite.setTextureOffsetV(passedTextureOffsetV);
-                    }
+                    // Apply the passed texture state to the sprite so the visual display shows the correct coordinates
+                    currentSprite.updateTextureCoordinates(textureEditState);
 
                     // Set initial values
                     float currentWidth = currentSprite.getWidth();
                     float currentHeight = currentSprite.getHeight();
-                    float currentTextureScale = currentSprite.getTextureScale();
+                    float currentTextureScale = textureEditState.getTextureScale();
 
                     // Width/Height: max 11.0, increments of 0.2 (max slider value = 55)
                     widthSlider.setProgress(Math.round(currentWidth / 0.2f));
@@ -218,10 +215,10 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                                 float width = progress * 0.2f;
                                 currentSprite.setWidth(width);
                                 updateWidthDisplay(width);
-                                // Update texture scale display since it may have been adjusted automatically
-                                updateTextureScaleDisplay(currentSprite.getTextureScale());
+                                updateSpriteTextureCoordinates();
+                                updateTextureScaleDisplay(textureEditState.getTextureScale());
                                 hasUnsavedChanges = true;
-                                Log.d(TAG, "Width changed to: " + width + ", textureScale now: " + currentSprite.getTextureScale());
+                                Log.d(TAG, "Width changed to: " + width);
                             }
                         }
 
@@ -239,10 +236,10 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                                 float height = progress * 0.2f;
                                 currentSprite.setHeight(height);
                                 updateHeightDisplay(height);
-                                // Update texture scale display since it may have been adjusted automatically
-                                updateTextureScaleDisplay(currentSprite.getTextureScale());
+                                updateSpriteTextureCoordinates();
+                                updateTextureScaleDisplay(textureEditState.getTextureScale());
                                 hasUnsavedChanges = true;
-                                Log.d(TAG, "Height changed to: " + height + ", textureScale now: " + currentSprite.getTextureScale());
+                                Log.d(TAG, "Height changed to: " + height);
                             }
                         }
 
@@ -259,7 +256,8 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                             if (fromUser && currentSprite != null) {
                                 // Texture scale: 1.0 + (progress * 0.1), range 1.0 to 8.0
                                 float scale = 1.0f + (progress * 0.1f);
-                                currentSprite.setTextureScale(scale);
+                                textureEditState.setTextureScale(scale);
+                                updateSpriteTextureCoordinates();
                                 updateTextureScaleDisplay(scale);
                                 hasUnsavedChanges = true;
                                 Log.d(TAG, "Texture scale changed to: " + scale);
@@ -274,6 +272,17 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     });
                 }
             }
+        }
+    }
+
+    /**
+     * Update sprite texture coordinates based on current TextureEditState.
+     * This applies the texture scale and offsets to the sprite's texture coordinate buffer.
+     */
+    private void updateSpriteTextureCoordinates() {
+        if (currentSprite != null && textureEditState != null) {
+            currentSprite.updateTextureCoordinates(textureEditState);
+            Log.d(TAG, "Sprite texture coordinates updated");
         }
     }
 
@@ -338,9 +347,13 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
 
                     Log.d(TAG, "Touch MOVE - deltaX: " + deltaX + ", deltaY: " + deltaY + ", uOffset: " + uOffset + ", vOffset: " + vOffset + ", viewSize: " + viewWidth + "x" + viewHeight);
 
-                    // Apply the offset to the sprite's texture coordinates
-                    currentSprite.offsetTextureCoordinates(uOffset, vOffset);
-                    hasUnsavedChanges = true;
+                    // Apply the offset to the texture edit state with clamping
+                    if (textureEditState != null) {
+                        textureEditState.offsetTextureCoordinates(uOffset, vOffset, currentSprite.getWidth(), currentSprite.getHeight(),
+                                currentSprite.getWidth(), currentSprite.getHeight(), 1.0f);
+                        updateSpriteTextureCoordinates();
+                        hasUnsavedChanges = true;
+                    }
 
                     // Update last position
                     lastTouchX = touchX;
@@ -466,9 +479,13 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             resultIntent.putExtra(RESULT_SPRITE_NAME, spriteName);
             resultIntent.putExtra(RESULT_WIDTH, currentSprite.getWidth());
             resultIntent.putExtra(RESULT_HEIGHT, currentSprite.getHeight());
-            resultIntent.putExtra(RESULT_TEXTURE_SCALE, currentSprite.getTextureScale());
-            resultIntent.putExtra(RESULT_TEXTURE_OFFSET_U, currentSprite.getTextureOffsetU());
-            resultIntent.putExtra(RESULT_TEXTURE_OFFSET_V, currentSprite.getTextureOffsetV());
+
+            // Return texture edit state values
+            if (textureEditState != null) {
+                resultIntent.putExtra(RESULT_TEXTURE_SCALE, textureEditState.getTextureScale());
+                resultIntent.putExtra(RESULT_TEXTURE_OFFSET_U, textureEditState.getTextureOffsetU());
+                resultIntent.putExtra(RESULT_TEXTURE_OFFSET_V, textureEditState.getTextureOffsetV());
+            }
 
             // Set the result and finish
             setResult(RESULT_OK, resultIntent);
