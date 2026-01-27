@@ -205,7 +205,12 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                         if (position < allSprites.size()) {
-                            showSpriteDetails(allSprites.get(position));
+                            Sprite selectedSprite = allSprites.get(position);
+                            showSpriteDetails(selectedSprite);
+                            // Highlight only the selected sprite
+                            if (renderer != null) {
+                                renderer.setSelectedSprite(selectedSprite);
+                            }
                         }
                     }
 

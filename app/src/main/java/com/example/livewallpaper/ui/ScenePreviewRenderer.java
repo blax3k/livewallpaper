@@ -40,6 +40,7 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
     private final float[] projectionMatrix = new float[16];
     private boolean spritesScaledForGyro = false;
     private volatile boolean shouldResortSprites = false;
+    private Sprite selectedSprite = null;
 
     public ScenePreviewRenderer(Context context, String sceneFileName) {
         this.context = context;
@@ -92,10 +93,11 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
         } else {
             Log.d(TAG, "Scene already loaded, reloading textures only");
             currentScene.reloadTextures(context, textureManager);
-            // Re-enable edge highlights after surface recreation
+            // Disable edge highlights after surface recreation and reset selected sprite
             for (Sprite sprite : currentScene.getSprites()) {
-                sprite.setShowEdgeHighlight(true);
+                sprite.setShowEdgeHighlight(false);
             }
+            selectedSprite = null;
         }
 
         Log.d(TAG, "Surface created and scene loaded");
@@ -179,13 +181,16 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
                     if (!currentScene.getSprites().isEmpty()) {
                         Sprite sprite = currentScene.getSprites().get(0);
                         sprite.setPosition(0f, 0f);
+                        // Enable edge highlight for the single sprite being edited
+                        sprite.setShowEdgeHighlight(true);
+                        selectedSprite = sprite;
                         Log.d(TAG, "Sprite positioned at (0, 0) for single sprite preview");
                     }
-                }
-
-                // Enable edge highlights by default for all sprites in preview
-                for (Sprite sprite : currentScene.getSprites()) {
-                    sprite.setShowEdgeHighlight(true);
+                } else {
+                    // Disable edge highlights by default (they will be enabled when a sprite is selected)
+                    for (Sprite sprite : currentScene.getSprites()) {
+                        sprite.setShowEdgeHighlight(false);
+                    }
                 }
 
                 Log.d(TAG, "Successfully loaded and initialized scene: " + currentScene.getSceneName());
@@ -249,6 +254,29 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
             return currentScene.getSprites().get(0).isShowEdgeHighlight();
         }
         return false;
+    }
+
+    /**
+     * Set the selected sprite and highlight only that sprite.
+     * All other sprites will have their edge highlights disabled.
+     * This is safe to call from the main thread.
+     *
+     * @param sprite the sprite to select and highlight (can be null to deselect all)
+     */
+    public void setSelectedSprite(Sprite sprite) {
+        if (currentScene != null) {
+            // Disable highlights for all sprites
+            for (Sprite s : currentScene.getSprites()) {
+                s.setShowEdgeHighlight(false);
+            }
+            // Enable highlight for the selected sprite
+            if (sprite != null) {
+                sprite.setShowEdgeHighlight(true);
+                selectedSprite = sprite;
+            } else {
+                selectedSprite = null;
+            }
+        }
     }
 
     /**
