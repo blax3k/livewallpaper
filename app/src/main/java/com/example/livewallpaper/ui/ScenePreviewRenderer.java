@@ -19,6 +19,10 @@ import com.example.livewallpaper.sensors.MotionConfig;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import java.util.ArrayList;
+import java.util.List;
+
+
 /**
  * Custom GL renderer for rendering a specific scene in the EditSceneActivity.
  * Supports gyroscope-based motion for interactive scene preview.
@@ -41,6 +45,7 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
     private boolean spritesScaledForGyro = false;
     private volatile boolean shouldResortSprites = false;
     private Sprite selectedSprite = null;
+    private String selectedSpriteName = null;
 
     public ScenePreviewRenderer(Context context, String sceneFileName) {
         this.context = context;
@@ -71,10 +76,7 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
         Log.d(TAG, "TextureManager created");
 
         // Create shader program
-        shaderProgram = new ShaderProgram(
-            ShaderProgram.getVertexShaderCode(),
-            ShaderProgram.getFragmentShaderCode()
-        );
+        shaderProgram = new ShaderProgram(ShaderProgram.getVertexShaderCode(), ShaderProgram.getFragmentShaderCode());
         shaderProgram.use();
         Log.d(TAG, "Shader program created and in use");
 
@@ -99,6 +101,8 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
             }
             selectedSprite = null;
         }
+
+        highlightSelectedSprite();
 
         Log.d(TAG, "Surface created and scene loaded");
     }
@@ -273,8 +277,10 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
             if (sprite != null) {
                 sprite.setShowEdgeHighlight(true);
                 selectedSprite = sprite;
+                selectedSpriteName = sprite.getName();
             } else {
                 selectedSprite = null;
+                selectedSpriteName = null;
             }
         }
     }
@@ -292,4 +298,159 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
     public void pause() {
         gyroProcessor.pause();
     }
+
+    /**
+     * Get a list of all sprites in the current scene.
+     *
+     * @return a list of sprites, or empty list if no scene is loaded
+     */
+    public List<Sprite> getAllSprites() {
+        if (currentScene == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(currentScene.getSprites());
+    }
+
+    /**
+     * Get the currently selected sprite for editing.
+     *
+     * @return the selected sprite, or null if none is selected
+     */
+    public Sprite getSelectedSprite() {
+        return selectedSprite;
+    }
+
+    /**
+     * Select a sprite by its index in the scene's sprite list.
+     * Updates the visual highlight and returns the selected sprite.
+     *
+     * @param index the zero-based index of the sprite to select
+     * @return the selected sprite, or null if index is invalid
+     */
+    public Sprite selectSpriteByIndex(int index) {
+        if (currentScene == null) {
+            return null;
+        }
+
+        List<Sprite> sprites = currentScene.getSprites();
+        if (index >= 0 && index < sprites.size()) {
+            Sprite sprite = sprites.get(index);
+            setSelectedSprite(sprite);
+            return sprite;
+        }
+        return null;
+    }
+
+    /**
+     * Calculate the current aspect ratio for a sprite.
+     * Returns the ratio of width to height.
+     *
+     * @param sprite the sprite to calculate the aspect ratio for
+     * @return the aspect ratio (width / height), or 1.0f if height is 0
+     */
+    public float calculateAspectRatio(Sprite sprite) {
+        if (sprite == null) {
+            return 1.0f;
+        }
+        float height = sprite.getHeight();
+        if (height == 0) {
+            return 1.0f;
+        }
+        return sprite.getWidth() / height;
+    }
+
+    /**
+     * Update a sprite's position.
+     *
+     * @param sprite the sprite to update
+     * @param x      the new X position
+     * @param y      the new Y position
+     */
+    public void updateSpritePosition(Sprite sprite, float x, float y) {
+        if (sprite != null) {
+            sprite.setPositionX(x);
+            sprite.setPositionY(y);
+        }
+    }
+
+    /**
+     * Update a sprite's parallax multiplier.
+     *
+     * @param sprite             the sprite to update
+     * @param parallaxMultiplier the new parallax multiplier
+     */
+    public void updateSpriteParallax(Sprite sprite, float parallaxMultiplier) {
+        if (sprite != null) {
+            sprite.setParallaxMultiplier(parallaxMultiplier);
+        }
+    }
+
+    /**
+     * Update a sprite's width while maintaining aspect ratio.
+     *
+     * @param sprite      the sprite to update
+     * @param newWidth    the new width
+     * @param aspectRatio the aspect ratio (width / height) to maintain
+     */
+    public void updateSpriteWidth(Sprite sprite, float newWidth, float aspectRatio) {
+        if (sprite != null) {
+            sprite.setWidth(newWidth);
+            sprite.setHeight(newWidth / aspectRatio);
+        }
+    }
+
+    /**
+     * Update a sprite's height while maintaining aspect ratio.
+     *
+     * @param sprite      the sprite to update
+     * @param newHeight   the new height
+     * @param aspectRatio the aspect ratio (width / height) to maintain
+     */
+    public void updateSpriteHeight(Sprite sprite, float newHeight, float aspectRatio) {
+        if (sprite != null) {
+            sprite.setHeight(newHeight);
+            sprite.setWidth(newHeight * aspectRatio);
+        }
+    }
+
+    /**
+     * Update a sprite's dimensions (width and height).
+     *
+     * @param sprite    the sprite to update
+     * @param newWidth  the new width
+     * @param newHeight the new height
+     */
+    public void updateSpriteDimensions(Sprite sprite, float newWidth, float newHeight) {
+        if (sprite != null) {
+            sprite.setWidth(newWidth);
+            sprite.setHeight(newHeight);
+        }
+    }
+
+    /**
+     * Update a sprite's texture coordinates.
+     *
+     * @param sprite         the sprite to update
+     * @param textureScale   the scale factor for the texture
+     * @param textureOffsetU the U-axis offset
+     * @param textureOffsetV the V-axis offset
+     */
+    public void updateSpriteTexture(Sprite sprite, float textureScale, float textureOffsetU, float textureOffsetV) {
+        if (sprite != null) {
+            com.example.livewallpaper.scene.TextureEditState textureState = new com.example.livewallpaper.scene.TextureEditState(textureScale, textureOffsetU, textureOffsetV);
+            sprite.updateTextureCoordinates(textureState);
+        }
+    }
+
+    private void highlightSelectedSprite() {
+        if (selectedSpriteName != null) for (Sprite sprite : currentScene.getSprites()) {
+            sprite.setShowEdgeHighlight(false);
+            if (sprite.getName().equals(selectedSpriteName)) {
+                sprite.setShowEdgeHighlight(true);
+                selectedSprite = sprite;
+                Log.d(TAG, "Restored highlight on GL thread for sprite: " + selectedSpriteName);
+            }
+        }
+    }
+
 }

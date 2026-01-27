@@ -50,12 +50,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     private String spriteName;
     private String sceneFileName;
     private boolean glSetupComplete = false;
-    private SeekBar widthSlider;
-    private SeekBar heightSlider;
-    private SeekBar textureScaleSlider;
-    private TextView widthValueText;
-    private TextView heightValueText;
-    private TextView textureScaleValueText;
+    private TextureSliderController textureSliderController;
     private Sprite currentSprite;
     private TextureEditState textureEditState;
     private float lastTouchX = 0;
@@ -162,12 +157,19 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     }
 
     private void initializeSliders() {
-        widthSlider = findViewById(R.id.width_slider);
-        heightSlider = findViewById(R.id.height_slider);
-        textureScaleSlider = findViewById(R.id.texture_scale_slider);
-        widthValueText = findViewById(R.id.width_value);
-        heightValueText = findViewById(R.id.height_value);
-        textureScaleValueText = findViewById(R.id.texture_scale_value);
+        SeekBar widthSlider = findViewById(R.id.width_slider);
+        SeekBar heightSlider = findViewById(R.id.height_slider);
+        SeekBar textureScaleSlider = findViewById(R.id.texture_scale_slider);
+        TextView widthValueText = findViewById(R.id.width_value);
+        TextView heightValueText = findViewById(R.id.height_value);
+        TextView textureScaleValueText = findViewById(R.id.texture_scale_value);
+
+        // Initialize the texture slider controller
+        textureSliderController = new TextureSliderController(widthSlider, heightSlider, textureScaleSlider,
+                widthValueText, heightValueText, textureScaleValueText);
+
+        // Set callback for slider changes to update sprite and texture coordinates
+        textureSliderController.setOnChangeCallback(this::handleSliderChange);
 
         if (renderer != null) {
             Scene scene = renderer.getCurrentScene();
@@ -186,93 +188,23 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                         currentSprite.setHeight(passedHeight);
                     }
 
-                    // Apply the passed texture state to the sprite so the visual display shows the correct coordinates
+                    // Apply the passed texture state to the sprite
                     currentSprite.updateTextureCoordinates(textureEditState);
 
-                    // Set initial values
-                    float currentWidth = currentSprite.getWidth();
-                    float currentHeight = currentSprite.getHeight();
-                    float currentTextureScale = textureEditState.getTextureScale();
-
-                    // Width/Height: max 11.0, increments of 0.2 (max slider value = 55)
-                    widthSlider.setProgress(Math.round(currentWidth / 0.2f));
-                    heightSlider.setProgress(Math.round(currentHeight / 0.2f));
-
-                    // Texture Scale: 1.0 to 8.0, increments of 0.1 (max slider value = 70)
-                    // Formula: (currentTextureScale - 1.0) / 0.1 to get slider progress
-                    int textureScaleProgress = Math.round((currentTextureScale - 1.0f) / 0.1f);
-                    textureScaleSlider.setProgress(Math.max(0, Math.min(70, textureScaleProgress)));
-
-                    updateWidthDisplay(currentWidth);
-                    updateHeightDisplay(currentHeight);
-                    updateTextureScaleDisplay(currentTextureScale);
-
-                    // Set up listeners
-                    widthSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                        @Override
-                        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                            if (fromUser && currentSprite != null) {
-                                float width = progress * 0.2f;
-                                currentSprite.setWidth(width);
-                                updateWidthDisplay(width);
-                                updateSpriteTextureCoordinates();
-                                updateTextureScaleDisplay(textureEditState.getTextureScale());
-                                hasUnsavedChanges = true;
-                                Log.d(TAG, "Width changed to: " + width);
-                            }
-                        }
-
-                        @Override
-                        public void onStartTrackingTouch(SeekBar seekBar) {}
-
-                        @Override
-                        public void onStopTrackingTouch(SeekBar seekBar) {}
-                    });
-
-                    heightSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                        @Override
-                        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                            if (fromUser && currentSprite != null) {
-                                float height = progress * 0.2f;
-                                currentSprite.setHeight(height);
-                                updateHeightDisplay(height);
-                                updateSpriteTextureCoordinates();
-                                updateTextureScaleDisplay(textureEditState.getTextureScale());
-                                hasUnsavedChanges = true;
-                                Log.d(TAG, "Height changed to: " + height);
-                            }
-                        }
-
-                        @Override
-                        public void onStartTrackingTouch(SeekBar seekBar) {}
-
-                        @Override
-                        public void onStopTrackingTouch(SeekBar seekBar) {}
-                    });
-
-                    textureScaleSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                        @Override
-                        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                            if (fromUser && currentSprite != null) {
-                                // Texture scale: 1.0 + (progress * 0.1), range 1.0 to 8.0
-                                float scale = 1.0f + (progress * 0.1f);
-                                textureEditState.setTextureScale(scale);
-                                updateSpriteTextureCoordinates();
-                                updateTextureScaleDisplay(scale);
-                                hasUnsavedChanges = true;
-                                Log.d(TAG, "Texture scale changed to: " + scale);
-                            }
-                        }
-
-                        @Override
-                        public void onStartTrackingTouch(SeekBar seekBar) {}
-
-                        @Override
-                        public void onStopTrackingTouch(SeekBar seekBar) {}
-                    });
+                    // Set up the sliders with the sprite and texture state
+                    textureSliderController.setup(currentSprite, textureEditState);
                 }
             }
         }
+    }
+
+    /**
+     * Callback when any slider value changes.
+     * Updates sprite texture coordinates and marks as having unsaved changes.
+     */
+    private void handleSliderChange() {
+        updateSpriteTextureCoordinates();
+        hasUnsavedChanges = true;
     }
 
     /**
@@ -286,23 +218,6 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         }
     }
 
-    private void updateWidthDisplay(float width) {
-        if (widthValueText != null) {
-            widthValueText.setText(String.format("%.1f", width));
-        }
-    }
-
-    private void updateHeightDisplay(float height) {
-        if (heightValueText != null) {
-            heightValueText.setText(String.format("%.1f", height));
-        }
-    }
-
-    private void updateTextureScaleDisplay(float scale) {
-        if (textureScaleValueText != null) {
-            textureScaleValueText.setText(String.format("%.1fx", scale));
-        }
-    }
 
     /**
      * Handle touch input on the GLView to manipulate texture coordinates.

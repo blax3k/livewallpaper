@@ -45,28 +45,20 @@ public class SpriteRenderer {
         GLES20.glUniform1i(samplerHandle, 0);
 
         // Set wipe uniforms
-        GLES20.glUniform1f(wipeProgressHandle, sprite.getWipeProgress());
-        GLES20.glUniform1f(wipeDirectionHandle, sprite.getWipeDirection());
+        setWipeUniforms(sprite.getWipeProgress(), sprite.getWipeDirection());
 
         // Enable vertex attribute array
-        GLES20.glEnableVertexAttribArray(positionHandle);
-        GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 12, sprite.getVertexBuffer());
-
+        enableVertexAttribute(positionHandle, 3, 12, sprite.getVertexBuffer());
         // Enable texture coordinate attribute array
-        GLES20.glEnableVertexAttribArray(texCoordHandle);
-        GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 8, sprite.getTexCoordBuffer());
-
+        enableVertexAttribute(texCoordHandle, 2, 8, sprite.getTexCoordBuffer());
         // Enable parallax multiplier attribute array
-        GLES20.glEnableVertexAttribArray(parallaxMultiplierHandle);
-        GLES20.glVertexAttribPointer(parallaxMultiplierHandle, 1, GLES20.GL_FLOAT, false, 4, sprite.getParallaxMultiplierBuffer());
+        enableVertexAttribute(parallaxMultiplierHandle, 1, 4, sprite.getParallaxMultiplierBuffer());
 
         // Draw the sprite
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, sprite.getVertexCount());
 
         // Disable attribute arrays
-        GLES20.glDisableVertexAttribArray(positionHandle);
-        GLES20.glDisableVertexAttribArray(texCoordHandle);
-        GLES20.glDisableVertexAttribArray(parallaxMultiplierHandle);
+        disableAttributeArrays(positionHandle, texCoordHandle, parallaxMultiplierHandle);
 
         // Draw edge highlight if enabled
         if (sprite.isShowEdgeHighlight()) {
@@ -89,31 +81,54 @@ public class SpriteRenderer {
         GLES20.glUniform4f(overrideColorHandle, 0.0f, 1.0f, 0.0f, 1.0f);
 
         // Enable the position attribute for edge line rendering
-        GLES20.glEnableVertexAttribArray(positionHandle);
-        GLES20.glVertexAttribPointer(positionHandle, 3, GLES20.GL_FLOAT, false, 12, sprite.getEdgeLineBuffer());
-
+        enableVertexAttribute(positionHandle, 3, 12, sprite.getEdgeLineBuffer());
         // Enable parallax multiplier attribute using edge line's own buffer to apply gyro/scroll transforms
-        GLES20.glEnableVertexAttribArray(parallaxMultiplierHandle);
-        GLES20.glVertexAttribPointer(parallaxMultiplierHandle, 1, GLES20.GL_FLOAT, false, 4, sprite.getEdgeLineParallaxMultiplierBuffer());
+        enableVertexAttribute(parallaxMultiplierHandle, 1, 4, sprite.getEdgeLineParallaxMultiplierBuffer());
 
         // Disable blending for solid color
         GLES20.glDisable(GLES20.GL_BLEND);
 
         // Set wipe uniforms to 0 to avoid any wipe effect on the outline
-        GLES20.glUniform1f(wipeProgressHandle, 0.0f);
-        GLES20.glUniform1f(wipeDirectionHandle, 0.0f);
+        setWipeUniforms(0.0f, 0.0f);
 
         // Draw bright green lines using line strip primitive
         GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, sprite.getEdgeLineVertexCount());
 
         // Clean up
-        GLES20.glDisableVertexAttribArray(positionHandle);
-        GLES20.glDisableVertexAttribArray(parallaxMultiplierHandle);
+        disableAttributeArrays(positionHandle, parallaxMultiplierHandle);
         GLES20.glLineWidth(1.0f);
         GLES20.glEnable(GLES20.GL_BLEND);
 
         // Disable color override for next sprites
         GLES20.glUniform1f(useColorOverrideHandle, 0.0f);
     }
-}
 
+    /**
+     * Helper method to set wipe progress and direction uniforms.
+     */
+    private void setWipeUniforms(float wipeProgress, float wipeDirection) {
+        GLES20.glUniform1f(wipeProgressHandle, wipeProgress);
+        GLES20.glUniform1f(wipeDirectionHandle, wipeDirection);
+    }
+
+    /**
+     * Helper method to disable one or more vertex attribute arrays.
+     */
+    private void disableAttributeArrays(int... handles) {
+        for (int handle : handles) {
+            GLES20.glDisableVertexAttribArray(handle);
+        }
+    }
+
+    /**
+     * Helper method to enable a vertex attribute and set its pointer.
+     * @param handle the attribute handle
+     * @param size number of components per attribute (e.g., 3 for position, 2 for texCoord)
+     * @param stride byte offset between consecutive attributes
+     * @param buffer the buffer containing the attribute data
+     */
+    private void enableVertexAttribute(int handle, int size, int stride, java.nio.Buffer buffer) {
+        GLES20.glEnableVertexAttribArray(handle);
+        GLES20.glVertexAttribPointer(handle, size, GLES20.GL_FLOAT, false, stride, buffer);
+    }
+}
