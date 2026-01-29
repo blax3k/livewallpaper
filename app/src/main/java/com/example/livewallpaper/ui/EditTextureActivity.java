@@ -177,9 +177,6 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 currentSprite = scene.getSprites().get(0);
 
                 if (currentSprite != null) {
-                    // Initialize TextureEditState with passed values
-                    textureEditState = new TextureEditState(passedTextureScale, passedTextureOffsetU, passedTextureOffsetV);
-
                     // Apply dimensions passed from EditSceneActivity
                     if (passedWidth > 0) {
                         currentSprite.setWidth(passedWidth);
@@ -188,8 +185,15 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                         currentSprite.setHeight(passedHeight);
                     }
 
-                    // Apply the passed texture state to the sprite
-                    currentSprite.updateTextureCoordinates(textureEditState);
+                    // Get the current texture state from the sprite (which includes any previously set scale/offset)
+                    textureEditState = currentSprite.getCurrentTextureEditState();
+
+                    // If we have passed texture values that differ from defaults, apply them
+                    // This ensures newly set values override what was loaded from the sprite
+                    if (passedTextureScale != 1.0f || passedTextureOffsetU != 0.0f || passedTextureOffsetV != 0.0f) {
+                        textureEditState = new TextureEditState(passedTextureScale, passedTextureOffsetU, passedTextureOffsetV);
+                        currentSprite.updateTextureCoordinates(textureEditState);
+                    }
 
                     // Set up the sliders with the sprite and texture state
                     textureSliderController.setup(currentSprite, textureEditState);
