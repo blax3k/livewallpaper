@@ -23,6 +23,9 @@ public class MainActivity extends AppCompatActivity {
             super.onCreate(savedInstanceState);
             Log.d(TAG, "onCreate called");
 
+            // Initialize persistent scenes folder on app startup
+            initializePersistentScenes();
+
             setContentView(R.layout.activity_main);
             Log.d(TAG, "Layout inflated successfully");
 
@@ -105,6 +108,21 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e(TAG, "Error navigating to scenes: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to open scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Initialize the persistent scenes folder by copying bundled scene files if needed.
+     * This runs on app startup to ensure the persistent folder is populated.
+     */
+    private void initializePersistentScenes() {
+        try {
+            SceneFileManager sceneFileManager = new SceneFileManager(this, null);
+            // Call loadAvailableSceneFiles which will populate the folder if empty
+            String[] sceneFiles = sceneFileManager.loadAvailableSceneFiles();
+            Log.d(TAG, "Persistent scenes initialized with " + sceneFiles.length + " scene files");
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing persistent scenes: " + e.getMessage(), e);
         }
     }
 }

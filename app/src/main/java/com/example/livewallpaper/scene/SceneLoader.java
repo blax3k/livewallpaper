@@ -5,13 +5,15 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Loads scene configurations from JSON files in the assets folder.
+ * Loads scene configurations from JSON files in the assets folder or persistent storage.
  */
 public class SceneLoader {
     private static final String TAG = "SceneLoader";
@@ -19,6 +21,7 @@ public class SceneLoader {
 
     private final Context context;
     private final Gson gson;
+    private String persistentScenesPath; // Path to persistent scenes directory
 
     public SceneLoader(Context context) {
         this.context = context;
@@ -26,7 +29,20 @@ public class SceneLoader {
     }
 
     /**
-     * Load a scene from a JSON file in the assets/scenes folder.
+     * Set the path to the persistent scenes directory.
+     * When set, scenes will be loaded from this directory instead of assets.
+     *
+     * @param persistentPath the absolute path to the persistent scenes directory
+     */
+    public void setPersistentScenesPath(String persistentPath) {
+        this.persistentScenesPath = persistentPath;
+        Log.d(TAG, "Persistent scenes path set to: " + persistentPath);
+    }
+
+    /**
+     * Load a scene from a JSON file.
+     * First attempts to load from persistent storage if a path is set,
+     * otherwise falls back to assets/scenes folder.
      *
      * @param fileName the name of the JSON file (e.g., "girl_back.json")
      * @return a Scene object populated with sprites from the JSON data
@@ -34,11 +50,22 @@ public class SceneLoader {
      * @throws IllegalArgumentException if the JSON is invalid or missing required fields
      */
     public Scene loadScene(String fileName) throws IOException {
-        String filePath = SCENES_FOLDER + "/" + fileName;
-        Log.d(TAG, "Loading scene from: " + filePath);
+        Log.d(TAG, "Loading scene: " + fileName);
 
-        SceneData sceneData = parseSceneData(filePath);
-        validateSceneData(sceneData, filePath);
+        SceneData sceneData;
+        if (persistentScenesPath != null) {
+            // Load from persistent storage
+            File sceneFile = new File(persistentScenesPath, fileName);
+            Log.d(TAG, "Loading from persistent storage: " + sceneFile.getAbsolutePath());
+            sceneData = parseSceneDataFromFile(sceneFile);
+        } else {
+            // Fall back to assets
+            String filePath = SCENES_FOLDER + "/" + fileName;
+            Log.d(TAG, "Loading from assets: " + filePath);
+            sceneData = parseSceneDataFromAssets(filePath);
+        }
+
+        validateSceneData(sceneData, fileName);
 
         // Derive scene name from filename (remove .json extension if present)
         String sceneName = fileName.endsWith(".json") ? fileName.substring(0, fileName.length() - 5) : fileName;
@@ -54,9 +81,19 @@ public class SceneLoader {
     }
 
     /**
-     * Parse JSON file into SceneData object.
+     * Parse JSON file from persistent storage into SceneData object.
      */
-    private SceneData parseSceneData(String filePath) throws IOException {
+    private SceneData parseSceneDataFromFile(File file) throws IOException {
+        try (FileReader reader = new FileReader(file)) {
+            SceneData sceneData = gson.fromJson(reader, SceneData.class);
+            return sceneData;
+        }
+    }
+
+    /**
+     * Parse JSON file from assets into SceneData object.
+     */
+    private SceneData parseSceneDataFromAssets(String filePath) throws IOException {
         InputStream inputStream = context.getAssets().open(filePath);
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         SceneData sceneData = gson.fromJson(reader, SceneData.class);

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.example.livewallpaper.gl.TextureManager;
+import com.example.livewallpaper.ui.SceneFileManager;
 
 /**
  * Manages scene switching logic, cycling between multiple scenes on demand.
@@ -12,15 +13,13 @@ import com.example.livewallpaper.gl.TextureManager;
  */
 public class SceneManager {
     private static final String TAG = "SceneManager";
-    private static final String SCENES_FOLDER = "scenes";
 
     private final Context context;
     private final SceneLoader sceneLoader;
     private final TextureManager textureManager;
     private final SceneTransitionManager transitionManager;
-
     // Dynamically loaded list of available scene files
-    private String[] sceneFiles;
+    private final String[] sceneFiles;
 
     // Current index in the sceneFiles array
     private int currentSceneIndex = 0;
@@ -38,49 +37,17 @@ public class SceneManager {
         void applyGyroScalingToNewScene(Scene newScene, float worldHeight);
     }
 
-    public SceneManager(Context context) {
+    public SceneManager(Context context, SceneFileManager sceneFileManager) {
         this.context = context;
         this.sceneLoader = new SceneLoader(context);
         this.textureManager = new TextureManager();
         this.transitionManager = new SceneTransitionManager(textureManager);
-        this.sceneFiles = loadAvailableSceneFiles();
-    }
+        this.sceneFiles = sceneFileManager.loadAvailableSceneFiles();
 
-    /**
-     * Load all available .json files from the scenes folder in assets.
-     *
-     * @return array of scene filenames, sorted alphabetically
-     */
-    private String[] loadAvailableSceneFiles() {
-        try {
-            String[] files = context.getAssets().list(SCENES_FOLDER);
-            if (files == null || files.length == 0) {
-                Log.w(TAG, "No scene files found in assets/" + SCENES_FOLDER);
-                return new String[0];
-            }
-
-            // Filter for .json files and sort
-            java.util.List<String> jsonFiles = new java.util.ArrayList<>();
-            for (String file : files) {
-                if (file.endsWith(".json")) {
-                    jsonFiles.add(file);
-                }
-            }
-
-            if (jsonFiles.isEmpty()) {
-                Log.w(TAG, "No .json files found in assets/" + SCENES_FOLDER);
-                return new String[0];
-            }
-
-            // Sort alphabetically for consistent ordering
-            java.util.Collections.sort(jsonFiles);
-
-            Log.d(TAG, "Found " + jsonFiles.size() + " scene files: " + jsonFiles);
-            return jsonFiles.toArray(new String[0]);
-
-        } catch (java.io.IOException e) {
-            Log.e(TAG, "Failed to load scene files from assets", e);
-            return new String[0];
+        // Set the persistent scenes path on the loader
+        String persistentPath = sceneFileManager.getPersistentScenesDirectoryPath();
+        if (persistentPath != null) {
+            sceneLoader.setPersistentScenesPath(persistentPath);
         }
     }
 
@@ -90,7 +57,7 @@ public class SceneManager {
      */
     public String getInitialSceneFile() {
         if (sceneFiles.length == 0) {
-            throw new RuntimeException("No scene files found in assets/" + SCENES_FOLDER);
+            throw new RuntimeException("No scene files found in assets/scenes");
         }
         return sceneFiles[0];
     }

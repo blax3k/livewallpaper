@@ -14,22 +14,188 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Manages scene file operations including saving and dialogs.
+ * Manages scene file operations including saving, loading, and dialogs.
+ * Scene files are stored in persistent storage (Documents folder) and persist across app uninstalls.
  */
 public class SceneFileManager {
     private static final String TAG = "SceneFileManager";
+    private static final String SCENES_FOLDER = "scenes";
+    private static final String PERSISTENT_SCENES_FOLDER = "LiveWallpaperScenes";
 
     private final Context context;
     private final ScenePreviewRenderer renderer;
+    private File persistentScenesDir;
 
     public SceneFileManager(Context context, ScenePreviewRenderer renderer) {
         this.context = context;
         this.renderer = renderer;
+        this.persistentScenesDir = getPersistentScenesDirectory();
+    }
+
+    /**
+     * Get or create the persistent scenes directory in Documents.
+     * This folder persists even if the app is uninstalled.
+     *
+     * @return the persistent scenes directory
+     */
+    private File getPersistentScenesDirectory() {
+        File documentsDir = Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_DOCUMENTS
+        );
+        File scenesDir = new File(documentsDir, PERSISTENT_SCENES_FOLDER);
+
+        if (!scenesDir.exists()) {
+            boolean created = scenesDir.mkdirs();
+            if (created) {
+                Log.d(TAG, "Created persistent scenes directory: " + scenesDir.getAbsolutePath());
+            } else {
+                Log.w(TAG, "Failed to create persistent scenes directory");
+            }
+        }
+
+        return scenesDir;
+    }
+
+    /**
+     * Load all available .json files from the persistent scenes folder.
+     * If the folder is empty, copies all scene files from the app bundle.
+     *
+     * @return array of scene filenames, sorted alphabetically
+     */
+    public String[] loadAvailableSceneFiles() {
+        // First, ensure the persistent directory has scene files
+        ensurePersistentScenesInitialized();
+
+        // Load from persistent storage
+        File[] files = persistentScenesDir.listFiles((dir, name) -> name.endsWith(".json"));
+
+        if (files == null || files.length == 0) {
+            Log.w(TAG, "No scene files found in persistent storage: " + persistentScenesDir.getAbsolutePath());
+            return new String[0];
+        }
+
+        // Sort alphabetically for consistent ordering
+        java.util.Arrays.sort(files);
+
+        List<String> fileNames = new ArrayList<>();
+        for (File file : files) {
+            fileNames.add(file.getName());
+        }
+
+        Log.d(TAG, "Found " + fileNames.size() + " scene files in persistent storage: " + fileNames);
+        return fileNames.toArray(new String[0]);
+    }
+
+    /**
+     * Ensure the persistent scenes directory has at least one scene file.
+     * If empty, copies all scene files from the app bundle.
+     */
+    private void ensurePersistentScenesInitialized() {
+        File[] files = persistentScenesDir.listFiles((dir, name) -> name.endsWith(".json"));
+
+        if (files != null && files.length > 0) {
+            // Persistent folder already has scene files
+            return;
+        }
+
+        Log.d(TAG, "Persistent scenes folder is empty, copying from app bundle...");
+
+        try {
+            String[] bundleScenes = context.getAssets().list(SCENES_FOLDER);
+            if (bundleScenes == null || bundleScenes.length == 0) {
+                Log.e(TAG, "No scene files found in app bundle");
+                return;
+            }
+
+            for (String sceneName : bundleScenes) {
+                if (sceneName.endsWith(".json")) {
+                    copySceneFromBundle(sceneName);
+                }
+            }
+
+            Log.d(TAG, "Successfully copied " + bundleScenes.length + " scene files from app bundle");
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to copy scene files from app bundle", e);
+        }
+    }
+
+    /**
+     * Copy a scene file from the app bundle to persistent storage.
+     *
+     * @param sceneName the name of the scene file to copy
+     * @throws IOException if copying fails
+     */
+    private void copySceneFromBundle(String sceneName) throws IOException {
+        try (InputStream inputStream = context.getAssets().open(SCENES_FOLDER + "/" + sceneName)) {
+            File targetFile = new File(persistentScenesDir, sceneName);
+
+            try (OutputStream outputStream = new FileOutputStream(targetFile)) {
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+            }
+
+            Log.d(TAG, "Copied scene file from bundle: " + sceneName);
+        }
+    }
+
+    /**
+     * Get the path to a scene file in persistent storage.
+     *
+     * @param sceneName the name of the scene file
+     * @return the absolute path to the scene file
+     */
+    public String getSceneFilePath(String sceneName) {
+        return new File(persistentScenesDir, sceneName).getAbsolutePath();
+    }
+
+    /**
+     * Get the path to the persistent scenes directory.
+     *
+     * @return the absolute path to the persistent scenes directory
+     */
+    public String getPersistentScenesDirectoryPath() {
+        return persistentScenesDir.getAbsolutePath();
+    }
+
+    /**
+     * Delete a scene file from persistent storage.
+     *
+     * @param sceneName the name of the scene file to delete
+     * @return true if the deletion was successful, false otherwise
+     */
+    public boolean deleteScene(String sceneName) {
+        try {
+            File sceneFile = new File(persistentScenesDir, sceneName);
+
+            if (!sceneFile.exists()) {
+                Log.w(TAG, "Scene file does not exist: " + sceneName);
+                return false;
+            }
+
+            boolean deleted = sceneFile.delete();
+            if (deleted) {
+                Log.d(TAG, "Successfully deleted scene file: " + sceneName);
+            } else {
+                Log.e(TAG, "Failed to delete scene file: " + sceneName);
+            }
+
+            return deleted;
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting scene file: " + sceneName, e);
+            return false;
+        }
     }
 
     /**
@@ -64,7 +230,7 @@ public class SceneFileManager {
                 }
 
                 saveScene(sceneName);
-                Toast.makeText(context, "Scene saved to Downloads", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Scene saved to persistent storage", Toast.LENGTH_SHORT).show();
 
                 if (onSuccess != null) {
                     onSuccess.run();
@@ -80,7 +246,7 @@ public class SceneFileManager {
     }
 
     /**
-     * Save the scene to the Downloads folder.
+     * Save the scene to persistent storage.
      *
      * @param sceneName the name for the scene file
      * @throws Exception if saving fails
@@ -122,24 +288,15 @@ public class SceneFileManager {
             .create();
         String sceneJson = gson.toJson(sceneData);
 
-        // Get Downloads folder
-        File downloadsDir = Environment.getExternalStoragePublicDirectory(
-            Environment.DIRECTORY_DOWNLOADS
-        );
-
-        if (!downloadsDir.exists()) {
-            downloadsDir.mkdirs();
-        }
-
-        // Create file with .json extension
+        // Create file in persistent storage with .json extension
         String fileName = sceneName.endsWith(".json") ? sceneName : sceneName + ".json";
-        File sceneFile = new File(downloadsDir, fileName);
+        File sceneFile = new File(persistentScenesDir, fileName);
 
         // Write to file
         try (FileWriter writer = new FileWriter(sceneFile)) {
             writer.write(sceneJson);
         }
 
-        Log.d(TAG, "Scene saved to: " + sceneFile.getAbsolutePath());
+        Log.d(TAG, "Scene saved to persistent storage: " + sceneFile.getAbsolutePath());
     }
 }

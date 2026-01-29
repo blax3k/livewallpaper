@@ -1,21 +1,31 @@
 package com.example.livewallpaper.ui;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.R;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SceneListActivity extends AppCompatActivity {
     private static final String TAG = "SceneListActivity";
-    private static final String SCENES_FOLDER = "scenes";
+
+    private SceneFileManager sceneFileManager;
+    private List<String> sceneFileNames;
+    private SceneListAdapter adapter;
+    private ListView scenesList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,20 +35,36 @@ public class SceneListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_scene_list);
         Log.d(TAG, "Scene list layout inflated successfully");
 
-        ListView scenesList = findViewById(R.id.scenes_list);
+        // Initialize SceneFileManager to access persistent storage
+        sceneFileManager = new SceneFileManager(this, null);
+
+        scenesList = findViewById(R.id.scenes_list);
         if (scenesList != null) {
-            List<String> sceneFileNames = loadSceneFileNames();
-            SceneListAdapter adapter = new SceneListAdapter(this, sceneFileNames);
+            sceneFileNames = loadSceneFileNames();
+            adapter = new SceneListAdapter(this, sceneFileNames);
             scenesList.setAdapter(adapter);
 
-            // Set up click listener for list items
+            // Set up interaction listener for options menu and scene selection
+            adapter.setOnSceneInteractionListener(new SceneListAdapter.OnSceneInteractionListener() {
+                @Override
+                public void onSceneSelected(int position, String sceneFileName) {
+                    openEditScene(sceneFileName);
+                }
+
+                @Override
+                public void onOptionsMenuRequested(int position, String sceneFileName, View anchorView) {
+                    showContextMenu(position, sceneFileName, anchorView);
+                }
+            });
+
+            // Set up click listener for list items (to edit)
             scenesList.setOnItemClickListener((parent, view, position, id) -> {
                 String selectedScene = sceneFileNames.get(position);
-                Log.d(TAG, "Scene selected: " + selectedScene);
+                Log.d(TAG, "Scene selected for editing: " + selectedScene);
                 openEditScene(selectedScene);
             });
 
-            Log.d(TAG, "Loaded " + sceneFileNames.size() + " scenes");
+            Log.d(TAG, "Loaded " + sceneFileNames.size() + " scenes from persistent storage");
         } else {
             Log.e(TAG, "Scenes ListView not found!");
             Toast.makeText(this, "Failed to load scenes view", Toast.LENGTH_SHORT).show();
@@ -46,30 +72,81 @@ public class SceneListActivity extends AppCompatActivity {
     }
 
     /**
-     * Load all JSON file names from the assets/scenes folder.
+     * Load all JSON file names from the persistent scenes directory.
      */
     private List<String> loadSceneFileNames() {
-        List<String> sceneFileNames = new ArrayList<>();
-        try {
-            String[] assetFiles = getAssets().list(SCENES_FOLDER);
-            if (assetFiles != null) {
-                // Filter for JSON files only
-                for (String fileName : assetFiles) {
-                    if (fileName.endsWith(".json")) {
-                        sceneFileNames.add(fileName);
-                        Log.d(TAG, "Found scene file: " + fileName);
-                    }
+        List<String> fileNames = new ArrayList<>();
+
+        String persistentPath = sceneFileManager.getPersistentScenesDirectoryPath();
+        File persistentDir = new File(persistentPath);
+
+        if (persistentDir.exists() && persistentDir.isDirectory()) {
+            File[] files = persistentDir.listFiles((dir, name) -> name.endsWith(".json"));
+            if (files != null) {
+                for (File file : files) {
+                    fileNames.add(file.getName());
+                    Log.d(TAG, "Found scene file: " + file.getName());
                 }
                 // Sort the list for consistent display
-                java.util.Collections.sort(sceneFileNames);
+                java.util.Collections.sort(fileNames);
             } else {
-                Log.e(TAG, "Scenes folder not found or is not a directory");
+                Log.e(TAG, "Error listing files in persistent directory");
             }
-        } catch (IOException e) {
-            Log.e(TAG, "Error loading scene files: " + e.getMessage(), e);
-            Toast.makeText(this, "Failed to load scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        } else {
+            Log.e(TAG, "Persistent scenes directory does not exist or is not a directory");
         }
-        return sceneFileNames;
+
+        return fileNames;
+    }
+
+    /**
+     * Show a context menu (PopupMenu) with the delete option.
+     */
+    private void showContextMenu(int position, String sceneFileName, View anchorView) {
+        PopupMenu popupMenu = new PopupMenu(this, anchorView);
+        popupMenu.getMenuInflater().inflate(R.menu.scene_context_menu, popupMenu.getMenu());
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.menu_delete_scene) {
+                showDeleteConfirmationDialog(position, sceneFileName);
+                return true;
+            }
+            return false;
+        });
+
+        popupMenu.show();
+    }
+
+    /**
+     * Show a confirmation dialog before deleting a scene.
+     */
+    private void showDeleteConfirmationDialog(int position, String sceneFileName) {
+        new AlertDialog.Builder(this)
+            .setTitle("Delete Scene")
+            .setMessage("Are you sure you want to delete '" + sceneFileName + "'?")
+            .setPositiveButton("Yes", (dialog, which) -> {
+                deleteScene(position, sceneFileName);
+            })
+            .setNegativeButton("No", (dialog, which) -> {
+                dialog.dismiss();
+            })
+            .show();
+    }
+
+    /**
+     * Delete a scene file from persistent storage and update the UI.
+     */
+    private void deleteScene(int position, String sceneFileName) {
+        if (sceneFileManager.deleteScene(sceneFileName)) {
+            // Remove from list and notify adapter
+            sceneFileNames.remove(position);
+            adapter.notifyDataSetChanged();
+            Toast.makeText(this, "Scene deleted: " + sceneFileName, Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Scene deleted successfully: " + sceneFileName);
+        } else {
+            Toast.makeText(this, "Failed to delete scene: " + sceneFileName, Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "Failed to delete scene: " + sceneFileName);
+        }
     }
 
     private void openEditScene(String sceneFileName) {
@@ -83,3 +160,6 @@ public class SceneListActivity extends AppCompatActivity {
         }
     }
 }
+
+
+

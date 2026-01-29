@@ -15,6 +15,8 @@ import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
+import com.example.livewallpaper.ui.SceneFileManager;
+import com.example.livewallpaper.ui.ScenePreviewRenderer;
 
 /**
  * Simple example renderer that displays a blue square with a texture (knight.png) in the center of the view.
@@ -56,7 +58,8 @@ public class SimpleRenderer implements GLWallpaperRenderer {
 
     public SimpleRenderer(Context context) {
         this.context = context;
-        this.sceneManager = new SceneManager(context);
+        SceneFileManager sceneFileManager = new SceneFileManager(context, null);
+        this.sceneManager = new SceneManager(context, sceneFileManager);
 
         // Load the initial scene
         try {
