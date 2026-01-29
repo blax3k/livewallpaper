@@ -24,7 +24,7 @@ public class SpritesDropdownAdapter extends ArrayAdapter<String> {
     private final Context context;
 
     public SpritesDropdownAdapter(@NonNull Context context, @NonNull List<String> spriteNames) {
-        super(context, android.R.layout.simple_spinner_item, createItemsList(spriteNames));
+        super(context, com.example.livewallpaper.R.layout.spinner_item, createItemsList(spriteNames));
         this.context = context;
         this.items = createItemsList(spriteNames);
     }
@@ -51,8 +51,8 @@ public class SpritesDropdownAdapter extends ArrayAdapter<String> {
 
     private View getCustomView(int position, View convertView, ViewGroup parent, boolean isDropdown) {
         if (convertView == null) {
-            convertView = LayoutInflater.from(context).inflate(
-                    android.R.layout.simple_spinner_item, parent, false);
+            int layoutId = isDropdown ? com.example.livewallpaper.R.layout.spinner_dropdown_item : com.example.livewallpaper.R.layout.spinner_item;
+            convertView = LayoutInflater.from(context).inflate(layoutId, parent, false);
         }
 
         TextView textView = convertView.findViewById(android.R.id.text1);
