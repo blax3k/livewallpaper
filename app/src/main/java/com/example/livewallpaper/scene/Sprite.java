@@ -384,6 +384,7 @@ public class Sprite {
     public int getTextureResourceId() {
         return textureResourceId;
     }
+
     /**
      * Set the GL texture ID that will be used for rendering. Typically obtained from TextureManager.
      */

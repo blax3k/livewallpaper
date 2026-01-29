@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -51,7 +52,6 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     private String sceneFileName;
     private boolean glSetupComplete = false;
     private TextureSliderController textureSliderController;
-    private Sprite currentSprite;
     private TextureEditState textureEditState;
     private float lastTouchX = 0;
     private float lastTouchY = 0;
@@ -163,6 +163,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         TextView widthValueText = findViewById(R.id.width_value);
         TextView heightValueText = findViewById(R.id.height_value);
         TextView textureScaleValueText = findViewById(R.id.texture_scale_value);
+        Button setTextureButton = findViewById(R.id.set_texture_button);
 
         // Initialize the texture slider controller
         textureSliderController = new TextureSliderController(widthSlider, heightSlider, textureScaleSlider,
@@ -171,34 +172,134 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         // Set callback for slider changes to update sprite and texture coordinates
         textureSliderController.setOnChangeCallback(this::handleSliderChange);
 
+        // Set up the Set Texture button
+        if (setTextureButton != null) {
+            setTextureButton.setOnClickListener(v -> showSetTextureDialog());
+        }
+
         if (renderer != null) {
             Scene scene = renderer.getCurrentScene();
             if (scene != null && !scene.getSprites().isEmpty()) {
-                currentSprite = scene.getSprites().get(0);
+                Sprite sprite = scene.getSprites().get(0);
 
-                if (currentSprite != null) {
+                if (sprite != null) {
                     // Apply dimensions passed from EditSceneActivity
                     if (passedWidth > 0) {
-                        currentSprite.setWidth(passedWidth);
+                        sprite.setWidth(passedWidth);
                     }
                     if (passedHeight > 0) {
-                        currentSprite.setHeight(passedHeight);
+                        sprite.setHeight(passedHeight);
                     }
 
                     // Get the current texture state from the sprite (which includes any previously set scale/offset)
-                    textureEditState = currentSprite.getCurrentTextureEditState();
+                    textureEditState = sprite.getCurrentTextureEditState();
 
                     // If we have passed texture values that differ from defaults, apply them
                     // This ensures newly set values override what was loaded from the sprite
                     if (passedTextureScale != 1.0f || passedTextureOffsetU != 0.0f || passedTextureOffsetV != 0.0f) {
                         textureEditState = new TextureEditState(passedTextureScale, passedTextureOffsetU, passedTextureOffsetV);
-                        currentSprite.updateTextureCoordinates(textureEditState);
+                        sprite.updateTextureCoordinates(textureEditState);
                     }
 
                     // Set up the sliders with the sprite and texture state
-                    textureSliderController.setup(currentSprite, textureEditState);
+                    textureSliderController.setup(sprite, textureEditState);
                 }
             }
+        }
+    }
+
+    /**
+     * Show the image picker dialog to select a new texture for the sprite.
+     */
+    private void showSetTextureDialog() {
+        DrawableImagePickerDialog.showImagePickerDialog(this, (imageName, resourceId) -> {
+            setNewTexture(imageName, resourceId);
+        });
+    }
+
+    /**
+     * Set a new texture for the sprite without changing sprite dimensions.
+     * Texture is displayed at full scale with no offset, centered within the sprite bounds.
+     * Aspect ratio fitting is handled by TextureCoordinateCalculator.
+     * Loads the texture to GPU before applying it.
+     *
+     * @param imageName the name of the drawable resource
+     * @param resourceId the resource ID of the drawable
+     */
+    private void setNewTexture(String imageName, int resourceId) {
+        try {
+            Sprite currentSprite = renderer != null ? renderer.getSelectedSprite() : null;
+            if (currentSprite == null) {
+                Toast.makeText(this, "Error: No sprite to texture", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (renderer == null) {
+                Toast.makeText(this, "Error: Renderer not available", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Get the dimensions of the new texture image (for logging purposes)
+            ImageDimensionsUtils.ImageDimensions imageDims = ImageDimensionsUtils.getImageDimensions(this, resourceId);
+            if (imageDims == null) {
+                Toast.makeText(this, "Error: Could not load image dimensions", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Log.d(TAG, "New texture dimensions: " + imageDims);
+
+            // Load the texture to GPU asynchronously
+            renderer.getTextureManager().getTextureAsync(this, resourceId, (resId, textureId) -> {
+                if (textureId == 0) {
+                    Log.e(TAG, "Failed to load texture for resourceId=" + resourceId);
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Error: Failed to load texture", Toast.LENGTH_SHORT).show();
+                    });
+                    return;
+                }
+
+                Log.d(TAG, "Texture loaded to GPU: resourceId=" + resourceId + ", textureId=" + textureId);
+
+                Sprite sprite = renderer.getSelectedSprite();
+                if (sprite == null) {
+                    Log.e(TAG, "Sprite is no longer available after texture load");
+                    return;
+                }
+
+                // Update the sprite with the new texture ID
+                sprite.setTextureId(textureId);
+
+                // Keep sprite dimensions unchanged
+                float spriteWidth = sprite.getWidth();
+                float spriteHeight = sprite.getHeight();
+                Log.d(TAG, "Sprite dimensions (unchanged): " + spriteWidth + "x" + spriteHeight);
+
+                // Reset texture coordinates to default: full texture, centered, no offset
+                // TextureCoordinateCalculator will handle aspect ratio fitting
+                TextureEditState newTextureState = new TextureEditState(1.0f, 0.0f, 0.0f);
+                sprite.updateTextureCoordinates(newTextureState);
+                textureEditState = newTextureState;
+
+                Log.d(TAG, "Texture coordinates reset to: scale=1.0, offsetU=0.0, offsetV=0.0");
+
+                // Update the sliders to reflect new texture state on the UI thread
+                runOnUiThread(() -> {
+                    if (textureSliderController != null) {
+                        if (renderer.getSelectedSprite() != null) {
+                            textureSliderController.setup(renderer.getSelectedSprite(), textureEditState);
+                        }
+                    }
+
+                    // Mark as having unsaved changes
+                    hasUnsavedChanges = true;
+
+                    Toast.makeText(this, "Texture '" + imageName + "' set successfully", Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "New texture set: " + imageName + " with resourceId=" + resourceId);
+                });
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting new texture: " + e.getMessage(), e);
+            Toast.makeText(this, "Error setting texture: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -216,6 +317,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
      * This applies the texture scale and offsets to the sprite's texture coordinate buffer.
      */
     private void updateSpriteTextureCoordinates() {
+        Sprite currentSprite = renderer != null ? renderer.getSelectedSprite() : null;
         if (currentSprite != null && textureEditState != null) {
             currentSprite.updateTextureCoordinates(textureEditState);
             Log.d(TAG, "Sprite texture coordinates updated");
@@ -228,6 +330,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
      * Dragging moves the texture in the corresponding direction.
      */
     private boolean handleGLViewTouch(View v, MotionEvent event) {
+        Sprite currentSprite = renderer != null ? renderer.getSelectedSprite() : null;
         Log.d(TAG, "handleGLViewTouch called - action: " + event.getAction() + ", currentSprite: " + (currentSprite != null ? currentSprite.getName() : "null"));
 
         if (currentSprite == null) {
@@ -388,6 +491,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 return;
             }
 
+            Sprite currentSprite = renderer.getSelectedSprite();
             if (currentSprite == null) {
                 Toast.makeText(this, "Error: Sprite not available", Toast.LENGTH_SHORT).show();
                 return;

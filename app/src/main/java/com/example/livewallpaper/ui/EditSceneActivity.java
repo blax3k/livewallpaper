@@ -161,22 +161,28 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                     spriteNames.add(sprite.getName());
                 }
 
-                // Create and set the adapter
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                    this,
-                    android.R.layout.simple_spinner_item,
-                    spriteNames
-                );
-                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                // Create and set the custom adapter (includes "+ sprite" button)
+                SpritesDropdownAdapter adapter = new SpritesDropdownAdapter(this, spriteNames);
                 spritesSpinner.setAdapter(adapter);
 
                 // Set up item selection listener
                 spritesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                        Sprite selectedSprite = renderer.selectSpriteByIndex(position);
-                        if (selectedSprite != null) {
-                            showSpriteDetails(selectedSprite);
+                        // Check if the "+ sprite" item was selected
+                        if (adapter.isAddSpriteItem(position)) {
+                            // Show image picker dialog
+                            showAddSpriteDialog();
+                            // Reset spinner to the first sprite
+                            if (adapter.getSpriteCount() > 0) {
+                                spritesSpinner.setSelection(0);
+                            }
+                        } else {
+                            // Normal sprite selection
+                            Sprite selectedSprite = renderer.selectSpriteByIndex(position);
+                            if (selectedSprite != null) {
+                                showSpriteDetails(selectedSprite);
+                            }
                         }
                     }
 
@@ -184,7 +190,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                     public void onNothingSelected(AdapterView<?> parent) {}
                 });
 
-                Log.d(TAG, "Sprites spinner populated with " + spriteNames.size() + " items");
+                Log.d(TAG, "Sprites spinner populated with " + spriteNames.size() + " items (plus add sprite button)");
             } catch (Exception e) {
                 Log.e(TAG, "Error populating sprites spinner: " + e.getMessage(), e);
                 Toast.makeText(this, "Error loading sprite list: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -203,6 +209,65 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             spriteDetailsContainer.setVisibility(View.VISIBLE);
             Log.d(TAG, "Showing details for sprite: " + sprite.getName());
         }
+    }
+
+    /**
+     * Show dialog to add a new sprite by selecting an image from drawables.
+     */
+    private void showAddSpriteDialog() {
+        DrawableImagePickerDialog.showImagePickerDialog(this, (imageName, resourceId) -> {
+            addNewSprite(imageName, resourceId);
+        });
+    }
+
+    /**
+     * Add a new sprite to the scene with a 1.0x1.0 size.
+     *
+     * @param imageName the name of the drawable resource
+     * @param resourceId the resource ID of the drawable
+     */
+    private void addNewSprite(String imageName, int resourceId) {
+        try {
+            if (renderer == null) {
+                Toast.makeText(this, "Error: Scene not loaded", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Create a new sprite with default properties (1.0x1.0, at origin, full parallax)
+            com.example.livewallpaper.scene.SpriteData spriteData = new com.example.livewallpaper.scene.SpriteData();
+            spriteData.textureResource = imageName;
+            spriteData.textureResourceId = resourceId;
+            spriteData.name = imageName;
+            spriteData.width = 1.0f;
+            spriteData.height = 1.0f;
+            spriteData.positionX = 0.0f;
+            spriteData.positionY = 0.0f;
+            spriteData.parallaxMultiplier = 1.0f;
+            spriteData.texCoordinates = null; // Use default texture coordinates
+
+            // Create the sprite from the data
+            Sprite newSprite = new Sprite(spriteData);
+
+            // Add to the scene
+            renderer.addSpriteToScene(newSprite);
+
+            Log.d(TAG, "Added new sprite: " + imageName);
+
+            // Refresh the spinner to show the new sprite
+            refreshSpritesList();
+
+            Toast.makeText(this, "Sprite '" + imageName + "' added", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding new sprite: " + e.getMessage(), e);
+            Toast.makeText(this, "Error adding sprite: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Refresh the sprites list in the spinner.
+     */
+    private void refreshSpritesList() {
+        populateSpritesListView();
     }
 
     private void openEditTextureActivity() {

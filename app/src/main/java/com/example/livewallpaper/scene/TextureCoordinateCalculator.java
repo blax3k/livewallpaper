@@ -56,7 +56,7 @@ public class TextureCoordinateCalculator {
         float growthScale = Math.max(widthGrowth, heightGrowth);
 
         // The texture's effective size in world space grows with the sprite
-        // This ensures the texture maintains its 1:1 aspect ratio while scaling uniformly
+        // This ensures the texture maintains its aspect ratio while scaling uniformly
         float textureWidthInWorld = originalWidth * textureScaleFactor * growthScale;
         float textureHeightInWorld = originalHeight * textureScaleFactor * growthScale;
 

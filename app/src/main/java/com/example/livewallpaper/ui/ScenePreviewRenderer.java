@@ -4,6 +4,8 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.example.livewallpaper.gl.Handles;
@@ -446,6 +448,43 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
         if (sprite != null) {
             com.example.livewallpaper.scene.TextureEditState textureState = new com.example.livewallpaper.scene.TextureEditState(textureScale, textureOffsetU, textureOffsetV);
             sprite.updateTextureCoordinates(textureState);
+        }
+    }
+
+    /**
+     * Get the TextureManager instance for loading textures.
+     * This allows external classes to load textures on demand.
+     *
+     * @return the TextureManager, or null if not yet initialized
+     */
+    public TextureManager getTextureManager() {
+        return textureManager;
+    }
+
+    /**
+     * Add a new sprite to the current scene and load its texture.
+     * This should be called from the main thread.
+     *
+     * @param sprite the sprite to add to the scene
+     */
+    public void addSpriteToScene(Sprite sprite) {
+        if (currentScene == null) {
+            Log.w(TAG, "Cannot add sprite: scene not loaded");
+            return;
+        }
+
+        currentScene.addSprite(sprite);
+
+        // Load the texture on the GL thread
+        if (textureManager != null) {
+            Log.d(TAG, "Adding sprite to scene: " + sprite.getName());
+            // Schedule texture loading on next GL frame
+            new Handler(Looper.getMainLooper()).post(() -> {
+                if (currentScene != null && textureManager != null) {
+                    currentScene.loadSpriteTexture(context, textureManager, sprite);
+                    Log.d(TAG, "Texture loaded for sprite: " + sprite.getName());
+                }
+            });
         }
     }
 
