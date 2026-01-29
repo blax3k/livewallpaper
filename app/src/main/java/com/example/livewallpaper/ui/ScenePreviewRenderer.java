@@ -170,6 +170,13 @@ public class ScenePreviewRenderer implements GLSurfaceView.Renderer {
                 // Otherwise load from file
                 Log.d(TAG, "Loading scene from file: " + sceneFileName);
                 SceneLoader sceneLoader = new SceneLoader(context);
+
+                // Set the persistent scenes path so it loads from persistent storage first
+                SceneFileManager sceneFileManager = new SceneFileManager(context, null);
+                String persistentPath = sceneFileManager.getPersistentScenesDirectoryPath();
+                sceneLoader.setPersistentScenesPath(persistentPath);
+                Log.d(TAG, "SceneLoader configured to load from persistent path: " + persistentPath);
+
                 currentScene = sceneLoader.loadScene(sceneFileName);
             }
 

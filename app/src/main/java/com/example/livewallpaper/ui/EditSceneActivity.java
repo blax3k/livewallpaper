@@ -273,7 +273,11 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         if (saveButton != null) {
             saveButton.setOnClickListener(v -> {
                 String currentSceneName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
-                sceneFileManager.showSaveDialog(currentSceneName, null);
+                // Pass a callback to be executed after successful save
+                sceneFileManager.showSaveDialog(currentSceneName, () -> {
+                    // Mark that a save occurred so SceneListActivity can refresh
+                    setResult(RESULT_OK);
+                });
             });
         }
     }

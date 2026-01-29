@@ -10,6 +10,9 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.GLWallpaperService;
@@ -26,6 +29,22 @@ public class SceneListActivity extends AppCompatActivity {
     private List<String> sceneFileNames;
     private SceneListAdapter adapter;
     private ListView scenesList;
+
+    // Activity result launcher for opening EditSceneActivity
+    private final ActivityResultLauncher<Intent> editSceneActivityLauncher =
+        registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() == RESULT_OK) {
+                // Scene was saved in EditSceneActivity, refresh the list
+                Log.d(TAG, "Scene was saved, refreshing scene list");
+                sceneFileNames = loadSceneFileNames();
+                adapter.clear();
+                adapter.addAll(sceneFileNames);
+                adapter.notifyDataSetChanged();
+
+                // Also refresh the wallpaper since scene was modified
+                GLWallpaperService.refreshSceneList(this);
+            }
+        });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,7 +175,7 @@ public class SceneListActivity extends AppCompatActivity {
         try {
             Intent intent = new Intent(this, EditSceneActivity.class);
             intent.putExtra(EditSceneActivity.EXTRA_SCENE_FILE_NAME, sceneFileName);
-            startActivity(intent);
+            editSceneActivityLauncher.launch(intent);
         } catch (Exception e) {
             Log.e(TAG, "Error opening edit scene: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to open scene editor: " + e.getMessage(), Toast.LENGTH_SHORT).show();
