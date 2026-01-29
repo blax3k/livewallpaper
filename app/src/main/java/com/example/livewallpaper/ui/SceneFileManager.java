@@ -199,6 +199,38 @@ public class SceneFileManager {
     }
 
     /**
+     * Reset the scene list to default by clearing persistent storage and copying
+     * all default scene files from the app bundle.
+     */
+    public void resetToDefaultScenes() {
+        try {
+            // Delete all files in the persistent scenes directory
+            File[] files = persistentScenesDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.delete()) {
+                        Log.d(TAG, "Deleted scene file during reset: " + file.getName());
+                    }
+                }
+            }
+
+            // Copy all default scene files from app bundle
+            String[] bundleScenes = context.getAssets().list(SCENES_FOLDER);
+            if (bundleScenes != null) {
+                for (String sceneName : bundleScenes) {
+                    if (sceneName.endsWith(".json")) {
+                        copySceneFromBundle(sceneName);
+                    }
+                }
+                Log.d(TAG, "Successfully reset scene list to " + bundleScenes.length + " default scenes");
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error resetting scenes to default", e);
+            throw new RuntimeException("Failed to reset scenes", e);
+        }
+    }
+
+    /**
      * Show the save scene dialog.
      *
      * @param currentSceneName the current scene name to use as default

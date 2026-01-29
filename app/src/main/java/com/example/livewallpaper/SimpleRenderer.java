@@ -261,5 +261,18 @@ public class SimpleRenderer implements GLWallpaperRenderer {
         sceneSwitchRequested = true;
     }
 
+    /**
+     * Refresh the available scene list from disk.
+     * This should be called when the scene list has changed (e.g., after delete, reset, or add operations).
+     *
+     * @param sceneFileManager the SceneFileManager to reload scenes from
+     */
+    public void refreshSceneList(SceneFileManager sceneFileManager) {
+        if (sceneManager != null) {
+            sceneManager.reloadAvailableScenes(sceneFileManager);
+            Log.d(TAG, "Scene list refreshed in renderer");
+        }
+    }
+
 
 }

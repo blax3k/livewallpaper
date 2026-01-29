@@ -4,15 +4,15 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.ContextMenu;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.livewallpaper.GLWallpaperService;
 import com.example.livewallpaper.R;
 
 import java.io.File;
@@ -143,6 +143,9 @@ public class SceneListActivity extends AppCompatActivity {
             adapter.notifyDataSetChanged();
             Toast.makeText(this, "Scene deleted: " + sceneFileName, Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Scene deleted successfully: " + sceneFileName);
+
+            // Refresh the scene list in the running wallpaper
+            GLWallpaperService.refreshSceneList(this);
         } else {
             Toast.makeText(this, "Failed to delete scene: " + sceneFileName, Toast.LENGTH_SHORT).show();
             Log.e(TAG, "Failed to delete scene: " + sceneFileName);
@@ -159,7 +162,52 @@ public class SceneListActivity extends AppCompatActivity {
             Toast.makeText(this, "Failed to open scene editor: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_scene_list, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_reset_scenes) {
+            showResetConfirmationDialog();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Show a confirmation dialog before resetting the scene list to defaults.
+     */
+    private void showResetConfirmationDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("Reset Scene List")
+            .setMessage("This will discard all changes and restore default scenes. Continue?")
+            .setPositiveButton("Yes", (dialog, which) -> resetSceneList())
+            .setNegativeButton("No", null)
+            .show();
+    }
+
+    /**
+     * Reset the scene list to default and reload the UI.
+     */
+    private void resetSceneList() {
+        try {
+            sceneFileManager.resetToDefaultScenes();
+            sceneFileNames = loadSceneFileNames();
+            adapter.clear();
+            adapter.addAll(sceneFileNames);
+            adapter.notifyDataSetChanged();
+            Toast.makeText(this, "Scene list reset to defaults", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Scene list successfully reset to defaults");
+
+            // Refresh the scene list in the running wallpaper
+            GLWallpaperService.refreshSceneList(this);
+        } catch (Exception e) {
+            Log.e(TAG, "Error resetting scenes: " + e.getMessage(), e);
+            Toast.makeText(this, "Failed to reset scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
 }
-
-
-

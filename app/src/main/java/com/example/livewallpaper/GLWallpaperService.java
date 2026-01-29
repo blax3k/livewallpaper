@@ -1,5 +1,6 @@
 package com.example.livewallpaper;
 
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,6 +17,8 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 
+import com.example.livewallpaper.ui.SceneFileManager;
+
 /**
  * A WallpaperService that renders OpenGL content as a live wallpaper.
  * Manages EGL context creation and a dedicated render thread.
@@ -23,9 +26,32 @@ import androidx.annotation.NonNull;
 public class GLWallpaperService extends WallpaperService {
     private static final String TAG = "GLWallpaperService";
 
+    // Static reference to the current renderer instance for refreshing from outside
+    private static SimpleRenderer currentRenderer;
+
     @Override
     public Engine onCreateEngine() {
         return new GLWallpaperEngine();
+    }
+
+    /**
+     * Refresh the scene list in the currently running wallpaper.
+     * Call this when scenes have been added, deleted, or reset in the app.
+     *
+     * @param context the application context
+     */
+    public static void refreshSceneList(Context context) {
+        if (currentRenderer != null) {
+            try {
+                SceneFileManager sceneFileManager = new SceneFileManager(context, null);
+                currentRenderer.refreshSceneList(sceneFileManager);
+                Log.d(TAG, "Scene list refreshed in wallpaper");
+            } catch (Exception e) {
+                Log.e(TAG, "Error refreshing scene list in wallpaper: " + e.getMessage(), e);
+            }
+        } else {
+            Log.d(TAG, "Wallpaper not currently running, scene list will be loaded when wallpaper starts");
+        }
     }
 
     private class GLWallpaperEngine extends Engine implements SurfaceHolder.Callback {
@@ -87,6 +113,8 @@ public class GLWallpaperService extends WallpaperService {
                 super.onCreate(surfaceHolder);
                 surfaceHolder.addCallback(this);
                 renderer = new SimpleRenderer(GLWallpaperService.this);
+                // Set the static reference so the scene list can be refreshed from outside
+                currentRenderer = (SimpleRenderer) renderer;
 
                 // Enable touch events and initialize gesture detector for double tap detection
                 setTouchEventsEnabled(true);
@@ -110,6 +138,11 @@ public class GLWallpaperService extends WallpaperService {
 
         @Override
         public void onDestroy() {
+            // Clear the static reference
+            if (currentRenderer == renderer) {
+                currentRenderer = null;
+            }
+
             // Ensure sensor listener is unregistered
             if (sensorManager != null && sensorRegistered) {
                 sensorManager.unregisterListener(sensorEventListener);

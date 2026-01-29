@@ -2,4 +2,6 @@
 <resources>
 
     <style name="Theme.Livewallpaper" parent="Theme.AppCompat.Light.NoActionBar" />
+
+    <style name="Theme.Livewallpaper.WithActionBar" parent="Theme.AppCompat.Light" />
 </resources>

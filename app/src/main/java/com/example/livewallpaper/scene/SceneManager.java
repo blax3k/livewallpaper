@@ -19,7 +19,7 @@ public class SceneManager {
     private final TextureManager textureManager;
     private final SceneTransitionManager transitionManager;
     // Dynamically loaded list of available scene files
-    private final String[] sceneFiles;
+    private String[] sceneFiles;
 
     // Current index in the sceneFiles array
     private int currentSceneIndex = 0;
@@ -195,5 +195,20 @@ public class SceneManager {
     public Scene getTransitioningScene() {
         return transitionManager.getNewScene();
     }
-}
 
+    /**
+     * Reload the available scene files from disk.
+     * Call this when the scene list has changed (e.g., after reset or delete operations).
+     * This updates the internal sceneFiles array to reflect the current state.
+     *
+     * @param sceneFileManager the SceneFileManager to load scene files from
+     */
+    public void reloadAvailableScenes(SceneFileManager sceneFileManager) {
+        this.sceneFiles = sceneFileManager.loadAvailableSceneFiles();
+
+        // Reset index to 0 since scene list changed
+        currentSceneIndex = 0;
+
+        Log.d(TAG, "Reloaded " + sceneFiles.length + " scene files");
+    }
+}
