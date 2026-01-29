@@ -13,6 +13,8 @@ import android.widget.TextView;
 
 import com.example.livewallpaper.scene.Sprite;
 
+import java.util.Locale;
+
 /**
  * Builds and manages the sprite details UI.
  * Handles property row creation and sprite property editing setup.
@@ -76,18 +78,28 @@ public class SpriteDetailsBuilder {
         // Add texture resource button
         addPropertyButtonRow("Texture Resource");
 
-        // Set up position sliders
-        sliderManager.setupSlider(new SliderController.SliderConfig(
-            positionXSlider, positionXValue, -15f, 15f, 0.25f, "Position X",
-            v -> renderer.updateSpritePosition(sprite, v, sprite.getPositionY()),
-            sprite::getPositionX
-        ));
+        // Set up position displays and sliders (if sliders exist)
+        if (positionXSlider != null) {
+            sliderManager.setupSlider(new SliderController.SliderConfig(
+                positionXSlider, positionXValue, -15f, 15f, 0.25f, "Position X",
+                v -> renderer.updateSpritePosition(sprite, v, sprite.getPositionY()),
+                sprite::getPositionX
+            ));
 
-        sliderManager.setupSlider(new SliderController.SliderConfig(
-            positionYSlider, positionYValue, -15f, 15f, 0.25f, "Position Y",
-            v -> renderer.updateSpritePosition(sprite, sprite.getPositionX(), v),
-            sprite::getPositionY
-        ));
+            sliderManager.setupSlider(new SliderController.SliderConfig(
+                positionYSlider, positionYValue, -15f, 15f, 0.25f, "Position Y",
+                v -> renderer.updateSpritePosition(sprite, sprite.getPositionX(), v),
+                sprite::getPositionY
+            ));
+        } else {
+            // No sliders - just update the text displays
+            if (positionXValue != null) {
+                positionXValue.setText(String.format(Locale.US, "%.2f", sprite.getPositionX()));
+            }
+            if (positionYValue != null) {
+                positionYValue.setText(String.format(Locale.US, "%.2f", sprite.getPositionY()));
+            }
+        }
 
         // Set up scale slider
         float aspectRatio = renderer.calculateAspectRatio(sprite);

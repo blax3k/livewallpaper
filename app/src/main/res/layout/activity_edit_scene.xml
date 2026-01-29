@@ -85,108 +85,70 @@
                 android:orientation="vertical"
                 android:padding="4dp">
 
-                    <!-- Position X Slider -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="0dp"
-                        android:background="@android:drawable/dialog_holo_light_frame"
-                        android:orientation="vertical"
-                        android:paddingBottom="0dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:paddingLeft="8dp"
-                            android:paddingTop="4dp"
-                            android:paddingRight="8dp"
-                            android:paddingBottom="4dp">
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Position X"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/position_x_value"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:background="@android:drawable/editbox_background"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingLeft="8dp"
-                                android:paddingTop="4dp"
-                                android:paddingRight="8dp"
-                                android:paddingBottom="4dp"
-                                android:text="0.00"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <SeekBar
-                            android:id="@+id/position_x_slider"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_margin="4dp"
-                            android:max="120"
-                            android:progress="60"
-                            android:paddingBottom="8dp"/>
-                    </LinearLayout>
-
-                    <!-- Position Y Slider -->
+                    <!-- Position X and Y Fields (single row) -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="8dp"
                         android:background="@android:drawable/dialog_holo_light_frame"
-                        android:orientation="vertical"
-                        android:paddingBottom="0dp">
+                        android:orientation="horizontal"
+                        android:padding="8dp"
+                        android:gravity="center_vertical">
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
+                            android:text="Position"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="8dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="X:"
+                            android:textSize="12sp"
+                            android:layout_marginEnd="4dp" />
+
+                        <TextView
+                            android:id="@+id/position_x_value"
+                            android:layout_width="60dp"
+                            android:layout_height="wrap_content"
+                            android:background="@android:drawable/editbox_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
                             android:paddingLeft="8dp"
                             android:paddingTop="4dp"
                             android:paddingRight="8dp"
-                            android:paddingBottom="4dp">
+                            android:paddingBottom="4dp"
+                            android:text="0.00"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="16dp" />
 
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:text="Position Y"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/position_y_value"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:background="@android:drawable/editbox_background"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingLeft="8dp"
-                                android:paddingTop="4dp"
-                                android:paddingRight="8dp"
-                                android:paddingBottom="4dp"
-                                android:text="0.00"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-                        </LinearLayout>
-
-                        <SeekBar
-                            android:id="@+id/position_y_slider"
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_margin="4dp"
-                            android:max="120"
-                            android:progress="60"
-                            android:paddingBottom="8dp"/>
+                            android:text="Y:"
+                            android:textSize="12sp"
+                            android:layout_marginEnd="4dp" />
+
+                        <TextView
+                            android:id="@+id/position_y_value"
+                            android:layout_width="60dp"
+                            android:layout_height="wrap_content"
+                            android:background="@android:drawable/editbox_background"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingLeft="8dp"
+                            android:paddingTop="4dp"
+                            android:paddingRight="8dp"
+                            android:paddingBottom="4dp"
+                            android:text="0.00"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <!-- Scale Control with Width and Height Fields -->

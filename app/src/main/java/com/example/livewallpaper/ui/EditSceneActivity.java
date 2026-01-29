@@ -11,9 +11,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ScrollView;
@@ -22,6 +22,7 @@ import android.widget.Spinner;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.R;
@@ -30,6 +31,7 @@ import com.example.livewallpaper.scene.TextureEditState;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class EditSceneActivity extends AppCompatActivity implements SensorEventListener {
     private static final String TAG = "EditSceneActivity";
@@ -41,6 +43,15 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     private Sensor gyroscopeSensor;
     private Spinner spritesSpinner;
     private ScrollView spriteDetailsContainer;
+    private TextView positionXValue;
+    private TextView positionYValue;
+
+    // Touch handling for sprite position
+    private float lastTouchX = 0;
+    private float lastTouchY = 0;
+    private boolean isTouching = false;
+    private static final float POSITION_MIN = -15f;
+    private static final float POSITION_MAX = 15f;
 
     // Helper controllers
     private SpriteDetailsBuilder spriteDetailsBuilder;
@@ -58,11 +69,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         // Initialize view references
         spritesSpinner = findViewById(R.id.sprites_spinner);
         spriteDetailsContainer = findViewById(R.id.sprite_details_container);
+        positionXValue = findViewById(R.id.position_x_value);
+        positionYValue = findViewById(R.id.position_y_value);
 
-        SeekBar positionXSlider = findViewById(R.id.position_x_slider);
-        TextView positionXValue = findViewById(R.id.position_x_value);
-        SeekBar positionYSlider = findViewById(R.id.position_y_slider);
-        TextView positionYValue = findViewById(R.id.position_y_value);
         SeekBar scaleSlider = findViewById(R.id.scale_slider);
         TextView scaleValue = findViewById(R.id.scale_value);
         EditText widthEdit = findViewById(R.id.width_edit);
@@ -70,6 +79,10 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         SeekBar parallaxMultiplierSlider = findViewById(R.id.parallax_multiplier_slider);
         TextView parallaxMultiplierValue = findViewById(R.id.parallax_multiplier_value);
         TableLayout propertiesTable = findViewById(R.id.sprite_properties_table);
+
+        // Set up click listeners for manual position input
+        positionXValue.setOnClickListener(v -> showPositionInputDialog("X"));
+        positionYValue.setOnClickListener(v -> showPositionInputDialog("Y"));
 
         // Initialize sensor manager
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -90,8 +103,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         if (sceneFileName != null) {
             Log.d(TAG, "Scene file name: " + sceneFileName);
             displaySceneInfo(sceneFileName);
-            setupGLSurfaceView(sceneFileName, propertiesTable, positionXSlider, positionXValue,
-                    positionYSlider, positionYValue, scaleSlider, scaleValue,
+            setupGLSurfaceView(sceneFileName, propertiesTable, scaleSlider, scaleValue,
                     widthEdit, heightEdit, parallaxMultiplierSlider, parallaxMultiplierValue);
         } else {
             Log.e(TAG, "No scene file name provided!");
@@ -107,8 +119,6 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     }
 
     private void setupGLSurfaceView(String sceneFileName, TableLayout propertiesTable,
-                                    SeekBar positionXSlider, TextView positionXValue,
-                                    SeekBar positionYSlider, TextView positionYValue,
                                     SeekBar scaleSlider, TextView scaleValue,
                                     EditText widthEdit, EditText heightEdit,
                                     SeekBar parallaxMultiplierSlider, TextView parallaxMultiplierValue) {
@@ -125,9 +135,12 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 // Set render mode to continuous
                 glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
+                // Set up touch listener for sprite position manipulation
+                glSurfaceView.setOnTouchListener((v, event) -> handleGLViewTouch(v, event));
+
                 // Initialize helper classes
                 spriteDetailsBuilder = new SpriteDetailsBuilder(this, renderer, propertiesTable,
-                        positionXSlider, positionXValue, positionYSlider, positionYValue,
+                        null, positionXValue, null, positionYValue,
                         scaleSlider, scaleValue, widthEdit, heightEdit,
                         parallaxMultiplierSlider, parallaxMultiplierValue);
                 sceneFileManager = new SceneFileManager(this, renderer);
@@ -382,4 +395,138 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             }
         }
     }
+
+    /**
+     * Handle touch events on the GL view to move sprite position.
+     * Dragging updates the sprite's X and Y position within bounds [-15, 15].
+     */
+    private boolean handleGLViewTouch(View v, MotionEvent event) {
+        Sprite currentSprite = renderer != null ? renderer.getSelectedSprite() : null;
+        if (currentSprite == null) {
+            return false;
+        }
+
+        float touchX = event.getX();
+        float touchY = event.getY();
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                isTouching = true;
+                lastTouchX = touchX;
+                lastTouchY = touchY;
+                return true;
+
+            case MotionEvent.ACTION_MOVE:
+                if (isTouching) {
+                    // Calculate delta movement in pixels
+                    float deltaX = (touchX - lastTouchX) * 0.15f;
+                    float deltaY = (touchY - lastTouchY) * 0.15f;
+
+                    // Get view dimensions
+                    float viewWidth = v.getWidth();
+                    float viewHeight = v.getHeight();
+
+                    // Convert pixel movement to position coordinates
+                    // The position range is -15 to 15, spread across the view
+                    float positionRange = POSITION_MAX - POSITION_MIN;
+                    float deltaPositionX = (deltaX / viewWidth) * positionRange;
+                    float deltaPositionY = (deltaY / viewHeight) * positionRange;
+
+                    // Get current position and apply delta with clamping
+                    float newX = Math.max(POSITION_MIN, Math.min(POSITION_MAX,
+                            currentSprite.getPositionX() + deltaPositionX));
+                    float newY = Math.max(POSITION_MIN, Math.min(POSITION_MAX,
+                            currentSprite.getPositionY() + deltaPositionY));
+
+                    // Update sprite position
+                    renderer.updateSpritePosition(currentSprite, newX, newY);
+                    updatePositionDisplay(newX, newY);
+
+                    // Update last touch position
+                    lastTouchX = touchX;
+                    lastTouchY = touchY;
+                }
+                return true;
+
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                isTouching = false;
+                // Snap to nearest 0.05 increment when finger is lifted
+                if (currentSprite != null) {
+                    float snappedX = Math.round(currentSprite.getPositionX() * 20f) / 20f;
+                    float snappedY = Math.round(currentSprite.getPositionY() * 20f) / 20f;
+                    renderer.updateSpritePosition(currentSprite, snappedX, snappedY);
+                    updatePositionDisplay(snappedX, snappedY);
+                }
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Update the position display fields.
+     */
+    private void updatePositionDisplay(float x, float y) {
+        if (positionXValue != null) {
+            positionXValue.setText(String.format(Locale.US, "%.2f", x));
+        }
+        if (positionYValue != null) {
+            positionYValue.setText(String.format(Locale.US, "%.2f", y));
+        }
+    }
+
+    /**
+     * Show a dialog to manually input a position value.
+     */
+    private void showPositionInputDialog(String axis) {
+        Sprite currentSprite = renderer != null ? renderer.getSelectedSprite() : null;
+        if (currentSprite == null) {
+            Toast.makeText(this, "No sprite selected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        float currentValue = axis.equals("X") ? currentSprite.getPositionX() : currentSprite.getPositionY();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter Position " + axis);
+        builder.setMessage("Enter a value between -15 and 15:");
+
+        final EditText input = new EditText(this);
+        input.setInputType(android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL | android.text.InputType.TYPE_NUMBER_FLAG_SIGNED);
+        input.setText(String.format(Locale.US, "%.2f", currentValue));
+        input.selectAll();
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            try {
+                float value = Float.parseFloat(input.getText().toString());
+
+                // Clamp value to range [-15, 15]
+                if (value < POSITION_MIN || value > POSITION_MAX) {
+                    Toast.makeText(EditSceneActivity.this,
+                            "Value must be between " + POSITION_MIN + " and " + POSITION_MAX,
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Update sprite position
+                if (axis.equals("X")) {
+                    renderer.updateSpritePosition(currentSprite, value, currentSprite.getPositionY());
+                    updatePositionDisplay(value, currentSprite.getPositionY());
+                } else {
+                    renderer.updateSpritePosition(currentSprite, currentSprite.getPositionX(), value);
+                    updatePositionDisplay(currentSprite.getPositionX(), value);
+                }
+
+                Toast.makeText(EditSceneActivity.this, "Position " + axis + " updated", Toast.LENGTH_SHORT).show();
+            } catch (NumberFormatException e) {
+                Toast.makeText(EditSceneActivity.this, "Invalid number format", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
 }
+
