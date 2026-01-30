@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.gl;
 
 import android.content.Context;
 import android.hardware.Sensor;
@@ -17,7 +17,8 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 
-import com.example.livewallpaper.ui.SceneFileManager;
+import com.example.livewallpaper.scene.Scene;
+import com.example.livewallpaper.ui.managers.SceneFileManager;
 
 /**
  * A WallpaperService that renders OpenGL content as a live wallpaper.
@@ -27,7 +28,7 @@ public class GLWallpaperService extends WallpaperService {
     private static final String TAG = "GLWallpaperService";
 
     // Static reference to the current renderer instance for refreshing from outside
-    private static SimpleRenderer currentRenderer;
+    private static Scene.SimpleRenderer currentRenderer;
 
     @Override
     public Engine onCreateEngine() {
@@ -112,9 +113,9 @@ public class GLWallpaperService extends WallpaperService {
             try {
                 super.onCreate(surfaceHolder);
                 surfaceHolder.addCallback(this);
-                renderer = new SimpleRenderer(GLWallpaperService.this);
+                renderer = new Scene.SimpleRenderer(GLWallpaperService.this);
                 // Set the static reference so the scene list can be refreshed from outside
-                currentRenderer = (SimpleRenderer) renderer;
+                currentRenderer = (Scene.SimpleRenderer) renderer;
 
                 // Enable touch events and initialize gesture detector for double tap detection
                 setTouchEventsEnabled(true);

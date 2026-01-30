@@ -1,4 +1,4 @@
-package com.example.livewallpaper;
+package com.example.livewallpaper.gl;
 
 /**
  * Interface for OpenGL wallpaper renderers.

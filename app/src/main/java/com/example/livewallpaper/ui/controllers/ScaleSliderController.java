@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui;
+package com.example.livewallpaper.ui.controllers;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -7,6 +7,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.livewallpaper.scene.SceneTransitionManager;
 import com.example.livewallpaper.scene.Sprite;
 
 /**
@@ -20,11 +21,11 @@ public class ScaleSliderController {
     private static final float SCALE_INCREMENT = 0.1f;
 
     private final Context context;
-    private final ScenePreviewRenderer renderer;
+    private final SceneTransitionManager.ScenePreviewRenderer renderer;
     private final SeekBar scaleSlider;
     private final TextView scaleValue;
 
-    public ScaleSliderController(Context context, ScenePreviewRenderer renderer,
+    public ScaleSliderController(Context context, SceneTransitionManager.ScenePreviewRenderer renderer,
                                 SeekBar scaleSlider, TextView scaleValue) {
         this.context = context;
         this.renderer = renderer;

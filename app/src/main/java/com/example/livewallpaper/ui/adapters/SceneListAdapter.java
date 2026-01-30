@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui;
+package com.example.livewallpaper.ui.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;

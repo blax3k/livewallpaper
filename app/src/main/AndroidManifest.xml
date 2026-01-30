@@ -15,7 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Livewallpaper">
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.activities.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Livewallpaper">
             <intent-filter>
@@ -26,22 +26,22 @@
         </activity>
 
         <activity
-            android:name=".ui.SceneListActivity"
+            android:name=".ui.activities.SceneListActivity"
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper.WithActionBar" />
 
         <activity
-            android:name=".ui.EditSceneActivity"
+            android:name=".ui.activities.EditSceneActivity"
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper" />
 
         <activity
-            android:name=".ui.EditTextureActivity"
+            android:name=".ui.activities.EditTextureActivity"
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper" />
 
         <service
-            android:name=".GLWallpaperService"
+            android:name=".gl.GLWallpaperService"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_WALLPAPER"
             android:exported="true">

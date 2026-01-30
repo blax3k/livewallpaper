@@ -1,8 +1,9 @@
-package com.example.livewallpaper.ui;
+package com.example.livewallpaper.ui.controllers;
 
 import android.util.Log;
 import android.widget.EditText;
 
+import com.example.livewallpaper.scene.SceneTransitionManager;
 import com.example.livewallpaper.scene.Sprite;
 
 /**
@@ -12,12 +13,12 @@ import com.example.livewallpaper.scene.Sprite;
 public class DimensionController {
     private static final String TAG = "DimensionController";
 
-    private final ScenePreviewRenderer renderer;
+    private final SceneTransitionManager.ScenePreviewRenderer renderer;
     private final EditText widthEdit;
     private final EditText heightEdit;
     private float originalAspectRatio;
 
-    public DimensionController(ScenePreviewRenderer renderer, EditText widthEdit, EditText heightEdit) {
+    public DimensionController(SceneTransitionManager.ScenePreviewRenderer renderer, EditText widthEdit, EditText heightEdit) {
         this.renderer = renderer;
         this.widthEdit = widthEdit;
         this.heightEdit = heightEdit;

@@ -41,7 +41,7 @@
         android:background="@android:color/black"
         android:gravity="center">
 
-        <com.example.livewallpaper.ui.SquareGLSurfaceView
+        <com.example.livewallpaper.gl.SquareGLSurfaceView
             android:id="@+id/scene_preview_gl_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />

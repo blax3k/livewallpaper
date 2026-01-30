@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui;
+package com.example.livewallpaper.ui.controllers;
 
 import android.content.Context;
 import android.util.Log;

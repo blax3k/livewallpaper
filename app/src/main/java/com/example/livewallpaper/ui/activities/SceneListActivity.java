@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui;
+package com.example.livewallpaper.ui.activities;
 
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -10,13 +10,15 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
-import androidx.activity.result.ActivityResult;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.livewallpaper.GLWallpaperService;
+import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
+import com.example.livewallpaper.ui.managers.SceneFileManager;
+import com.example.livewallpaper.ui.adapters.SceneListAdapter;
 
 import java.io.File;
 import java.util.ArrayList;

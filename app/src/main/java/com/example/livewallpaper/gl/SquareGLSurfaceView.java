@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui;
+package com.example.livewallpaper.gl;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;

@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui;
+package com.example.livewallpaper.ui.activities;
 
 import android.content.Context;
 import android.content.Intent;
@@ -26,8 +26,14 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.R;
+import com.example.livewallpaper.scene.SceneTransitionManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.scene.TextureEditState;
+import com.example.livewallpaper.ui.managers.SceneFileManager;
+import com.example.livewallpaper.ui.adapters.SpritesDropdownAdapter;
+import com.example.livewallpaper.gl.SquareGLSurfaceView;
+import com.example.livewallpaper.ui.controllers.DrawableImagePickerDialog;
+import com.example.livewallpaper.ui.builders.SpriteDetailsBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +44,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     public static final String EXTRA_SCENE_FILE_NAME = "scene_file_name";
 
     private SquareGLSurfaceView glSurfaceView;
-    private ScenePreviewRenderer renderer;
+    private SceneTransitionManager.ScenePreviewRenderer renderer;
     private SensorManager sensorManager;
     private Sensor gyroscopeSensor;
     private Spinner spritesSpinner;
@@ -129,7 +135,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 glSurfaceView.setEGLContextClientVersion(2);
 
                 // Set the renderer
-                renderer = new ScenePreviewRenderer(this, sceneFileName);
+                renderer = new SceneTransitionManager.ScenePreviewRenderer(this, sceneFileName);
                 glSurfaceView.setRenderer(renderer);
 
                 // Set render mode to continuous

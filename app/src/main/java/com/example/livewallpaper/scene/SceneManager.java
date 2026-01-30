@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import com.example.livewallpaper.gl.TextureManager;
-import com.example.livewallpaper.ui.SceneFileManager;
+import com.example.livewallpaper.ui.managers.SceneFileManager;
 
 /**
  * Manages scene switching logic, cycling between multiple scenes on demand.
