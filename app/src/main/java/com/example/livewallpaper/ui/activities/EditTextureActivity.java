@@ -23,7 +23,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.Scene;
-import com.example.livewallpaper.scene.SceneTransitionManager;
+import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.gl.SquareGLSurfaceView;
@@ -50,7 +50,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     public static final String RESULT_TEXTURE_OFFSET_V = "result_texture_offset_v";
 
     private SquareGLSurfaceView glSurfaceView;
-    private SceneTransitionManager.ScenePreviewRenderer renderer;
+    private SceneManager renderer;
     private SensorManager sensorManager;
     private Sensor gyroscopeSensor;
     private String spriteName;
@@ -141,7 +141,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             Log.d(TAG, "Setting up GLSurfaceView renderer for scene: " + sceneFileName);
 
             // Create renderer that loads the full scene
-            renderer = new SceneTransitionManager.ScenePreviewRenderer(this, sceneFileName, spriteName);
+            renderer = new SceneManager(this, sceneFileName, spriteName);
             glSurfaceView.setRenderer(renderer);
 
             glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);

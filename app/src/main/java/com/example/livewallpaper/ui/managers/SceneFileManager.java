@@ -8,7 +8,7 @@ import android.widget.Toast;
 
 import com.example.livewallpaper.scene.Scene;
 import com.example.livewallpaper.scene.SceneData;
-import com.example.livewallpaper.scene.SceneTransitionManager;
+import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.scene.SpriteData;
 import com.google.gson.Gson;
@@ -33,10 +33,10 @@ public class SceneFileManager {
     private static final String PERSISTENT_SCENES_FOLDER = "LiveWallpaperScenes";
 
     private final Context context;
-    private final SceneTransitionManager.ScenePreviewRenderer renderer;
+    private final SceneManager renderer;
     private File persistentScenesDir;
 
-    public SceneFileManager(Context context, SceneTransitionManager.ScenePreviewRenderer renderer) {
+    public SceneFileManager(Context context, SceneManager renderer) {
         this.context = context;
         this.renderer = renderer;
         this.persistentScenesDir = getPersistentScenesDirectory();

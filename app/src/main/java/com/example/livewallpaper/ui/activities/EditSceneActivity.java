@@ -26,7 +26,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.scene.SceneTransitionManager;
+import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
@@ -44,7 +44,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     public static final String EXTRA_SCENE_FILE_NAME = "scene_file_name";
 
     private SquareGLSurfaceView glSurfaceView;
-    private SceneTransitionManager.ScenePreviewRenderer renderer;
+    private SceneManager renderer;
     private SensorManager sensorManager;
     private Sensor gyroscopeSensor;
     private Spinner spritesSpinner;
@@ -135,7 +135,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 glSurfaceView.setEGLContextClientVersion(2);
 
                 // Set the renderer
-                renderer = new SceneTransitionManager.ScenePreviewRenderer(this, sceneFileName);
+                renderer = new SceneManager(this, sceneFileName);
                 glSurfaceView.setRenderer(renderer);
 
                 // Set render mode to continuous

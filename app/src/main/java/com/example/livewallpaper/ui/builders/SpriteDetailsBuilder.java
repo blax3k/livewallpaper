@@ -11,7 +11,7 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-import com.example.livewallpaper.scene.SceneTransitionManager;
+import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.ui.controllers.DimensionController;
 import com.example.livewallpaper.ui.controllers.ScaleSliderController;
@@ -27,7 +27,7 @@ public class SpriteDetailsBuilder {
     private static final String TAG = "SpriteDetailsBuilder";
 
     private final Activity activity;
-    private final SceneTransitionManager.ScenePreviewRenderer renderer;
+    private final SceneManager renderer;
     private final TableLayout propertiesTable;
     private final SliderController sliderManager;
     private final ScaleSliderController scaleController;
@@ -40,7 +40,7 @@ public class SpriteDetailsBuilder {
     private final TextView parallaxMultiplierValue;
     private View.OnClickListener textureButtonListener;
 
-    public SpriteDetailsBuilder(Activity activity, SceneTransitionManager.ScenePreviewRenderer renderer,
+    public SpriteDetailsBuilder(Activity activity, SceneManager renderer,
                                TableLayout propertiesTable,
                                SeekBar positionXSlider, TextView positionXValue,
                                SeekBar positionYSlider, TextView positionYValue,

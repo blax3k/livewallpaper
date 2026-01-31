@@ -307,9 +307,8 @@ public class Scene {
 
         // Track whether sprites are currently scaled for gyro motion
         private boolean spritesScaledForGyro = false;
-
         // Manages scene cycling and switching logic
-        private final SceneManager sceneManager;
+        private final SceneSwitchManager sceneManager;
 
         // Flag to request scene switch on GL thread (set from UI thread, consumed on GL thread)
         private volatile boolean sceneSwitchRequested = false;
@@ -323,7 +322,7 @@ public class Scene {
         public SimpleRenderer(Context context) {
             this.context = context;
             SceneFileManager sceneFileManager = new SceneFileManager(context, null);
-            this.sceneManager = new SceneManager(context, sceneFileManager);
+            this.sceneManager = new SceneSwitchManager(context, sceneFileManager);
 
             // Load the initial scene
             try {
