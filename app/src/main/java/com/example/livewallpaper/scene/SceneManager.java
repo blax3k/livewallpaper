@@ -90,10 +90,9 @@ public class SceneManager implements GLSurfaceView.Renderer {
         spriteRenderer = new SpriteRenderer(handles);
         Log.d(TAG, "SpriteRenderer created");
 
-        // Create phone guide renderer
+        // Create phone guide renderer (PhoneGuide will be initialized after scene is loaded)
         phoneGuideRenderer = new PhoneGuideRenderer(handles);
-        phoneGuide = new PhoneGuide();
-        Log.d(TAG, "PhoneGuideRenderer and PhoneGuide created");
+        Log.d(TAG, "PhoneGuideRenderer created");
 
         // Load the scene from the JSON file only if not already loaded
         // If the scene already exists, just reload textures and edge highlights
@@ -107,6 +106,25 @@ public class SceneManager implements GLSurfaceView.Renderer {
                 sprite.setShowEdgeHighlight(false);
             }
             selectedSprite = null;
+        }
+
+        // Initialize PhoneGuide after scene is loaded
+        phoneGuide = new PhoneGuide();
+        if (currentScene != null) {
+            // Calculate xOffset based on the scene's xFocus (0.0 to 1.0)
+            // The phone guide's rectangle has width of about 4.76 units (9.99 * 9/21)
+            // For a 1:1 viewport with world height of 10, the visible world is -5 to +5
+            // We need to position the center line based on xFocus:
+            // xFocus 0.0 (left) -> center line at -5
+            // xFocus 0.5 (center) -> center line at 0
+            // xFocus 1.0 (right) -> center line at +5
+            float xFocus = currentScene.getXFocus();
+            float guideWidth = 9.99f * (9f / 21f);  // width = height * aspect ratio
+            float xOffset = -guideWidth/2f + (xFocus * guideWidth);
+            phoneGuide.setXOffset(xOffset);
+            Log.d(TAG, "PhoneGuide created and positioned with xOffset: " + xOffset + " (xFocus: " + xFocus + ")");
+        } else {
+            Log.d(TAG, "PhoneGuide created with default position");
         }
 
         highlightSelectedSprite();

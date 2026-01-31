@@ -20,6 +20,7 @@ public class PhoneGuide {
     private FloatBuffer centerLineBuffer;
     private int rectangleVertexCount = 5;  // 5 vertices for closed box (line strip)
     private int centerLineVertexCount = 2;  // 2 vertices for center vertical line
+    private float xOffset = 0.0f;  // X-offset for positioning the phone guide (similar to Sprite)
 
     public PhoneGuide() {
         initializeGeometry();
@@ -28,6 +29,7 @@ public class PhoneGuide {
     /**
      * Initialize the geometry buffers for the 21:9 rectangle and center line.
      * Takes into account that the viewport is square (1:1 aspect ratio).
+     * Geometry is initialized at center; use setXOffset() to position after creation.
      */
     private void initializeGeometry() {
         // The viewport is square, so the visible world goes from -5 to +5 in both X and Y
@@ -49,6 +51,7 @@ public class PhoneGuide {
         float halfHeight = height / 2f;
 
         // Rectangle outline (5 vertices to draw a closed box)
+        // Initialize centered at origin; xOffset will be applied during rendering
         float[] rectangleCoords = {
             -halfWidth,   halfHeight, 0.0f,  // top left
              halfWidth,   halfHeight, 0.0f,  // top right
@@ -65,6 +68,7 @@ public class PhoneGuide {
         rectangleVertexCount = 5;
 
         // Center vertical line (2 vertices) - runs from top to bottom through center
+        // Initialize centered at origin; xOffset will be applied during rendering
         float[] centerLineCoords = {
             0.0f,   halfHeight, 0.0f,  // top point on center line
             0.0f,  -halfHeight, 0.0f   // bottom point on center line
@@ -104,5 +108,20 @@ public class PhoneGuide {
      */
     public int getCenterLineVertexCount() {
         return centerLineVertexCount;
+    }
+
+    /**
+     * Get the x-offset of this phone guide.
+     */
+    public float getXOffset() {
+        return xOffset;
+    }
+
+    /**
+     * Set the x-offset of this phone guide.
+     * @param xOffset the offset along the x-axis
+     */
+    public void setXOffset(float xOffset) {
+        this.xOffset = xOffset;
     }
 }

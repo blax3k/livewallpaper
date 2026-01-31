@@ -2,6 +2,9 @@ package com.example.livewallpaper.gl;
 
 import android.opengl.GLES20;
 import com.example.livewallpaper.scene.PhoneGuide;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 
 /**
  * Responsible for rendering the phone guide (21:9 rectangle with center line).
@@ -22,6 +25,7 @@ public class PhoneGuideRenderer {
     /**
      * Draw the phone guide (21:9 rectangle and center line).
      * Uses bright cyan color for the rectangle and bright yellow for the center line.
+     * Applies the phoneGuide's xOffset to position it along the x-axis.
      */
     public void drawPhoneGuide(PhoneGuide phoneGuide) {
         if (phoneGuide == null) {
@@ -37,15 +41,20 @@ public class PhoneGuideRenderer {
         // Disable blending for solid colors
         GLES20.glDisable(GLES20.GL_BLEND);
 
+        // Get the xOffset to apply
+        float xOffset = phoneGuide.getXOffset();
+
         // Draw rectangle outline in bright cyan (R=0, G=1, B=1, A=1)
         GLES20.glUniform4f(overrideColorHandle, 0.0f, 1.0f, 1.0f, 1.0f);
-        enableVertexAttribute(positionHandle, 3, 12, phoneGuide.getRectangleEdgeLineBuffer());
+        FloatBuffer rectangleBuffer = applyXOffset(phoneGuide.getRectangleEdgeLineBuffer(), xOffset);
+        enableVertexAttribute(positionHandle, 3, 12, rectangleBuffer);
         GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, phoneGuide.getRectangleVertexCount());
         GLES20.glDisableVertexAttribArray(positionHandle);
 
-        // Draw center horizontal line in bright yellow (R=1, G=1, B=0, A=1)
+        // Draw center vertical line in bright yellow (R=1, G=1, B=0, A=1)
         GLES20.glUniform4f(overrideColorHandle, 1.0f, 1.0f, 0.0f, 1.0f);
-        enableVertexAttribute(positionHandle, 3, 12, phoneGuide.getCenterLineBuffer());
+        FloatBuffer centerBuffer = applyXOffset(phoneGuide.getCenterLineBuffer(), xOffset);
+        enableVertexAttribute(positionHandle, 3, 12, centerBuffer);
         GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, phoneGuide.getCenterLineVertexCount());
         GLES20.glDisableVertexAttribArray(positionHandle);
 
@@ -55,6 +64,50 @@ public class PhoneGuideRenderer {
 
         // Disable color override for next objects
         GLES20.glUniform1f(useColorOverrideHandle, 0.0f);
+    }
+
+    /**
+     * Apply an xOffset to all vertices in a buffer by adding the offset to the x-coordinate.
+     * @param originalBuffer the original vertex buffer
+     * @param xOffset the offset to apply to x-coordinates
+     * @return a new FloatBuffer with xOffset applied to all x-coordinates
+     */
+    private FloatBuffer applyXOffset(FloatBuffer originalBuffer, float xOffset) {
+        if (xOffset == 0.0f) {
+            // If no offset, return the original buffer
+            originalBuffer.position(0);
+            return originalBuffer;
+        }
+
+        // Get the current position and limit
+        int originalPosition = originalBuffer.position();
+        int originalLimit = originalBuffer.limit();
+
+        // Create a new buffer with the same size
+        originalBuffer.position(0);
+        int capacity = originalBuffer.capacity();
+        FloatBuffer offsetBuffer = ByteBuffer.allocateDirect(capacity * 4)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer();
+
+        // Copy all vertices and apply xOffset to x-coordinates
+        // Vertices are 3D positions (x, y, z) with stride of 3 floats
+        for (int i = 0; i < capacity; i += 3) {
+            float x = originalBuffer.get(i);
+            float y = originalBuffer.get(i + 1);
+            float z = originalBuffer.get(i + 2);
+
+            offsetBuffer.put(x + xOffset);  // Apply offset to x
+            offsetBuffer.put(y);
+            offsetBuffer.put(z);
+        }
+
+        offsetBuffer.position(0);
+        // Restore original buffer state
+        originalBuffer.position(originalPosition);
+        originalBuffer.limit(originalLimit);
+
+        return offsetBuffer;
     }
 
     /**
@@ -69,3 +122,6 @@ public class PhoneGuideRenderer {
         GLES20.glVertexAttribPointer(handle, size, GLES20.GL_FLOAT, false, stride, buffer);
     }
 }
+
+
+
