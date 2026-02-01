@@ -25,7 +25,7 @@ public class PhoneGuideRenderer {
     /**
      * Draw the phone guide (21:9 rectangle and center line).
      * Uses bright cyan color for the rectangle and bright yellow for the center line.
-     * Applies the phoneGuide's xOffset to position it along the x-axis.
+     * The phone guide is static and always centered, unaffected by scroll offset changes.
      */
     public void drawPhoneGuide(PhoneGuide phoneGuide) {
         if (phoneGuide == null) {
@@ -41,8 +41,8 @@ public class PhoneGuideRenderer {
         // Disable blending for solid colors
         GLES20.glDisable(GLES20.GL_BLEND);
 
-        // Get the xOffset to apply
-        float xOffset = phoneGuide.getXOffset();
+        // Always use 0 offset to keep phone guide centered and static
+        float xOffset = 0.0f;
 
         // Draw rectangle outline in bright cyan (R=0, G=1, B=1, A=1)
         GLES20.glUniform4f(overrideColorHandle, 0.0f, 1.0f, 1.0f, 1.0f);

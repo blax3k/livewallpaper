@@ -14,7 +14,7 @@
       "textureResource": "room",
       "width": 10.0,
       "height": 10.0,
-      "parallaxMultiplier": 0.8,
+      "parallaxMultiplier": 1.0,
       "positionX": 0.0,
       "positionY": 0.0
     },
@@ -23,7 +23,7 @@
       "width": 4.0,
       "height": 6.0,
       "parallaxMultiplier": 1.2,
-      "positionX": -1.0,
+      "positionX": 0.0,
       "positionY": 2.5
     },
     {

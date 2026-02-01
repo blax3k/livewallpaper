@@ -71,6 +71,20 @@ public class ScrollOffsetProcessor {
     }
 
     /**
+     * Set scroll offset to a specific calculated value immediately.
+     * Used in EditSceneActivity where the scroll offset is pre-calculated
+     * to account for viewport aspect ratio differences.
+     * Both current and target are set to the same value (no interpolation).
+     *
+     * @param scrollOffset the scroll offset value in world units
+     */
+    public void setScrollOffsetImmediate(float scrollOffset) {
+        this.currentScrollOffset = scrollOffset;
+        this.targetScrollOffset = scrollOffset;
+        this.isXFocusTarget = false;  // No interpolation for immediate changes
+    }
+
+    /**
      * Optional: adjust smoothing via a legacy fraction-based API.
      * Range should be (0,1]. Higher smoothing => faster => shorter duration.
      * Deprecated: prefer setScrollSmoothingDuration(float seconds).

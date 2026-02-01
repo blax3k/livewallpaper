@@ -15,6 +15,7 @@ import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
 import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
 
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class SceneManager implements GLSurfaceView.Renderer {
     private PhoneGuideRenderer phoneGuideRenderer;
     private TextureManager textureManager;
     private final GyroSensorProcessor gyroProcessor;
+    private final ScrollOffsetProcessor scrollOffsetProcessor = new ScrollOffsetProcessor();
     private final float[] projectionMatrix = new float[16];
     private boolean spritesScaledForGyro = false;
     private volatile boolean shouldResortSprites = false;
@@ -172,8 +174,11 @@ public class SceneManager implements GLSurfaceView.Renderer {
         // Set projection matrix
         GLES20.glUniformMatrix4fv(handles.projectionMatrixHandle, 1, false, projectionMatrix, 0);
 
-        // Set scroll offset uniform (no scroll movement for preview)
-        GLES20.glUniform1f(handles.scrollOffsetHandle, 0f);
+        // Update scroll offset interpolation and get the current value for this frame
+        float currentScrollOffset = scrollOffsetProcessor.updateAndGetCurrentOffset();
+
+        // Set scroll offset uniform (applied by all sprites with their own multiplier)
+        GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
         // Update gyro offsets and apply uniforms
         spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, WORLD_HEIGHT, spritesScaledForGyro);
@@ -326,17 +331,19 @@ public class SceneManager implements GLSurfaceView.Renderer {
     }
 
     /**
-     * Resume gyro tracking when activity resumes.
+     * Resume gyro tracking and scroll offset interpolation when activity resumes.
      */
     public void resume() {
         gyroProcessor.resume();
+        scrollOffsetProcessor.onRendererResume();
     }
 
     /**
-     * Pause gyro tracking when activity pauses.
+     * Pause gyro tracking and scroll offset interpolation when activity pauses.
      */
     public void pause() {
         gyroProcessor.pause();
+        scrollOffsetProcessor.onRendererPause();
     }
 
     /**
@@ -361,19 +368,35 @@ public class SceneManager implements GLSurfaceView.Renderer {
     }
 
     /**
-     * Update the phone guide's position based on the scene's focus point.
-     * This should be called whenever the scene's xFocus changes.
+     * Update the scene's scroll offset based on the xFocus value.
+     * Called whenever the focus slider changes. The phone guide is no longer affected
+     * and remains static and centered at all times.
      *
      * @param xFocus the new focus point value (0.0 to 1.0)
      */
     public void updatePhoneGuidePosition(float xFocus) {
-        if (phoneGuide != null) {
-            // Calculate xOffset based on the scene's xFocus (0.0 to 1.0)
-            float guideWidth = 9.99f * (9f / 21f);  // width = height * aspect ratio
-            float xOffset = -guideWidth/2f + (xFocus * guideWidth);
-            phoneGuide.setXOffset(xOffset);
-            Log.d(TAG, "PhoneGuide position updated with xOffset: " + xOffset + " (xFocus: " + xFocus + ")");
-        }
+        // Phone guide is now static and always centered, so we no longer update its position
+        // Just update the scroll offset to affect the sprites
+        updateScrollOffsetFromXFocus(xFocus);
+    }
+
+    /**
+     * Update the scroll offset processor based on the xFocus value.
+     * This mimics the motion of the live wallpaper when the user changes the focus slider.
+     * Uses the same SCROLL_SCALE constant as ScrollOffsetProcessor to ensure consistent behavior.
+     *
+     * @param xFocus the focus point value (0.0 = left, 0.5 = center, 1.0 = right)
+     */
+    public void updateScrollOffsetFromXFocus(float xFocus) {
+        // Use the same calculation as ScrollOffsetProcessor.calculateScrollOffset()
+        // This ensures EditSceneActivity matches the live wallpaper's scroll behavior
+        float SCROLL_SCALE = 5.0f;  // Same constant used in ScrollOffsetProcessor
+        float scrollOffset = (0.5f - xFocus) * SCROLL_SCALE;
+
+        // Update the scroll offset processor with immediate value
+        scrollOffsetProcessor.setScrollOffsetImmediate(scrollOffset);
+        Log.d(TAG, "Scroll offset updated immediately from xFocus: " + xFocus +
+              " (scroll scale: " + SCROLL_SCALE + ", offset: " + scrollOffset + ")");
     }
 
     /**
