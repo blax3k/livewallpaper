@@ -305,8 +305,9 @@ public class SceneFileManager {
             SpriteData spriteData = new SpriteData();
             spriteData.name = sprite.getName();
             spriteData.textureResource = sprite.getTextureResource();
-            spriteData.width = sprite.getWidth();
-            spriteData.height = sprite.getHeight();
+            // Use original width/height to avoid saving gyro-scaled values
+            spriteData.width = sprite.getOriginalWidth();
+            spriteData.height = sprite.getOriginalHeight();
             spriteData.positionX = sprite.getPositionX();
             spriteData.positionY = sprite.getPositionY();
             spriteData.parallaxMultiplier = sprite.getParallaxMultiplier();

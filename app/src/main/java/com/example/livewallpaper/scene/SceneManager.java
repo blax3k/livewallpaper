@@ -473,8 +473,9 @@ public class SceneManager implements GLSurfaceView.Renderer {
      */
     public void updateSpriteWidth(Sprite sprite, float newWidth, float aspectRatio) {
         if (sprite != null) {
-            sprite.setWidth(newWidth);
-            sprite.setHeight(newWidth / aspectRatio);
+            // Update both current and original values so edits are saved to JSON
+            sprite.setWidthAndUpdateOriginal(newWidth);
+            sprite.setHeightAndUpdateOriginal(newWidth / aspectRatio);
         }
     }
 
@@ -487,8 +488,9 @@ public class SceneManager implements GLSurfaceView.Renderer {
      */
     public void updateSpriteHeight(Sprite sprite, float newHeight, float aspectRatio) {
         if (sprite != null) {
-            sprite.setHeight(newHeight);
-            sprite.setWidth(newHeight * aspectRatio);
+            // Update both current and original values so edits are saved to JSON
+            sprite.setHeightAndUpdateOriginal(newHeight);
+            sprite.setWidthAndUpdateOriginal(newHeight * aspectRatio);
         }
     }
 
@@ -501,8 +503,9 @@ public class SceneManager implements GLSurfaceView.Renderer {
      */
     public void updateSpriteDimensions(Sprite sprite, float newWidth, float newHeight) {
         if (sprite != null) {
-            sprite.setWidth(newWidth);
-            sprite.setHeight(newHeight);
+            // Update both current and original values so edits are saved to JSON
+            sprite.setWidthAndUpdateOriginal(newWidth);
+            sprite.setHeightAndUpdateOriginal(newHeight);
         }
     }
 

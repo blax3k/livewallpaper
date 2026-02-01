@@ -43,10 +43,10 @@ public class ScaleSliderController {
 
         scaleSlider.setOnSeekBarChangeListener(null);
 
-        // Calculate initial scale based on the larger dimension
-        float currentWidth = sprite.getWidth();
-        float currentHeight = sprite.getHeight();
-        float largerDimension = Math.max(currentWidth, currentHeight);
+        // Calculate initial scale based on the larger ORIGINAL dimension
+        float originalWidth = sprite.getOriginalWidth();
+        float originalHeight = sprite.getOriginalHeight();
+        float largerDimension = Math.max(originalWidth, originalHeight);
         float initialScale = largerDimension;
 
         // Clamp to valid range
@@ -66,7 +66,7 @@ public class ScaleSliderController {
         updateDisplay(initialScale);
 
         // Set up click listener for manual editing
-        scaleValue.setOnClickListener(v -> showEditDialog(sprite, currentWidth, currentHeight));
+        scaleValue.setOnClickListener(v -> showEditDialog(sprite, originalWidth, originalHeight));
 
         // Set up slider listener
         setupSliderListener(sprite);
@@ -80,11 +80,11 @@ public class ScaleSliderController {
             return;
         }
 
-        float currentWidth = sprite.getWidth();
-        float currentHeight = sprite.getHeight();
+        float originalWidth = sprite.getOriginalWidth();
+        float originalHeight = sprite.getOriginalHeight();
 
-        // Calculate scale based on the larger dimension
-        float largerDimension = Math.max(currentWidth, currentHeight);
+        // Calculate scale based on the larger ORIGINAL dimension
+        float largerDimension = Math.max(originalWidth, originalHeight);
         float scale = largerDimension;
 
         // Clamp scale to valid range
@@ -135,13 +135,15 @@ public class ScaleSliderController {
                     float desiredScale = MIN_SCALE + (progress * SCALE_INCREMENT);
                     desiredScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, desiredScale));
 
-                    float currentWidth = sprite.getWidth();
-                    float currentHeight = sprite.getHeight();
-                    float largerDimension = Math.max(currentWidth, currentHeight);
+                    // Use ORIGINAL dimensions as the base for scaling
+                    float originalWidth = sprite.getOriginalWidth();
+                    float originalHeight = sprite.getOriginalHeight();
 
+                    // Calculate the aspect ratio from original dimensions
+                    float largerDimension = Math.max(originalWidth, originalHeight);
                     float scaleFactor = 1.0f / largerDimension;
-                    float baseWidth = currentWidth * scaleFactor;
-                    float baseHeight = currentHeight * scaleFactor;
+                    float baseWidth = originalWidth * scaleFactor;
+                    float baseHeight = originalHeight * scaleFactor;
 
                     float newWidth = baseWidth * desiredScale;
                     float newHeight = baseHeight * desiredScale;

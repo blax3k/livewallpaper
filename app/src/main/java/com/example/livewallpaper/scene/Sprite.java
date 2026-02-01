@@ -36,8 +36,8 @@ public class Sprite {
     private final SpriteWipe spriteWipe = new SpriteWipe();
 
     // Store original dimensions and positions for scaling
-    private final float originalWidth;
-    private final float originalHeight;
+    private float originalWidth;
+    private float originalHeight;
     private float originalPositionX;
     private float originalPositionY;
 
@@ -287,6 +287,34 @@ public class Sprite {
     }
 
     /**
+     * Set width and update the original width (for user edits in the UI).
+     * Use this when the user manually changes the sprite dimensions to ensure
+     * the new dimensions are saved to JSON correctly.
+     *
+     * @param width the width in world units
+     */
+    public void setWidthAndUpdateOriginal(float width) {
+        this.width = width;
+        // Cast to float to match field type
+        this.originalWidth = width;
+        updateVertexBuffer();
+    }
+
+    /**
+     * Set height and update the original height (for user edits in the UI).
+     * Use this when the user manually changes the sprite dimensions to ensure
+     * the new dimensions are saved to JSON correctly.
+     *
+     * @param height the height in world units
+     */
+    public void setHeightAndUpdateOriginal(float height) {
+        this.height = height;
+        // Cast to float to match field type
+        this.originalHeight = height;
+        updateVertexBuffer();
+    }
+
+    /**
      * Set the parallax multiplier for this sprite.
      * Controls how much the sprite moves relative to scrolling (1.0 = full scroll, 0.5 = half, etc.)
      *
@@ -379,6 +407,12 @@ public class Sprite {
     }
     public float getHeight() {
         return height;
+    }
+    public float getOriginalWidth() {
+        return originalWidth;
+    }
+    public float getOriginalHeight() {
+        return originalHeight;
     }
     public String getName() {
         return name;
