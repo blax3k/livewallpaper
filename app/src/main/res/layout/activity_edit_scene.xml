@@ -48,6 +48,9 @@
 
     </FrameLayout>
 
+    <!-- Focus Point Slider -->
+    <include layout="@layout/component_focus_controls" />
+
     <!-- Container for sprite selection and details -->
     <LinearLayout
         android:layout_width="match_parent"

@@ -84,6 +84,8 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         EditText heightEdit = findViewById(R.id.height_edit);
         SeekBar parallaxMultiplierSlider = findViewById(R.id.parallax_multiplier_slider);
         TextView parallaxMultiplierValue = findViewById(R.id.parallax_multiplier_value);
+        SeekBar focusPointSlider = findViewById(R.id.focus_point_slider);
+        TextView focusPointValue = findViewById(R.id.focus_point_value);
         TableLayout propertiesTable = findViewById(R.id.sprite_properties_table);
 
         // Set up click listeners for manual position input
@@ -110,7 +112,8 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             Log.d(TAG, "Scene file name: " + sceneFileName);
             displaySceneInfo(sceneFileName);
             setupGLSurfaceView(sceneFileName, propertiesTable, scaleSlider, scaleValue,
-                    widthEdit, heightEdit, parallaxMultiplierSlider, parallaxMultiplierValue);
+                    widthEdit, heightEdit, parallaxMultiplierSlider, parallaxMultiplierValue,
+                    focusPointSlider, focusPointValue);
         } else {
             Log.e(TAG, "No scene file name provided!");
             Toast.makeText(this, "Error: No scene selected", Toast.LENGTH_SHORT).show();
@@ -127,7 +130,8 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     private void setupGLSurfaceView(String sceneFileName, TableLayout propertiesTable,
                                     SeekBar scaleSlider, TextView scaleValue,
                                     EditText widthEdit, EditText heightEdit,
-                                    SeekBar parallaxMultiplierSlider, TextView parallaxMultiplierValue) {
+                                    SeekBar parallaxMultiplierSlider, TextView parallaxMultiplierValue,
+                                    SeekBar focusPointSlider, TextView focusPointValue) {
         glSurfaceView = findViewById(R.id.scene_preview_gl_view);
         if (glSurfaceView != null) {
             try {
@@ -153,6 +157,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
                 // Set up texture button listener
                 spriteDetailsBuilder.setTextureButtonListener(v -> openEditTextureActivity());
+
+                // Set up focus point slider
+                setupFocusPointSlider(focusPointSlider, focusPointValue);
 
                 Log.d(TAG, "GLSurfaceView configured successfully");
 
@@ -533,6 +540,64 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
         builder.show();
+    }
+
+    /**
+     * Set up the focus point slider to initialize with the scene's focus point and handle changes.
+     * Focus point ranges from 0.0 (left) to 1.0 (right), displayed as 0-100 on the slider.
+     */
+    private void setupFocusPointSlider(SeekBar focusPointSlider, TextView focusPointValue) {
+        if (focusPointSlider == null || focusPointValue == null || renderer == null) {
+            Log.w(TAG, "Focus point slider not properly initialized");
+            return;
+        }
+
+        // Initialize the slider with the scene's current focus point
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            try {
+                float currentFocusPoint = renderer.getCurrentScene().getXFocus();
+                int sliderPosition = (int) (currentFocusPoint * 100);
+                focusPointSlider.setProgress(sliderPosition);
+                updateFocusPointDisplay(focusPointValue, currentFocusPoint);
+                Log.d(TAG, "Focus point slider initialized with value: " + currentFocusPoint);
+            } catch (Exception e) {
+                Log.e(TAG, "Error initializing focus point slider: " + e.getMessage(), e);
+            }
+        }, 1000);
+
+        // Set up listener for slider changes
+        focusPointSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    // Convert slider progress (0-100) to focus point (0.0-1.0)
+                    float newFocusPoint = progress / 100.0f;
+
+                    // Update scene's focus point
+                    renderer.getCurrentScene().setXFocus(newFocusPoint);
+                    Log.d(TAG, "Focus point changed to: " + newFocusPoint);
+
+                    // Update display value
+                    updateFocusPointDisplay(focusPointValue, newFocusPoint);
+
+                    // Update phone guide position in the renderer
+                    renderer.updatePhoneGuidePosition(newFocusPoint);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+    }
+
+    /**
+     * Update the focus point value display in the UI.
+     */
+    private void updateFocusPointDisplay(TextView focusPointValue, float value) {
+        focusPointValue.setText(String.format(Locale.US, "%.2f", value));
     }
 }
 
