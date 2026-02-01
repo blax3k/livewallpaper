@@ -34,10 +34,10 @@ public class DimensionController {
 
         this.originalAspectRatio = aspectRatio;
 
-        float currentWidth = sprite.getWidth();
-        float currentHeight = sprite.getHeight();
+        float originalWidth = sprite.getOriginalWidth();
+        float originalHeight = sprite.getOriginalHeight();
 
-        updateDisplays(currentWidth, currentHeight);
+        updateDisplays(originalWidth, originalHeight);
 
         // Width field focus change listener
         widthEdit.setOnFocusChangeListener((v, hasFocus) -> {
@@ -45,11 +45,11 @@ public class DimensionController {
                 try {
                     float newWidth = Float.parseFloat(widthEdit.getText().toString());
                     renderer.updateSpriteWidth(sprite, newWidth, originalAspectRatio);
-                    updateDisplays(sprite.getWidth(), sprite.getHeight());
+                    updateDisplays(sprite.getOriginalWidth(), sprite.getOriginalHeight());
                     Log.d(TAG, "Width updated from EditText: " + newWidth);
                 } catch (NumberFormatException e) {
                     Log.e(TAG, "Invalid width input");
-                    updateDisplays(sprite.getWidth(), sprite.getHeight());
+                    updateDisplays(sprite.getOriginalWidth(), sprite.getOriginalHeight());
                 }
             }
         });
@@ -60,11 +60,11 @@ public class DimensionController {
                 try {
                     float newHeight = Float.parseFloat(heightEdit.getText().toString());
                     renderer.updateSpriteHeight(sprite, newHeight, originalAspectRatio);
-                    updateDisplays(sprite.getWidth(), sprite.getHeight());
+                    updateDisplays(sprite.getOriginalWidth(), sprite.getOriginalHeight());
                     Log.d(TAG, "Height updated from EditText: " + newHeight);
                 } catch (NumberFormatException e) {
                     Log.e(TAG, "Invalid height input");
-                    updateDisplays(sprite.getWidth(), sprite.getHeight());
+                    updateDisplays(sprite.getOriginalWidth(), sprite.getOriginalHeight());
                 }
             }
         });
