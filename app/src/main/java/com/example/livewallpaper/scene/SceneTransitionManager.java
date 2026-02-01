@@ -123,12 +123,19 @@ public class SceneTransitionManager {
         }
 
         // Mark and add sprites unique to new scene as wiping in
+        // Also transfer state from matching old sprites to new sprites
         for (Sprite newSprite : newScene.getSprites()) {
-            if (!hasDuplicateIn(newSprite, oldScene.getSprites())) {
+            Sprite matchingOldSprite = findDuplicateIn(newSprite, oldScene.getSprites());
+            if (matchingOldSprite == null) {
+                // New sprite not in old scene - wipe it in
                 newSprite.setWipingIn(true);
                 newSprite.setWipeProgress(0.0f);
                 oldScene.addSprite(newSprite);
                 addedSprites.add(newSprite);
+            } else {
+                // Matching sprite found - transfer state from old to new sprite
+                transferSpriteState(matchingOldSprite, newSprite);
+                Log.d(TAG, "Transferred state for matching sprite: " + newSprite.getName());
             }
         }
 
@@ -136,6 +143,58 @@ public class SceneTransitionManager {
         oldScene.sortSpritesByParallax();
 
         Log.d(TAG, "Beginning fade: added " + addedSprites.size() + " sprites from new scene");
+    }
+
+    /**
+     * Find and return the duplicate sprite if it exists in the list.
+     * Returns null if no duplicate is found.
+     *
+     * @param sprite the sprite to find a duplicate of
+     * @param sprites the list to search in
+     * @return the duplicate sprite, or null if not found
+     */
+    private Sprite findDuplicateIn(Sprite sprite, java.util.List<Sprite> sprites) {
+        for (Sprite other : sprites) {
+            if (areDuplicates(sprite, other)) {
+                return other;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Transfer state from an old sprite to a new sprite during transitions.
+     * This ensures that visual properties and animations are preserved across the transition,
+     * preventing jarring position or scale changes for sprites that appear in both scenes.
+     *
+     * @param oldSprite the sprite from the old scene
+     * @param newSprite the matching sprite from the new scene
+     */
+    private void transferSpriteState(Sprite oldSprite, Sprite newSprite) {
+        try {
+            // Transfer gyro scaling state
+            if (oldSprite.isGyroScaled()) {
+                newSprite.setGyroScaled(true);
+            }
+
+            // Transfer current texture edit state (scale and offsets)
+            TextureEditState editState = oldSprite.getCurrentTextureEditState();
+            if (editState != null) {
+                newSprite.setCurrentTextureEditState(
+                    new TextureEditState(
+                        editState.getTextureScale(),
+                        editState.getTextureOffsetU(),
+                        editState.getTextureOffsetV()
+                    )
+                );
+            }
+
+            Log.d(TAG, "State transferred: sprite '" + oldSprite.getName() +
+                  "' | gyroScaled=" + oldSprite.isGyroScaled() +
+                  " | textureScale=" + (editState != null ? editState.getTextureScale() : "N/A"));
+        } catch (Exception e) {
+            Log.w(TAG, "Error transferring sprite state: " + e.getMessage());
+        }
     }
 
     private float calculateProgress() {

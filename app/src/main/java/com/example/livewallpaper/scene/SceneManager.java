@@ -361,6 +361,22 @@ public class SceneManager implements GLSurfaceView.Renderer {
     }
 
     /**
+     * Update the phone guide's position based on the scene's focus point.
+     * This should be called whenever the scene's xFocus changes.
+     *
+     * @param xFocus the new focus point value (0.0 to 1.0)
+     */
+    public void updatePhoneGuidePosition(float xFocus) {
+        if (phoneGuide != null) {
+            // Calculate xOffset based on the scene's xFocus (0.0 to 1.0)
+            float guideWidth = 9.99f * (9f / 21f);  // width = height * aspect ratio
+            float xOffset = -guideWidth/2f + (xFocus * guideWidth);
+            phoneGuide.setXOffset(xOffset);
+            Log.d(TAG, "PhoneGuide position updated with xOffset: " + xOffset + " (xFocus: " + xFocus + ")");
+        }
+    }
+
+    /**
      * Select a sprite by its index in the scene's sprite list.
      * Updates the visual highlight and returns the selected sprite.
      *

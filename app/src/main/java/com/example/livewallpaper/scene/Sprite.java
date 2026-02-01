@@ -351,6 +351,14 @@ public class Sprite {
     }
 
     /**
+     * Set whether this sprite has been scaled for gyro motion.
+     * Used during transitions to preserve gyro scaling state.
+     */
+    public void setGyroScaled(boolean gyroScaled) {
+        this.isGyroScaled = gyroScaled;
+    }
+
+    /**
      * Reset sprite size back to its original dimensions.
      */
     public void resetScale() {
@@ -520,6 +528,18 @@ public class Sprite {
                 currentTextureEditState.getTextureOffsetU(),
                 currentTextureEditState.getTextureOffsetV()
         );
+    }
+
+    /**
+     * Set the current texture scale and offset state.
+     * Used during transitions to preserve texture editing state from one scene to another.
+     *
+     * @param editState the new texture edit state to apply
+     */
+    public void setCurrentTextureEditState(TextureEditState editState) {
+        if (editState != null) {
+            this.currentTextureEditState = editState;
+        }
     }
 
     /**
