@@ -203,14 +203,23 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     float baselineHeight = passedHeight > 0 ? passedHeight : sprite.getHeight();
                     sprite.setTextureEditingBaseline(baselineWidth, baselineHeight);
 
-                    // Get the current texture state from the sprite (which includes any previously set scale/offset)
-                    textureEditState = sprite.getCurrentTextureEditState();
+                    // Get the texture edit state from the sprite (stored when previously applied)
+                    // This is the authoritative source for the current texture scale and offsets
+                    TextureEditState storedState = sprite.getCurrentTextureEditState();
 
-                    // If we have passed texture values that differ from defaults, apply them
-                    // This ensures newly set values override what was loaded from the sprite
+                    // If we have passed texture values that differ from defaults, use those instead
+                    // This ensures newly set values override what was previously stored
                     if (passedTextureScale != 1.0f || passedTextureOffsetU != 0.0f || passedTextureOffsetV != 0.0f) {
                         textureEditState = new TextureEditState(passedTextureScale, passedTextureOffsetU, passedTextureOffsetV);
                         sprite.updateTextureCoordinates(textureEditState);
+                        Log.d(TAG, "Applied passed texture values - scale: " + passedTextureScale +
+                              ", offsetU: " + passedTextureOffsetU + ", offsetV: " + passedTextureOffsetV);
+                    } else {
+                        // Use the stored texture edit state directly
+                        // This contains the scale and offset that were previously applied
+                        textureEditState = storedState;
+                        Log.d(TAG, "Using stored texture state - scale: " + textureEditState.getTextureScale() +
+                              ", offsetU: " + textureEditState.getTextureOffsetU() + ", offsetV: " + textureEditState.getTextureOffsetV());
                     }
 
                     // Set up the sliders with the sprite and texture state
@@ -384,7 +393,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     // Apply the offset to the texture edit state with clamping
                     if (textureEditState != null) {
                         textureEditState.offsetTextureCoordinates(uOffset, vOffset, currentSprite.getWidth(), currentSprite.getHeight(),
-                                currentSprite.getWidth(), currentSprite.getHeight(), 1.0f);
+                                currentSprite.getTextureEditingBaselineWidth(), currentSprite.getTextureEditingBaselineHeight(), 1.0f);
                         updateSpriteTextureCoordinates();
                         hasUnsavedChanges = true;
                     }

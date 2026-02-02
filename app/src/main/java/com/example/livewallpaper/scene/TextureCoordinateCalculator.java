@@ -49,15 +49,19 @@ public class TextureCoordinateCalculator {
         float textureOffsetU = textureOffsets[0];
         float textureOffsetV = textureOffsets[1];
 
-        // Calculate the texture's size in world space
-        // The texture maintains a FIXED size regardless of sprite growth
-        // It is set once at the editing baseline dimensions and does not scale with sprite changes
-        float textureWidthInWorld = originalWidth * textureScaleFactor;
-        float textureHeightInWorld = originalHeight * textureScaleFactor;
+        // Calculate the growth scale: how much has the sprite grown from its original size?
+        // We use the maximum of width and height growth to ensure uniform scaling
+        float widthGrowth = width / originalWidth;
+        float heightGrowth = height / originalHeight;
+        float growthScale = Math.max(widthGrowth, heightGrowth);
+
+        // The texture's effective size in world space grows with the sprite
+        // This ensures the texture maintains its aspect ratio while scaling uniformly
+        float textureWidthInWorld = originalWidth * textureScaleFactor * growthScale;
+        float textureHeightInWorld = originalHeight * textureScaleFactor * growthScale;
 
         // Calculate the visible portion of the texture in each dimension independently
-        // When sprite shrinks: uScale/vScale become larger (we see a larger portion of the texture)
-        // When sprite grows: uScale/vScale become smaller (we see a smaller portion of the texture)
+        // This allows the texture to maintain its aspect ratio while the sprite aspect ratio changes
         float uScale = width / textureWidthInWorld;      // How much of texture width is visible
         float vScale = height / textureHeightInWorld;    // How much of texture height is visible
 
@@ -119,10 +123,10 @@ public class TextureCoordinateCalculator {
 
         // Build final texture coordinates by mapping sprite corners to the visible window
         float[] texCoords = new float[] {
-            uMin, vMax,  // top left
-            uMin, vMin,  // bottom left
-            uMax, vMax,  // top right
-            uMax, vMin   // bottom right
+                uMin, vMax,  // top left
+                uMin, vMin,  // bottom left
+                uMax, vMax,  // top right
+                uMax, vMin   // bottom right
         };
 
         // Update the texture coordinate buffer
@@ -131,7 +135,7 @@ public class TextureCoordinateCalculator {
         texCoordBuffer.position(0);
 
         Log.d(TAG, "Texture coordinates updated - scale: " + textureScale +
-              ", offsetU: " + textureOffsetU + ", offsetV: " + textureOffsetV);
+                ", offsetU: " + textureOffsetU + ", offsetV: " + textureOffsetV);
     }
 
     /**
@@ -162,9 +166,14 @@ public class TextureCoordinateCalculator {
             float textureScale,
             float textureScaleFactor) {
 
-        // Calculate texture dimensions in world space (fixed, not scaled with sprite growth)
-        float textureWidthInWorld = originalWidth * textureScaleFactor;
-        float textureHeightInWorld = originalHeight * textureScaleFactor;
+        // Calculate the growth scale
+        float widthGrowth = width / originalWidth;
+        float heightGrowth = height / originalHeight;
+        float growthScale = Math.max(widthGrowth, heightGrowth);
+
+        // Calculate texture dimensions in world space
+        float textureWidthInWorld = originalWidth * textureScaleFactor * growthScale;
+        float textureHeightInWorld = originalHeight * textureScaleFactor * growthScale;
 
         // Calculate visible window
         float uScale = width / textureWidthInWorld;
@@ -179,20 +188,28 @@ public class TextureCoordinateCalculator {
         float newOffsetU = currentOffsetU + deltaU;
         float newOffsetV = currentOffsetV + deltaV;
 
-        // Clamp U
+        // Clamp U: ensure the visible window stays within [0, 1] texture space
+        // The window is centered at (0.5 + offset) with size windowSizeU
+        // Valid range: window must fit entirely in [0, 1]
         float halfWindowU = windowSizeU * 0.5f;
-        if (newOffsetU < -0.5f + halfWindowU) {
-            newOffsetU = -0.5f + halfWindowU;
-        } else if (newOffsetU > 0.5f - halfWindowU) {
-            newOffsetU = 0.5f - halfWindowU;
+        float minOffsetU = halfWindowU - 0.5f;  // Ensures window left edge >= 0
+        float maxOffsetU = 0.5f - halfWindowU;  // Ensures window right edge <= 1
+
+        if (newOffsetU < minOffsetU) {
+            newOffsetU = minOffsetU;
+        } else if (newOffsetU > maxOffsetU) {
+            newOffsetU = maxOffsetU;
         }
 
-        // Clamp V
+        // Clamp V: same logic as U but for vertical axis
         float halfWindowV = windowSizeV * 0.5f;
-        if (newOffsetV < -0.5f + halfWindowV) {
-            newOffsetV = -0.5f + halfWindowV;
-        } else if (newOffsetV > 0.5f - halfWindowV) {
-            newOffsetV = 0.5f - halfWindowV;
+        float minOffsetV = halfWindowV - 0.5f;  // Ensures window top edge >= 0
+        float maxOffsetV = 0.5f - halfWindowV;  // Ensures window bottom edge <= 1
+
+        if (newOffsetV < minOffsetV) {
+            newOffsetV = minOffsetV;
+        } else if (newOffsetV > maxOffsetV) {
+            newOffsetV = maxOffsetV;
         }
 
         return new float[] { newOffsetU, newOffsetV };
