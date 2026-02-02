@@ -207,7 +207,7 @@ public class Scene {
             // Scale the position away from center (0, 0) to maintain relative spacing
             float currentX = sprite.getPositionX();
             float currentY = sprite.getPositionY();
-            sprite.setPosition(currentX * currentGyroScaleFactor, currentY * currentGyroScaleFactor);
+            sprite.setPosition(currentX, currentY, currentGyroScaleFactor);
             Log.d(TAG, "Applied gyro scaling to sprite. Scale factor: " + currentGyroScaleFactor);
         }
     }
@@ -238,7 +238,7 @@ public class Scene {
             // Scale the position away from center (0, 0) to maintain relative spacing
             float currentX = sprite.getPositionX();
             float currentY = sprite.getPositionY();
-            sprite.setPosition(currentX * scaleFactor, currentY * scaleFactor);
+            sprite.setPosition(currentX, currentY, scaleFactor);
         }
         Log.d(TAG, "Scene '" + sceneName + "' scaled for gyro motion. Scale factor: " + scaleFactor);
     }

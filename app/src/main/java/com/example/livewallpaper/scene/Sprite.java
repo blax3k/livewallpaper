@@ -62,23 +62,23 @@ public class Sprite {
      */
     public Sprite(SpriteData config) {
         this(config.textureResourceId, config.name, config.width, config.height,
-             config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource, config.texCoordinates);
+                config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource, config.texCoordinates);
     }
 
     /**
      * Constructor with parallax multiplier, position, and optional gyro scaling.
      * Supports all initialization scenarios.
      *
-     * @param textureResourceId the drawable resource ID for the texture
-     * @param name the name of the sprite for debugging
-     * @param width the width in world units
-     * @param height the height in world units
+     * @param textureResourceId  the drawable resource ID for the texture
+     * @param name               the name of the sprite for debugging
+     * @param width              the width in world units
+     * @param height             the height in world units
      * @param parallaxMultiplier the parallax multiplier (1.0 = full scroll, 0.5 = half, etc.)
-     * @param positionX the x position in world units
-     * @param positionY the y position in world units
-     * @param gyroScaleFactor the gyro scale factor to apply (1.0 = no scaling, >1.0 = enlarged for gyro motion)
-     * @param textureResource the texture resource name (e.g., "background", "player")
-     * @param texCoordinates the texture coordinates array (8 floats) or null/empty for default
+     * @param positionX          the x position in world units
+     * @param positionY          the y position in world units
+     * @param gyroScaleFactor    the gyro scale factor to apply (1.0 = no scaling, >1.0 = enlarged for gyro motion)
+     * @param textureResource    the texture resource name (e.g., "background", "player")
+     * @param texCoordinates     the texture coordinates array (8 floats) or null/empty for default
      */
     public Sprite(int textureResourceId, String name, float width, float height, float parallaxMultiplier, float positionX, float positionY, float gyroScaleFactor, String textureResource, float[] texCoordinates) {
         this.textureResourceId = textureResourceId;
@@ -116,10 +116,10 @@ public class Sprite {
         float halfHeight = height / 2f;
 
         float[] squareCoords = {
-            positionX - halfWidth,  positionY + halfHeight, 0.0f,  // top left
-            positionX - halfWidth,  positionY - halfHeight, 0.0f,  // bottom left
-            positionX + halfWidth,  positionY + halfHeight, 0.0f,  // top right
-            positionX + halfWidth,  positionY - halfHeight, 0.0f   // bottom right
+                positionX - halfWidth, positionY + halfHeight, 0.0f,  // top left
+                positionX - halfWidth, positionY - halfHeight, 0.0f,  // bottom left
+                positionX + halfWidth, positionY + halfHeight, 0.0f,  // top right
+                positionX + halfWidth, positionY - halfHeight, 0.0f   // bottom right
         };
 
         ByteBuffer bb = ByteBuffer.allocateDirect(squareCoords.length * 4);
@@ -134,11 +134,11 @@ public class Sprite {
             texCoords = customTexCoordinates;
         } else {
             // Default: full texture mapping
-            texCoords = new float[] {
-                0.0f, 1.0f,  // top left
-                0.0f, 0.0f,  // bottom left
-                1.0f, 1.0f,  // top right
-                1.0f, 0.0f   // bottom right
+            texCoords = new float[]{
+                    0.0f, 1.0f,  // top left
+                    0.0f, 0.0f,  // bottom left
+                    1.0f, 1.0f,  // top right
+                    1.0f, 0.0f   // bottom right
             };
         }
 
@@ -161,11 +161,11 @@ public class Sprite {
 
         // Initialize edge line buffer for highlight outline (5 vertices to draw a closed box)
         float[] edgeLineCoords = {
-            positionX - halfWidth,  positionY + halfHeight, 0.0f,  // top left
-            positionX + halfWidth,  positionY + halfHeight, 0.0f,  // top right
-            positionX + halfWidth,  positionY - halfHeight, 0.0f,  // bottom right
-            positionX - halfWidth,  positionY - halfHeight, 0.0f,  // bottom left
-            positionX - halfWidth,  positionY + halfHeight, 0.0f   // back to top left
+                positionX - halfWidth, positionY + halfHeight, 0.0f,  // top left
+                positionX + halfWidth, positionY + halfHeight, 0.0f,  // top right
+                positionX + halfWidth, positionY - halfHeight, 0.0f,  // bottom right
+                positionX - halfWidth, positionY - halfHeight, 0.0f,  // bottom left
+                positionX - halfWidth, positionY + halfHeight, 0.0f   // back to top left
         };
         ByteBuffer ebb = ByteBuffer.allocateDirect(edgeLineCoords.length * 4);
         ebb.order(ByteOrder.nativeOrder());
@@ -182,19 +182,26 @@ public class Sprite {
         edgeLineParallaxMultiplierBuffer.position(0);
     }
 
+    public void updateVertexBuffer() {
+        updateVertexBuffer(1.0f);
+    }
+
     /**
      * Recalculates vertex coordinates based on current position and size.
      * Call this after changing position or size.
      */
-    private void updateVertexBuffer() {
+    private void updateVertexBuffer(float scaleFactor) {
         float halfWidth = width / 2f;
         float halfHeight = height / 2f;
 
+        float scaledPositionX = positionX * scaleFactor;
+        float scaledPositionY = positionY * scaleFactor;
+
         float[] squareCoords = {
-            positionX - halfWidth,  positionY + halfHeight, 0.0f,  // top left
-            positionX - halfWidth,  positionY - halfHeight, 0.0f,  // bottom left
-            positionX + halfWidth,  positionY + halfHeight, 0.0f,  // top right
-            positionX + halfWidth,  positionY - halfHeight, 0.0f   // bottom right
+                scaledPositionX - halfWidth, scaledPositionY + halfHeight, 0.0f,  // top left
+                scaledPositionX - halfWidth, scaledPositionY - halfHeight, 0.0f,  // bottom left
+                scaledPositionX + halfWidth, scaledPositionY + halfHeight, 0.0f,  // top right
+                scaledPositionX + halfWidth, scaledPositionY - halfHeight, 0.0f   // bottom right
         };
 
         vertexBuffer.position(0);
@@ -203,15 +210,19 @@ public class Sprite {
 
         // Update edge line buffer as well
         float[] edgeLineCoords = {
-            positionX - halfWidth,  positionY + halfHeight, 0.0f,  // top left
-            positionX + halfWidth,  positionY + halfHeight, 0.0f,  // top right
-            positionX + halfWidth,  positionY - halfHeight, 0.0f,  // bottom right
-            positionX - halfWidth,  positionY - halfHeight, 0.0f,  // bottom left
-            positionX - halfWidth,  positionY + halfHeight, 0.0f   // back to top left
+                scaledPositionX - halfWidth, scaledPositionY + halfHeight, 0.0f,  // top left
+                scaledPositionX + halfWidth, scaledPositionY + halfHeight, 0.0f,  // top right
+                scaledPositionX + halfWidth, scaledPositionY - halfHeight, 0.0f,  // bottom right
+                scaledPositionX - halfWidth, scaledPositionY - halfHeight, 0.0f,  // bottom left
+                scaledPositionX - halfWidth, scaledPositionY + halfHeight, 0.0f   // back to top left
         };
         edgeLineBuffer.position(0);
         edgeLineBuffer.put(edgeLineCoords);
         edgeLineBuffer.position(0);
+    }
+
+    public void setPosition(float x, float y) {
+        setPosition(x, y, 1.0f);
     }
 
     /**
@@ -224,7 +235,8 @@ public class Sprite {
      * @param x the x position in world units
      * @param y the y position in world units
      */
-    public void setPosition(float x, float y) {
+    public void setPosition(float x, float y, float scaleFactor) {
+
         this.positionX = x;
         this.positionY = y;
 
@@ -235,7 +247,7 @@ public class Sprite {
             originalPositionY = y;
         }
 
-        updateVertexBuffer();
+        updateVertexBuffer(scaleFactor);
     }
 
     /**
@@ -579,22 +591,45 @@ public class Sprite {
     /**
      * Accessors for renderer to use the geometry buffers.
      */
-    public FloatBuffer getVertexBuffer() { return vertexBuffer; }
-    public FloatBuffer getTexCoordBuffer() { return texCoordBuffer; }
-    public FloatBuffer getParallaxMultiplierBuffer() { return parallaxMultiplierBuffer; }
-    public FloatBuffer getEdgeLineBuffer() { return edgeLineBuffer; }
-    public FloatBuffer getEdgeLineParallaxMultiplierBuffer() { return edgeLineParallaxMultiplierBuffer; }
-    public int getVertexCount() { return VERTEX_COUNT; }
-    public int getEdgeLineVertexCount() { return 5; }
+    public FloatBuffer getVertexBuffer() {
+        return vertexBuffer;
+    }
+
+    public FloatBuffer getTexCoordBuffer() {
+        return texCoordBuffer;
+    }
+
+    public FloatBuffer getParallaxMultiplierBuffer() {
+        return parallaxMultiplierBuffer;
+    }
+
+    public FloatBuffer getEdgeLineBuffer() {
+        return edgeLineBuffer;
+    }
+
+    public FloatBuffer getEdgeLineParallaxMultiplierBuffer() {
+        return edgeLineParallaxMultiplierBuffer;
+    }
+
+    public int getVertexCount() {
+        return VERTEX_COUNT;
+    }
+
+    public int getEdgeLineVertexCount() {
+        return 5;
+    }
 
     /**
      * Get the parallax multiplier value for this sprite.
      * Used for draw order sorting (lower values = further back, drawn first).
      */
-    public float getParallaxMultiplier() { return parallaxMultiplier; }
+    public float getParallaxMultiplier() {
+        return parallaxMultiplier;
+    }
 
     /**
      * Set whether to show the edge highlight for this sprite.
+     *
      * @param show true to show green outline, false to hide
      */
     public void setShowEdgeHighlight(boolean show) {
