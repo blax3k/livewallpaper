@@ -11,6 +11,7 @@ import com.example.livewallpaper.scene.SceneData;
 import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.scene.SpriteData;
+import com.example.livewallpaper.scene.TextureEditState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -312,6 +313,20 @@ public class SceneFileManager {
             spriteData.positionY = sprite.getPositionY();
             spriteData.parallaxMultiplier = sprite.getParallaxMultiplier();
             spriteData.texCoordinates = sprite.getTextureCoordinates();
+
+            // Save the current texture editing state (scale and offsets)
+            // This preserves the texture zoom level and pan position across save/load cycles
+            TextureEditState textureEditState = sprite.getCurrentTextureEditState();
+            if (textureEditState != null) {
+                spriteData.textureScale = textureEditState.getTextureScale();
+                spriteData.textureOffsetU = textureEditState.getTextureOffsetU();
+                spriteData.textureOffsetV = textureEditState.getTextureOffsetV();
+                Log.d(TAG, "Saving texture state for sprite: " + sprite.getName() +
+                      " - scale: " + spriteData.textureScale +
+                      ", offsetU: " + spriteData.textureOffsetU +
+                      ", offsetV: " + spriteData.textureOffsetV);
+            }
+
             spriteDatas.add(spriteData);
         }
         sceneData.sprites = spriteDatas.toArray(new SpriteData[0]);

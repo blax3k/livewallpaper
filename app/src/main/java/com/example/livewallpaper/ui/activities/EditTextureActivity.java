@@ -27,6 +27,7 @@ import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.gl.SquareGLSurfaceView;
+import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.ui.controllers.DrawableImagePickerDialog;
 import com.example.livewallpaper.ui.controllers.TextureSliderController;
 import com.example.livewallpaper.ui.utils.ImageDimensionsUtils;
@@ -67,13 +68,17 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     private float passedTextureScale = 1.0f;
     private float passedTextureOffsetU = 0.0f;
     private float passedTextureOffsetV = 0.0f;
+    private boolean wasGyroMotionEnabled = true;  // Track original gyro state to restore on exit
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_texture);
 
-        Log.d(TAG, "EditTextureActivity onCreate called");
+        // Disable gyro motion for texture editing to work with unscaled sprite dimensions
+        wasGyroMotionEnabled = MotionConfig.isGyroMotionEnabled();
+        MotionConfig.setGyroMotionEnabled(false);
+        Log.d(TAG, "Gyro motion disabled for texture editing (was: " + wasGyroMotionEnabled + ")");
 
         // Set up back button
         ImageButton backButton = findViewById(R.id.back_button);
@@ -188,19 +193,29 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 Sprite sprite = scene.getSprites().get(0);
 
                 if (sprite != null) {
+                    // Use original (unscaled) dimensions to avoid working with gyro-scaled values
+                    float originalWidth = sprite.getOriginalWidth();
+                    float originalHeight = sprite.getOriginalHeight();
+
                     // Apply dimensions passed from EditSceneActivity
                     if (passedWidth > 0) {
                         sprite.setWidth(passedWidth);
+                    } else {
+                        // Use original width if no passed width
+                        sprite.setWidth(originalWidth);
                     }
                     if (passedHeight > 0) {
                         sprite.setHeight(passedHeight);
+                    } else {
+                        // Use original height if no passed height
+                        sprite.setHeight(originalHeight);
                     }
 
                     // Set the texture editing baseline for this session
                     // This ensures texture coordinates are calculated relative to the starting dimensions
                     // without modifying the sprite's permanent original dimensions
-                    float baselineWidth = passedWidth > 0 ? passedWidth : sprite.getWidth();
-                    float baselineHeight = passedHeight > 0 ? passedHeight : sprite.getHeight();
+                    float baselineWidth = passedWidth > 0 ? passedWidth : originalWidth;
+                    float baselineHeight = passedHeight > 0 ? passedHeight : originalHeight;
                     sprite.setTextureEditingBaseline(baselineWidth, baselineHeight);
 
                     // Get the texture edit state from the sprite (stored when previously applied)
@@ -443,6 +458,9 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         if (sensorManager != null && gyroscopeSensor != null) {
             sensorManager.unregisterListener(this, gyroscopeSensor);
         }
+        // Restore gyro motion to its original state when exiting this activity
+        MotionConfig.setGyroMotionEnabled(wasGyroMotionEnabled);
+        Log.d(TAG, "Gyro motion restored to: " + wasGyroMotionEnabled);
     }
 
     @Override
@@ -521,6 +539,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             // Create an Intent to return the edited sprite data
             Intent resultIntent = new Intent();
             resultIntent.putExtra(RESULT_SPRITE_NAME, spriteName);
+            // Use original (unscaled) dimensions to avoid returning gyro-scaled values
             resultIntent.putExtra(RESULT_WIDTH, currentSprite.getWidth());
             resultIntent.putExtra(RESULT_HEIGHT, currentSprite.getHeight());
 

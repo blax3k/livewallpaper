@@ -68,6 +68,12 @@ public class Sprite {
     public Sprite(SpriteData config) {
         this(config.textureResourceId, config.name, config.width, config.height,
                 config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource, config.texCoordinates);
+
+        // Initialize texture edit state with saved scale and offsets
+        // This restores the texture zoom level and pan position from the last save
+        this.currentTextureEditState = new TextureEditState(config.textureScale, config.textureOffsetU, config.textureOffsetV);
+        Log.d("Sprite", "Initialized sprite '" + config.name + "' with texture state - scale: " + config.textureScale +
+              ", offsetU: " + config.textureOffsetU + ", offsetV: " + config.textureOffsetV);
     }
 
     /**
