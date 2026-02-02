@@ -49,19 +49,15 @@ public class TextureCoordinateCalculator {
         float textureOffsetU = textureOffsets[0];
         float textureOffsetV = textureOffsets[1];
 
-        // Calculate the growth scale: how much has the sprite grown from its original size?
-        // We use the maximum of width and height growth to ensure uniform scaling
-        float widthGrowth = width / originalWidth;
-        float heightGrowth = height / originalHeight;
-        float growthScale = Math.max(widthGrowth, heightGrowth);
-
-        // The texture's effective size in world space grows with the sprite
-        // This ensures the texture maintains its aspect ratio while scaling uniformly
-        float textureWidthInWorld = originalWidth * textureScaleFactor * growthScale;
-        float textureHeightInWorld = originalHeight * textureScaleFactor * growthScale;
+        // Calculate the texture's size in world space
+        // The texture maintains a FIXED size regardless of sprite growth
+        // It is set once at the editing baseline dimensions and does not scale with sprite changes
+        float textureWidthInWorld = originalWidth * textureScaleFactor;
+        float textureHeightInWorld = originalHeight * textureScaleFactor;
 
         // Calculate the visible portion of the texture in each dimension independently
-        // This allows the texture to maintain its aspect ratio while the sprite aspect ratio changes
+        // When sprite shrinks: uScale/vScale become larger (we see a larger portion of the texture)
+        // When sprite grows: uScale/vScale become smaller (we see a smaller portion of the texture)
         float uScale = width / textureWidthInWorld;      // How much of texture width is visible
         float vScale = height / textureHeightInWorld;    // How much of texture height is visible
 
@@ -166,14 +162,9 @@ public class TextureCoordinateCalculator {
             float textureScale,
             float textureScaleFactor) {
 
-        // Calculate the growth scale
-        float widthGrowth = width / originalWidth;
-        float heightGrowth = height / originalHeight;
-        float growthScale = Math.max(widthGrowth, heightGrowth);
-
-        // Calculate texture dimensions in world space
-        float textureWidthInWorld = originalWidth * textureScaleFactor * growthScale;
-        float textureHeightInWorld = originalHeight * textureScaleFactor * growthScale;
+        // Calculate texture dimensions in world space (fixed, not scaled with sprite growth)
+        float textureWidthInWorld = originalWidth * textureScaleFactor;
+        float textureHeightInWorld = originalHeight * textureScaleFactor;
 
         // Calculate visible window
         float uScale = width / textureWidthInWorld;
