@@ -196,6 +196,13 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                         sprite.setHeight(passedHeight);
                     }
 
+                    // Set the texture editing baseline for this session
+                    // This ensures texture coordinates are calculated relative to the starting dimensions
+                    // without modifying the sprite's permanent original dimensions
+                    float baselineWidth = passedWidth > 0 ? passedWidth : sprite.getWidth();
+                    float baselineHeight = passedHeight > 0 ? passedHeight : sprite.getHeight();
+                    sprite.setTextureEditingBaseline(baselineWidth, baselineHeight);
+
                     // Get the current texture state from the sprite (which includes any previously set scale/offset)
                     textureEditState = sprite.getCurrentTextureEditState();
 

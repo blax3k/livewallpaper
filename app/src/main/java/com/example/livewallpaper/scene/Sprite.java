@@ -41,6 +41,11 @@ public class Sprite {
     private float originalPositionX;
     private float originalPositionY;
 
+    // Store texture editing session baseline dimensions (used for texture coordinate calculations during editing)
+    // When not in editing mode, these are equal to originalWidth/originalHeight
+    private float textureEditingBaselineWidth;
+    private float textureEditingBaselineHeight;
+
     // Store original texture coordinates for scaling
     private float[] originalTexCoordinates;
     private final float textureScaleFactor;  // The scale factor of the texture in world space, set at construction
@@ -88,6 +93,9 @@ public class Sprite {
         this.height = height;
         this.originalWidth = width;
         this.originalHeight = height;
+        // Initialize texture editing baseline to match original dimensions
+        this.textureEditingBaselineWidth = width;
+        this.textureEditingBaselineHeight = height;
         this.parallaxMultiplier = parallaxMultiplier;
         this.positionX = positionX;
         this.positionY = positionY;
@@ -426,6 +434,41 @@ public class Sprite {
     public float getOriginalHeight() {
         return originalHeight;
     }
+    public float getOriginalPositionX() {
+        return originalPositionX;
+    }
+    public float getOriginalPositionY() {
+        return originalPositionY;
+    }
+
+    /**
+     * Get the texture editing baseline width.
+     * Used for texture coordinate calculations during editing sessions.
+     */
+    public float getTextureEditingBaselineWidth() {
+        return textureEditingBaselineWidth;
+    }
+
+    /**
+     * Get the texture editing baseline height.
+     * Used for texture coordinate calculations during editing sessions.
+     */
+    public float getTextureEditingBaselineHeight() {
+        return textureEditingBaselineHeight;
+    }
+
+    /**
+     * Set the texture editing baseline dimensions.
+     * Call this when entering an editing session to establish the base dimensions for texture coordinate calculations.
+     *
+     * @param baselineWidth the width to use as the baseline for this editing session
+     * @param baselineHeight the height to use as the baseline for this editing session
+     */
+    public void setTextureEditingBaseline(float baselineWidth, float baselineHeight) {
+        this.textureEditingBaselineWidth = baselineWidth;
+        this.textureEditingBaselineHeight = baselineHeight;
+    }
+
     public String getName() {
         return name;
     }
@@ -556,8 +599,8 @@ public class Sprite {
                 textureEditState.getOffsets(),
                 width,
                 height,
-                originalWidth,
-                originalHeight,
+                textureEditingBaselineWidth,
+                textureEditingBaselineHeight,
                 textureScaleFactor
         );
     }
