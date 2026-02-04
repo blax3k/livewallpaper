@@ -54,7 +54,7 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
     private PhoneGuide phoneGuide = null;
 
     // Wallpaper-specific fields for scene switching and cycling
-    private SceneSwitchManager sceneManager;
+    private SceneSwitchManager sceneSwitchManager;
     private volatile boolean sceneSwitchRequested = false;
     private static final long SCENE_CYCLE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
     private long lastSceneChangeTimeMs = System.currentTimeMillis();
@@ -92,11 +92,11 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
 
         // Initialize scene manager for wallpaper mode
         SceneFileManager sceneFileManager = new SceneFileManager(context, null);
-        this.sceneManager = new SceneSwitchManager(context, sceneFileManager);
+        this.sceneSwitchManager = new SceneSwitchManager(context, sceneFileManager);
 
         // Load the initial scene
         try {
-            this.currentScene = sceneManager.loadInitialScene();
+            this.currentScene = sceneSwitchManager.loadInitialScene();
             Log.d(TAG, "Loaded initial scene: " + currentScene.getSceneName());
         } catch (Exception e) {
             Log.e(TAG, "Failed to load initial scene, using empty scene", e);
@@ -104,7 +104,7 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         }
 
         // Initialize the scene manager with the loaded scene
-        this.sceneManager.initialize(currentScene);
+        this.sceneSwitchManager.initialize(currentScene);
     }
 
     @Override
@@ -659,8 +659,8 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         spriteRenderer = new SpriteRenderer(handles);
 
         // Set up gyro scaling callback
-        if (sceneManager != null) {
-            sceneManager.setGyroScalingCallback((newScene, worldHeight) -> {
+        if (sceneSwitchManager != null) {
+            sceneSwitchManager.setGyroScalingCallback((newScene, worldHeight) -> {
                 if (spritesScaledForGyro) {
                     gyroProcessor.applyGyroScalingToNewScene(newScene, worldHeight);
                 }
@@ -668,8 +668,8 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         }
 
         // Initialize the scene and load textures
-        if (currentScene != null && sceneManager != null) {
-            currentScene.initialize(context, sceneManager.getTextureManager());
+        if (currentScene != null && sceneSwitchManager != null) {
+            currentScene.initialize(context, sceneSwitchManager.getTextureManager());
         }
 
         // Reset the scene change timer
@@ -714,28 +714,28 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         }
 
         // Process any pending async texture uploads that are ready (must be on GL thread)
-        TextureManager textureManager = sceneManager != null ? sceneManager.getTextureManager() : null;
+        TextureManager textureManager = sceneSwitchManager != null ? sceneSwitchManager.getTextureManager() : null;
         if (textureManager != null) {
             textureManager.processPendingUploads();
         }
 
         // Check if scene switch was requested (from UI thread) and perform it here on GL thread
-        if (sceneSwitchRequested && sceneManager != null) {
+        if (sceneSwitchRequested && sceneSwitchManager != null) {
             sceneSwitchRequested = false;
-            sceneManager.cycleToNextScene(currentScene, WORLD_HEIGHT);
+            sceneSwitchManager.cycleToNextScene(currentScene, WORLD_HEIGHT);
             lastSceneChangeTimeMs = System.currentTimeMillis();
         }
 
         // Update scene transition (handles texture preload, crossfade, and scene switching)
-        if (sceneManager != null) {
-            currentScene = sceneManager.updateTransition();
+        if (sceneSwitchManager != null) {
+            currentScene = sceneSwitchManager.updateTransition();
         }
 
         // Apply xFocus offset when scroll motion is disabled
         if (!MotionConfig.isScrollMotionEnabled()) {
             // If we're in a transition, smoothly transition to the next scene's xFocus
             // Otherwise, use the current scene's xFocus
-            Scene transitioningScene = sceneManager != null ? sceneManager.getTransitioningScene() : null;
+            Scene transitioningScene = sceneSwitchManager != null ? sceneSwitchManager.getTransitioningScene() : null;
             if (transitioningScene != null) {
                 scrollOffsetProcessor.setScrollTargetFromXFocus(transitioningScene.getXFocus());
             } else {
@@ -767,7 +767,7 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
             shaderProgram.delete();
         }
 
-        TextureManager textureManager = sceneManager != null ? sceneManager.getTextureManager() : null;
+        TextureManager textureManager = sceneSwitchManager != null ? sceneSwitchManager.getTextureManager() : null;
         if (textureManager != null) {
             textureManager.destroyAll();
         }
@@ -855,8 +855,8 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
 
         // Check if it's time for automatic scene cycling (every 5 minutes)
         long currentTimeMs = System.currentTimeMillis();
-        if (currentTimeMs - lastSceneChangeTimeMs >= SCENE_CYCLE_INTERVAL_MS && sceneManager != null) {
-            sceneManager.cycleToNextScene(currentScene, WORLD_HEIGHT);
+        if (currentTimeMs - lastSceneChangeTimeMs >= SCENE_CYCLE_INTERVAL_MS && sceneSwitchManager != null) {
+            sceneSwitchManager.cycleToNextScene(currentScene, WORLD_HEIGHT);
             lastSceneChangeTimeMs = currentTimeMs;
             Log.d(TAG, "Auto-cycling to next scene (5 minutes elapsed)");
         }
@@ -888,8 +888,8 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
      * @param sceneFileManager the SceneFileManager to reload scenes from
      */
     public void refreshSceneList(SceneFileManager sceneFileManager) {
-        if (isWallpaperMode && sceneManager != null) {
-            sceneManager.reloadAvailableScenes(sceneFileManager);
+        if (isWallpaperMode && sceneSwitchManager != null) {
+            sceneSwitchManager.reloadAvailableScenes(sceneFileManager);
             Log.d(TAG, "Scene list refreshed in renderer");
         }
     }
