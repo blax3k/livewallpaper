@@ -31,7 +31,7 @@ import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
 import com.example.livewallpaper.ui.adapters.SpritesDropdownAdapter;
-import com.example.livewallpaper.gl.SquareGLSurfaceView;
+import com.example.livewallpaper.ui.views.SquareGLSurfaceView;
 import com.example.livewallpaper.ui.controllers.DrawableImagePickerDialog;
 import com.example.livewallpaper.ui.builders.SpriteDetailsBuilder;
 
