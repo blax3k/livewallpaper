@@ -17,7 +17,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 
-import com.example.livewallpaper.scene.SimpleRenderer;
+import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
 
 /**
@@ -28,7 +28,7 @@ public class GLWallpaperService extends WallpaperService {
     private static final String TAG = "GLWallpaperService";
 
     // Static reference to the current renderer instance for refreshing from outside
-    private static SimpleRenderer currentRenderer;
+    private static SceneManager currentRenderer;
 
     @Override
     public Engine onCreateEngine() {
@@ -113,16 +113,13 @@ public class GLWallpaperService extends WallpaperService {
             try {
                 super.onCreate(surfaceHolder);
                 surfaceHolder.addCallback(this);
-                renderer = new SimpleRenderer(GLWallpaperService.this);
+                renderer = new SceneManager(GLWallpaperService.this);
                 // Set the static reference so the scene list can be refreshed from outside
-                currentRenderer = (SimpleRenderer) renderer;
+                currentRenderer = (SceneManager) renderer;
 
                 // Enable touch events and initialize gesture detector for double tap detection
                 setTouchEventsEnabled(true);
                 gestureDetector = new GestureDetector(GLWallpaperService.this, gestureListener);
-
-                // Initialize sensor manager and obtain gyroscope sensor but don't register yet
-                sensorManager = (SensorManager) GLWallpaperService.this.getSystemService(SENSOR_SERVICE);
                 if (sensorManager != null) {
                     gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
                     if (gyroscopeSensor == null) {
