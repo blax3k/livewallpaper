@@ -3,4 +3,8 @@
     <item
         android:id="@+id/menu_save"
         android:title="Save" />
+    <item
+        android:id="@+id/menu_enable_gyro"
+        android:title="Enable Gyro"
+        android:checkable="true" />
 </menu>

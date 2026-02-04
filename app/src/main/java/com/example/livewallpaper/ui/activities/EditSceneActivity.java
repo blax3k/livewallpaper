@@ -30,6 +30,7 @@ import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.scene.TextureEditState;
+import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
 import com.example.livewallpaper.ui.adapters.SpritesDropdownAdapter;
 import com.example.livewallpaper.ui.views.SquareGLSurfaceView;
@@ -366,6 +367,10 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             ellipsisButton.setOnClickListener(v -> {
                 PopupMenu popupMenu = new PopupMenu(EditSceneActivity.this, v);
                 popupMenu.getMenuInflater().inflate(R.menu.menu_edit_scene, popupMenu.getMenu());
+
+                // Set the checkbox state based on current gyro motion status
+                popupMenu.getMenu().findItem(R.id.menu_enable_gyro).setChecked(MotionConfig.isGyroMotionEnabled());
+
                 popupMenu.setOnMenuItemClickListener(item -> {
                     if (item.getItemId() == R.id.menu_save) {
                         String currentSceneName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
@@ -374,6 +379,15 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                             // Mark that a save occurred so SceneListActivity can refresh
                             setResult(RESULT_OK);
                         });
+                        return true;
+                    } else if (item.getItemId() == R.id.menu_enable_gyro) {
+                        // Toggle the gyro motion enabled state
+                        boolean isCurrentlyEnabled = MotionConfig.isGyroMotionEnabled();
+                        MotionConfig.setGyroMotionEnabled(!isCurrentlyEnabled);
+                        item.setChecked(!isCurrentlyEnabled);
+                        Toast.makeText(EditSceneActivity.this,
+                                "Gyro motion " + (!isCurrentlyEnabled ? "enabled" : "disabled"),
+                                Toast.LENGTH_SHORT).show();
                         return true;
                     }
                     return false;
