@@ -119,6 +119,10 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         textureManager = new TextureManager();
         Log.d(TAG, "TextureManager created");
 
+        // CRITICAL: Query GPU limits on GL thread BEFORE loading any textures
+        // This ensures proper downscaling decisions for large textures
+        textureManager.ensureGPULimitsQueried();
+
         // Create shader program
         shaderProgram = new ShaderProgram(ShaderProgram.getVertexShaderCode(), ShaderProgram.getFragmentShaderCode());
         shaderProgram.use();
@@ -665,6 +669,12 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
                     gyroProcessor.applyGyroScalingToNewScene(newScene, worldHeight);
                 }
             });
+        }
+
+        // CRITICAL: Query GPU limits on GL thread BEFORE loading any textures
+        // This ensures proper downscaling decisions for large textures
+        if (sceneSwitchManager != null) {
+            sceneSwitchManager.getTextureManager().ensureGPULimitsQueried();
         }
 
         // Initialize the scene and load textures

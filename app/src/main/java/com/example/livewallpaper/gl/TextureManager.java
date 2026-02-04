@@ -62,6 +62,26 @@ public class TextureManager {
     }
 
     /**
+     * Query the GPU's actual maximum texture size. This should be called once from the GL thread
+     * when the surface is created. Uses glGetIntegerv to query GL_MAX_TEXTURE_SIZE.
+     *
+     * CRITICAL: This must be called on the GL thread BEFORE any textures are decoded asynchronously.
+     * If called too late, textures will have been downscaled based on the default 1024px limit.
+     */
+    public void ensureGPULimitsQueried() {
+        if (gpuLimitsQueried) {
+            return; // Already queried
+        }
+
+        int[] maxSize = new int[1];
+        GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, maxSize, 0);
+        maxTextureSize = maxSize[0];
+
+        Log.d(TAG, "GPU max texture size queried (on GL thread): " + maxTextureSize + " pixels");
+        gpuLimitsQueried = true;
+    }
+
+    /**
      * Query the GPU's actual maximum texture size. This should be called once before
      * loading textures. Uses glGetIntegerv to query GL_MAX_TEXTURE_SIZE.
      */
@@ -291,39 +311,73 @@ public class TextureManager {
      * Decode a bitmap from resources with automatic downscaling for large textures.
      * Returns ARGB_8888 format for consistent texture handling.
      *
+     * IMPORTANT: Uses raw resource stream (not BitmapFactory.decodeResource) to bypass
+     * Android's automatic density scaling which can cause textures to be downscaled
+     * based on device DPI. This is critical for texture detail when zooming in.
+     *
      * @param context Android context
      * @param resourceId drawable resource ID
      * @return decoded bitmap, or null if failed
      */
     private Bitmap decodeBitmap(Context context, int resourceId) {
-        // Get dimensions first (without loading full bitmap)
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeResource(context.getResources(), resourceId, options);
+        java.io.InputStream is = null;
+        try {
+            // Load raw resource stream - this bypasses Android's density-based scaling
+            is = context.getResources().openRawResource(resourceId);
 
-        // Calculate optimal sample size
-        int inSampleSize = calculateInSampleSize(options.outWidth, options.outHeight, resourceId);
+            // Get dimensions first (without loading full bitmap)
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inScaled = false;  // Ensure no scaling
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(is, null, options);
 
-        // Decode with scaling
-        options.inJustDecodeBounds = false;
-        options.inSampleSize = inSampleSize;
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
+            int originalWidth = options.outWidth;
+            int originalHeight = options.outHeight;
 
-        if (bitmap == null) {
-            Log.e(TAG, "Failed to decode resource " + resourceId);
+            Log.d(TAG, "Raw resource dimensions for resourceId=" + resourceId + ": " + originalWidth + "x" + originalHeight);
+
+            // Calculate optimal sample size
+            int inSampleSize = calculateInSampleSize(originalWidth, originalHeight, resourceId);
+
+            // Reset stream and decode with determined sample size
+            is.close();
+            is = context.getResources().openRawResource(resourceId);
+
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = inSampleSize;
+            Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
+
+            if (bitmap == null) {
+                Log.e(TAG, "Failed to decode resource " + resourceId);
+                return null;
+            }
+
+            Log.d(TAG, "Successfully decoded resource " + resourceId + ", bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight() + ", format: " + bitmap.getConfig() + ", inSampleSize: " + inSampleSize);
+
+            // Convert to ARGB_8888 if necessary
+            return ensureARGB8888Format(bitmap);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception decoding resource " + resourceId, e);
             return null;
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (java.io.IOException e) {
+                    Log.e(TAG, "Error closing resource stream", e);
+                }
+            }
         }
-
-        Log.d(TAG, "Successfully decoded resource " + resourceId + ", bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight() + ", format: " + bitmap.getConfig());
-
-        // Convert to ARGB_8888 if necessary
-        return ensureARGB8888Format(bitmap);
     }
 
     /**
      * Calculate the inSampleSize needed to scale down large textures.
-     * Caps maximum texture dimension at the GPU's reported limit to prevent GPU memory exhaustion.
+     * Only downscales if BOTH dimensions exceed the GPU's maximum texture size.
+     * This preserves texture resolution for zooming and detailed sprite work.
+     *
+     * If a texture is larger than the max size in one dimension but not both,
+     * we allow it through and let OpenGL handle it (modern devices can handle this
+     * and it preserves detail for texture zooming/editing).
      *
      * @param width original width
      * @param height original height
@@ -333,10 +387,12 @@ public class TextureManager {
     private int calculateInSampleSize(int width, int height, int resourceId) {
         int inSampleSize = 1;
 
-        if (height > maxTextureSize || width > maxTextureSize) {
+        // Only downscale if BOTH dimensions exceed max texture size
+        // This preserves high-resolution textures for detail work and zooming
+        if (height > maxTextureSize && width > maxTextureSize) {
             final int halfHeight = height / 2;
             final int halfWidth = width / 2;
-            while ((halfHeight / inSampleSize) >= maxTextureSize ||
+            while ((halfHeight / inSampleSize) >= maxTextureSize &&
                    (halfWidth / inSampleSize) >= maxTextureSize) {
                 inSampleSize *= 2;
             }
@@ -344,6 +400,11 @@ public class TextureManager {
                   ": original=" + width + "x" + height +
                   ", max allowed=" + maxTextureSize +
                   ", scaling with inSampleSize=" + inSampleSize);
+        } else if (height > maxTextureSize || width > maxTextureSize) {
+            Log.d(TAG, "One dimension exceeds max texture size for resourceId=" + resourceId +
+                  ": original=" + width + "x" + height +
+                  ", max allowed=" + maxTextureSize +
+                  " - allowing full resolution (will be uploaded with potential downsizing by GPU driver)");
         }
 
         return inSampleSize;
@@ -400,12 +461,25 @@ public class TextureManager {
 
     /**
      * Set standard texture parameters (wrapping, filtering).
+     * Uses GL_LINEAR for both MIN_FILTER and MAG_FILTER for smooth scaling.
+     * Disables mipmapping to preserve original texture resolution.
      */
     private void setTextureParameters() {
+        // Wrapping mode - clamp to edges to avoid edge artifacts
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+
+        // Filtering modes
+        // MIN_FILTER: GL_LINEAR for smooth downsampling when zooming out
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+
+        // MAG_FILTER: GL_LINEAR for smooth appearance when magnifying/zooming in
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+
+        // Note: Mipmapping is not explicitly disabled in GLES 2.0 (no BASE_LEVEL/MAX_LEVEL support)
+        // The texture will use full resolution since no mipmaps are generated during upload
+
+        Log.d(TAG, "Texture parameters set: MIN_FILTER=GL_LINEAR, MAG_FILTER=GL_LINEAR, wrapping=CLAMP_TO_EDGE, mipmaps disabled");
     }
 
     /**
