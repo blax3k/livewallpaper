@@ -21,17 +21,14 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/save_button"
-            android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:drawableStart="@android:drawable/ic_menu_save"
-            android:paddingStart="8dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="8dp"
-            android:paddingBottom="4dp"
-            android:text="Save"
-            android:textSize="12sp" />
+        <ImageButton
+            android:id="@+id/menu_ellipsis_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_more"
+            android:contentDescription="More options"
+            android:scaleType="centerInside"
+            android:background="?attr/selectableItemBackground" />
     </LinearLayout>
 
     <!-- Square GLSurfaceView for scene preview -->

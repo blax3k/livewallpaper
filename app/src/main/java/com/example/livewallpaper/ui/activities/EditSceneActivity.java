@@ -14,8 +14,8 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
@@ -24,6 +24,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.SceneManager;
@@ -103,8 +104,8 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             }
         }
 
-        // Set up save button
-        setupSaveButton();
+        // Set up menu ellipsis button
+        setupMenuEllipsis();
 
         // Get the scene file name from the intent
         String sceneFileName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
@@ -359,16 +360,25 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         }
     }
 
-    private void setupSaveButton() {
-        Button saveButton = findViewById(R.id.save_button);
-        if (saveButton != null) {
-            saveButton.setOnClickListener(v -> {
-                String currentSceneName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
-                // Pass a callback to be executed after successful save
-                sceneFileManager.showSaveDialog(currentSceneName, () -> {
-                    // Mark that a save occurred so SceneListActivity can refresh
-                    setResult(RESULT_OK);
+    private void setupMenuEllipsis() {
+        ImageButton ellipsisButton = findViewById(R.id.menu_ellipsis_button);
+        if (ellipsisButton != null) {
+            ellipsisButton.setOnClickListener(v -> {
+                PopupMenu popupMenu = new PopupMenu(EditSceneActivity.this, v);
+                popupMenu.getMenuInflater().inflate(R.menu.menu_edit_scene, popupMenu.getMenu());
+                popupMenu.setOnMenuItemClickListener(item -> {
+                    if (item.getItemId() == R.id.menu_save) {
+                        String currentSceneName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
+                        // Pass a callback to be executed after successful save
+                        sceneFileManager.showSaveDialog(currentSceneName, () -> {
+                            // Mark that a save occurred so SceneListActivity can refresh
+                            setResult(RESULT_OK);
+                        });
+                        return true;
+                    }
+                    return false;
                 });
+                popupMenu.show();
             });
         }
     }
