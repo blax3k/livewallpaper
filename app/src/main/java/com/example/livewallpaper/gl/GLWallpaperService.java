@@ -120,6 +120,9 @@ public class GLWallpaperService extends WallpaperService {
                 // Enable touch events and initialize gesture detector for double tap detection
                 setTouchEventsEnabled(true);
                 gestureDetector = new GestureDetector(GLWallpaperService.this, gestureListener);
+
+                // Initialize sensor manager for gyroscope input
+                sensorManager = (SensorManager) GLWallpaperService.this.getSystemService(Context.SENSOR_SERVICE);
                 if (sensorManager != null) {
                     gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
                     if (gyroscopeSensor == null) {
