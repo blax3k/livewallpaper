@@ -262,13 +262,11 @@ public class GyroSensorProcessor {
      *
      * @param handles the shader handles for setting gyro uniforms
      * @param scene the current scene to apply gyro scaling
-     * @param worldHeight the world-space height for scale factor calculation
      * @param spritesScaledForGyro current scaling state (will be mutated)
      * @return the updated spritesScaledForGyro state
      */
     public boolean updateAndApplyGyroUniforms(com.example.livewallpaper.gl.Handles handles,
                                                com.example.livewallpaper.scene.Scene scene,
-                                               float worldHeight,
                                                boolean spritesScaledForGyro) {
         if (MotionConfig.isGyroMotionEnabled()) {
             float gyroOffsetX = updateAndGetCurrentOffsetX();
@@ -278,8 +276,8 @@ public class GyroSensorProcessor {
 
             // Apply sprite scaling for gyro motion if not already scaled
             if (!spritesScaledForGyro) {
-                float scaleFactor = calculateScaleFactor(motionOffsetLimit, worldHeight);
-                scene.updateGyroScaling(scaleFactor);
+                scene.enableGyroScaling();
+                scene.applyGyroScaling();
                 spritesScaledForGyro = true;
             }
         } else {
@@ -289,7 +287,7 @@ public class GyroSensorProcessor {
 
             // Reset sprite scaling if previously scaled
             if (spritesScaledForGyro) {
-                scene.resetGyroScaling();
+                scene.disableGyroScaling();
                 spritesScaledForGyro = false;
             }
         }
@@ -297,17 +295,17 @@ public class GyroSensorProcessor {
     }
 
     /**
-     * Apply current gyro scaling state to a new scene during transitions.
-     * If the processor has an active scale factor, it will be applied to the scene
-     * for initialization.
+     * Apply gyro scaling to a new scene during transitions.
+     * Enables gyro scaling for the scene based on current gyro motion state.
      *
      * @param newScene the scene to apply gyro scaling to
-     * @param worldHeight the world-space height for scale factor calculation
      */
-    public void applyGyroScalingToNewScene(Scene newScene, float worldHeight) {
-            float scaleFactor = calculateScaleFactor(motionOffsetLimit, worldHeight);
-            newScene.setGyroScalingForInitialization(scaleFactor);
-            android.util.Log.d("GyroSensorProcessor", "New scene will be initialized with gyro scaling factor: " + scaleFactor);
+    public void applyGyroScalingToNewScene(Scene newScene) {
+        if (MotionConfig.isGyroMotionEnabled()) {
+            newScene.enableGyroScaling();
+            newScene.applyGyroScaling();
+            android.util.Log.d("GyroSensorProcessor", "New scene initialized with gyro scaling applied");
+        }
     }
 }
 

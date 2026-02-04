@@ -34,7 +34,7 @@ public class SceneSwitchManager {
      * Callback interface for applying gyro scaling to new scenes
      */
     public interface GyroScalingCallback {
-        void applyGyroScalingToNewScene(Scene newScene, float worldHeight);
+        void applyGyroScalingToNewScene(Scene newScene);
     }
 
     public SceneSwitchManager(Context context, SceneFileManager sceneFileManager) {
@@ -114,9 +114,8 @@ public class SceneSwitchManager {
      * Must be called on the GL thread.
      *
      * @param currentScene The currently active scene to transition FROM
-     * @param worldHeight The world height for gyro scaling calculations
      */
-    public void cycleToNextScene(Scene currentScene, float worldHeight) {
+    public void cycleToNextScene(Scene currentScene) {
         if (sceneFiles.length == 0) {
             Log.w(TAG, "No scene files available to cycle through");
             return;
@@ -151,7 +150,7 @@ public class SceneSwitchManager {
 
             // Apply gyro scaling if callback is set and gyro is currently active
             if (gyroCallback != null) {
-                gyroCallback.applyGyroScalingToNewScene(newScene, worldHeight);
+                gyroCallback.applyGyroScalingToNewScene(newScene);
             }
 
             // Start the transition with the transition manager

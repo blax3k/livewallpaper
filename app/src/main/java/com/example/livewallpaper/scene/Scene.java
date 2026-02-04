@@ -17,7 +17,6 @@ public class Scene {
     private final String sceneName;
     private final List<Sprite> sprites;
     private boolean isInitialized = false;
-    private float currentGyroScaleFactor = 1.0f;
     private boolean isGyroScaled = false;
     private float xFocus = 0.5f; // Default to center; represents the x-position to focus on (0.0 = left, 0.5 = center, 1.0 = right)
     public Scene(String sceneName) {
@@ -140,7 +139,6 @@ public class Scene {
         // Load textures and apply gyro scaling in a single pass
         for (Sprite sprite : sprites) {
             loadSpriteTexture(context, textureManager, sprite);
-            applyGyroScalingToSprite(sprite);
         }
 
         isInitialized = true;
@@ -186,65 +184,74 @@ public class Scene {
     }
 
     /**
-     * Apply stored gyro scaling to a sprite if gyro scaling is enabled.
+     * Apply gyro scaling to all sprites in this scene.
      *
-     * @param sprite the sprite to apply gyro scaling to
+     * When the gyro moves, sprites are moved by their parallaxMultiplier amount.
+     * This can reveal blank background behind sprites that touch the edges (e.g., a 10x10 sprite).
+     *
+     * To compensate, we scale up sprite sizes relative to their parallaxMultiplier:
+     * - A sprite with parallaxMultiplier=1.0 can move 1.0 unit, so we increase its size by 10%
+     * - A sprite with parallaxMultiplier=0.5 can move 0.5 unit, so we increase its size by 5%
+     *
+     * Sprites also need position adjustment. If a sprite is centered at (0,0), no adjustment needed.
+     * However, if positioned at (2,2), it must also shift away from center proportionally to maintain
+     * relative positioning with other sprites: newPosition = oldPosition * scaleFactor
      */
-    private void applyGyroScalingToSprite(Sprite sprite) {
-        if (isGyroScaled && currentGyroScaleFactor > 1.0f && !sprite.isGyroScaled()) {
-            // Scale the sprite size
-            sprite.scaleFromOriginal(currentGyroScaleFactor);
-            // Scale the position away from center (0, 0) to maintain relative spacing
-            float currentX = sprite.getPositionX();
-            float currentY = sprite.getPositionY();
-            sprite.setPosition(currentX, currentY, currentGyroScaleFactor);
-            Log.d(TAG, "Applied gyro scaling to sprite. Scale factor: " + currentGyroScaleFactor);
+    public void applyGyroScaling() {
+        if (!isGyroScaled) {
+            Log.d(TAG, "Gyro scaling not enabled for scene '" + sceneName + "'");
+            return;
         }
+
+        for (Sprite sprite : sprites) {
+            // Calculate the gyro scale factor based on parallax multiplier
+            // Formula: scale = 1.0 + parallaxMultiplier * 0.1
+            // This means:
+            // - parallaxMultiplier=1.0 -> scale=1.1 (10% increase)
+            // - parallaxMultiplier=0.5 -> scale=1.05 (5% increase)
+            // - parallaxMultiplier=0.0 -> scale=1.0 (no change, fully parallaxed)
+            float parallaxMultiplier = sprite.getParallaxMultiplier();
+            float spriteGyroScaleFactor = 1.0f + (parallaxMultiplier * 0.1f);
+
+            // Scale the sprite size based on its parallax multiplier
+            sprite.scaleFromOriginal(spriteGyroScaleFactor);
+
+            // Scale the position away from center to maintain relative positioning
+            float originalX = sprite.getOriginalPositionX();
+            float originalY = sprite.getOriginalPositionY();
+            float scaledX = originalX * spriteGyroScaleFactor;
+            float scaledY = originalY * spriteGyroScaleFactor;
+            sprite.setPosition(scaledX, scaledY);
+
+            Log.d(TAG, "Applied gyro scaling to sprite '" + sprite.getName() +
+                    "' with parallaxMultiplier=" + parallaxMultiplier +
+                    ", spriteGyroScaleFactor=" + spriteGyroScaleFactor +
+                    ", newSize=" + sprite.getWidth() + "x" + sprite.getHeight() +
+                    ", newPosition=(" + scaledX + ", " + scaledY + ")");
+        }
+
+        Log.d(TAG, "Scene '" + sceneName + "' gyro scaling applied to all sprites");
     }
 
     /**
-     * Set the gyro scaling state that will be applied during initialization.
-     * Call this before initializing the scene to ensure sprites are created with proper scaling.
-     *
-     * @param scaleFactor the gyro scale factor to apply (1.0 = no scaling, >1.0 = enlarged)
+     * Enable gyro scaling for this scene.
+     * Call this before rendering to apply gyro scaling based on sprite parallax multipliers.
      */
-    public void setGyroScalingForInitialization(float scaleFactor) {
-        if (scaleFactor > 1.0f) {
-            this.currentGyroScaleFactor = scaleFactor;
-            this.isGyroScaled = true;
-            Log.d(TAG, "Scene '" + sceneName + "' marked to apply gyro scaling on initialization. Factor: " + scaleFactor);
-        }
+    public void enableGyroScaling() {
+        this.isGyroScaled = true;
+        Log.d(TAG, "Gyro scaling enabled for scene '" + sceneName + "'");
     }
-    
+
     /**
-     * Apply gyro scaling to all sprites in this scene.
-     *
-     * @param scaleFactor the scale factor to apply (>1.0 to enlarge)
+     * Disable gyro scaling and reset all sprites to their original sizes and positions.
      */
-    public void updateGyroScaling(float scaleFactor) {
+    public void disableGyroScaling() {
         for (Sprite sprite : sprites) {
-            // Scale the sprite size
-            sprite.scaleFromOriginal(scaleFactor);
-            // Scale the position away from center (0, 0) to maintain relative spacing
-            float currentX = sprite.getPositionX();
-            float currentY = sprite.getPositionY();
-            sprite.setPosition(currentX, currentY, scaleFactor);
-        }
-        Log.d(TAG, "Scene '" + sceneName + "' scaled for gyro motion. Scale factor: " + scaleFactor);
-    }
-    /**
-     * Reset all sprites in this scene to their original sizes and positions.
-     */
-    public void resetGyroScaling() {
-        for (Sprite sprite : sprites) {
-            // Reset size to original
             sprite.resetScale();
-            // Reset position to original
             sprite.resetPosition();
         }
         this.isGyroScaled = false;
-        this.currentGyroScaleFactor = 1.0f;
-        Log.d(TAG, "Scene '" + sceneName + "' reset to original size and position");
+        Log.d(TAG, "Gyro scaling disabled for scene '" + sceneName + "', all sprites reset");
     }
     /**
      * Destroy all sprites in this scene and release resources.

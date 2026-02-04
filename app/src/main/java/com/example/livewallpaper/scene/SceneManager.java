@@ -249,7 +249,7 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
         // Update gyro offsets and apply uniforms
-        spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, WORLD_HEIGHT, spritesScaledForGyro);
+        spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, spritesScaledForGyro);
 
         // Draw all sprites in the scene
         for (Sprite sprite : currentScene.getSprites()) {
@@ -664,9 +664,9 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
 
         // Set up gyro scaling callback
         if (sceneSwitchManager != null) {
-            sceneSwitchManager.setGyroScalingCallback((newScene, worldHeight) -> {
+            sceneSwitchManager.setGyroScalingCallback((newScene) -> {
                 if (spritesScaledForGyro) {
-                    gyroProcessor.applyGyroScalingToNewScene(newScene, worldHeight);
+                    gyroProcessor.applyGyroScalingToNewScene(newScene);
                 }
             });
         }
@@ -732,7 +732,7 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         // Check if scene switch was requested (from UI thread) and perform it here on GL thread
         if (sceneSwitchRequested && sceneSwitchManager != null) {
             sceneSwitchRequested = false;
-            sceneSwitchManager.cycleToNextScene(currentScene, WORLD_HEIGHT);
+            sceneSwitchManager.cycleToNextScene(currentScene);
             lastSceneChangeTimeMs = System.currentTimeMillis();
         }
 
@@ -866,7 +866,7 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         // Check if it's time for automatic scene cycling (every 5 minutes)
         long currentTimeMs = System.currentTimeMillis();
         if (currentTimeMs - lastSceneChangeTimeMs >= SCENE_CYCLE_INTERVAL_MS && sceneSwitchManager != null) {
-            sceneSwitchManager.cycleToNextScene(currentScene, WORLD_HEIGHT);
+            sceneSwitchManager.cycleToNextScene(currentScene);
             lastSceneChangeTimeMs = currentTimeMs;
             Log.d(TAG, "Auto-cycling to next scene (5 minutes elapsed)");
         }

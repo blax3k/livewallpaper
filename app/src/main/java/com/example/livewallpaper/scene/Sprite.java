@@ -110,10 +110,6 @@ public class Sprite {
         // Initialize textureScaleFactor to 1.0 at construction - the texture's base size in world space
         this.textureScaleFactor = 1.0f;
         initializeGeometry(texCoordinates);
-        // Apply gyro scaling if provided
-        if (gyroScaleFactor > 1.0f) {
-            applyGyroScaling(gyroScaleFactor);
-        }
         // Texture loading is handled by TextureManager; caller should set textureId via setTextureId().
     }
 
@@ -379,23 +375,6 @@ public class Sprite {
         updateVertexBuffer();
     }
 
-    /**
-     * Internal method to apply gyro scaling during sprite initialization.
-     * Tracks the gyro scaling state so sprites know they're already scaled.
-     *
-     * @param scaleFactor the gyro scale factor (>1.0 to enlarge)
-     */
-    private void applyGyroScaling(float scaleFactor) {
-        this.isGyroScaled = true;
-        // Scale the sprite size
-        scaleFromOriginal(scaleFactor);
-        // Scale the position away from center (0, 0) to maintain relative spacing
-        float scaledX = originalPositionX * scaleFactor;
-        float scaledY = originalPositionY * scaleFactor;
-        this.positionX = scaledX;
-        this.positionY = scaledY;
-        updateVertexBuffer();
-    }
 
     /**
      * Check if this sprite is already scaled for gyro motion.
