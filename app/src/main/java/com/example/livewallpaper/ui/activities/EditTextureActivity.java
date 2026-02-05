@@ -413,7 +413,8 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     // Apply the offset to the texture edit state with clamping
                     if (textureEditState != null) {
                         textureEditState.offsetTextureCoordinates(uOffset, vOffset, currentSprite.getWidth(), currentSprite.getHeight(),
-                                currentSprite.getTextureEditingBaselineWidth(), currentSprite.getTextureEditingBaselineHeight(), 1.0f);
+                                currentSprite.getTextureEditingBaselineWidth(), currentSprite.getTextureEditingBaselineHeight(), 1.0f,
+                                currentSprite.getTextureCoordinates());
                         updateSpriteTextureCoordinates();
                         hasUnsavedChanges = true;
                     }

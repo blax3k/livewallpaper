@@ -60,21 +60,52 @@ public class TextureCoordinateCalculator {
         float textureWidthInWorld = originalWidth * textureScaleFactor * growthScale;
         float textureHeightInWorld = originalHeight * textureScaleFactor * growthScale;
 
-        // Calculate the visible portion of the texture in each dimension independently
-        // This allows the texture to maintain its aspect ratio while the sprite aspect ratio changes
-        float uScale = width / textureWidthInWorld;      // How much of texture width is visible
-        float vScale = height / textureHeightInWorld;    // How much of texture height is visible
+        // Get the texture's aspect ratio (from original coordinates)
+        float textureAspectRatio = 1.0f;  // Default for square textures
+        if (originalTexCoordinates != null && originalTexCoordinates.length >= 4) {
+            float texWidth = Math.abs(originalTexCoordinates[4] - originalTexCoordinates[0]);  // uMax - uMin
+            float texHeight = Math.abs(originalTexCoordinates[3] - originalTexCoordinates[1]);  // vMax - vMin
+            if (texHeight > 0) {
+                textureAspectRatio = texWidth / texHeight;
+            }
+        }
+
+        // Calculate the sprite's aspect ratio
+        float spriteAspectRatio = width / height;
+
+        // To maintain texture aspect ratio while fitting within sprite:
+        // We need to use a uniform scale (same for U and V) that maintains the texture's aspect ratio
+        // The visible window size should be scaled uniformly to preserve texture aspect ratio,
+        // then clipped to the sprite bounds
+
+        // Calculate how much of the texture is visible based on uniform scaling
+        // The constraint is that the texture must fit within the sprite bounds while maintaining aspect ratio
+        float uniformScale;
+        if (textureAspectRatio > spriteAspectRatio) {
+            // Texture is wider than sprite - constrain by width
+            uniformScale = width / textureWidthInWorld;
+        } else {
+            // Texture is taller than sprite - constrain by height
+            uniformScale = height / textureHeightInWorld;
+        }
+
+        // Apply texture scale (zoom) to the uniform scale
+        float baseWindowSize = 1.0f / textureScale;
+        float windowSize = baseWindowSize * uniformScale;
+
+        // Calculate window dimensions maintaining aspect ratio
+        float windowSizeU = windowSize * textureAspectRatio;
+        float windowSizeV = windowSize;
+
+        Log.d(TAG, "TEXDEBUG_WINDOW_SIZE: textureAspectRatio=" + textureAspectRatio + ", spriteAspectRatio=" + spriteAspectRatio + ", uniformScale=" + uniformScale);
+        Log.d(TAG, "TEXDEBUG_WINDOW_SIZE: baseWindowSize=" + baseWindowSize + " * uniformScale=" + uniformScale + " = windowSize=" + windowSize);
+        Log.d(TAG, "TEXDEBUG_WINDOW_SIZE: windowSizeU=" + windowSizeU + ", windowSizeV=" + windowSizeV);
+        Log.d(TAG, "TEXDEBUG_WINDOW_SIZE: windowAspectRatio=" + (windowSizeU / windowSizeV));
 
         // Calculate the center point for texture scaling
+        // Use 0.5 in the full [0,1] space as center
         float centerU = 0.5f;
         float centerV = 0.5f;
-
-        // Calculate the visible window size in UV space after texture scale zoom
-        // Apply texture scale to both dimensions independently to preserve texture aspect ratio
-        float baseWindowSizeU = 1.0f / textureScale;
-        float baseWindowSizeV = 1.0f / textureScale;
-        float windowSizeU = baseWindowSizeU * uScale;
-        float windowSizeV = baseWindowSizeV * vScale;
 
         // Calculate the base window position (centered)
         float halfWindowU = windowSizeU * 0.5f;
@@ -84,11 +115,15 @@ public class TextureCoordinateCalculator {
         float vMin = centerV - halfWindowV;
         float vMax = centerV + halfWindowV;
 
+        Log.d(TAG, "TEXDEBUG_WINDOW_INITIAL: uMin=" + uMin + ", uMax=" + uMax + ", vMin=" + vMin + ", vMax=" + vMax);
+
         // Apply offset to move the visible window
         uMin += textureOffsetU;
         uMax += textureOffsetU;
         vMin += textureOffsetV;
         vMax += textureOffsetV;
+
+        Log.d(TAG, "TEXDEBUG_WINDOW_AFTER_OFFSET: uMin=" + uMin + ", uMax=" + uMax + ", vMin=" + vMin + ", vMax=" + vMax);
 
         // Clamp the window to [0, 1], adjusting offset to keep the window within bounds
         if (uMin < 0f) {
@@ -96,11 +131,13 @@ public class TextureCoordinateCalculator {
             textureOffsetU += overshoot;
             uMin = 0f;
             uMax = uMax + overshoot;
+            Log.d(TAG, "TEXDEBUG_CLAMP: U negative overshoot=" + overshoot + ", adjusted uMin=" + uMin + ", uMax=" + uMax);
         } else if (uMax > 1f) {
             float overshoot = uMax - 1f;
             textureOffsetU -= overshoot;
             uMax = 1f;
             uMin = uMin - overshoot;
+            Log.d(TAG, "TEXDEBUG_CLAMP: U positive overshoot=" + overshoot + ", adjusted uMin=" + uMin + ", uMax=" + uMax);
         }
 
         if (vMin < 0f) {
@@ -108,11 +145,13 @@ public class TextureCoordinateCalculator {
             textureOffsetV += overshoot;
             vMin = 0f;
             vMax = vMax + overshoot;
+            Log.d(TAG, "TEXDEBUG_CLAMP: V negative overshoot=" + overshoot + ", adjusted vMin=" + vMin + ", vMax=" + vMax);
         } else if (vMax > 1f) {
             float overshoot = vMax - 1f;
             textureOffsetV -= overshoot;
             vMax = 1f;
             vMin = vMin - overshoot;
+            Log.d(TAG, "TEXDEBUG_CLAMP: V positive overshoot=" + overshoot + ", adjusted vMin=" + vMin + ", vMax=" + vMax);
         }
 
         // Final clamp to ensure we stay in [0, 1]
@@ -121,6 +160,8 @@ public class TextureCoordinateCalculator {
         vMin = Math.max(0f, Math.min(1f, vMin));
         vMax = Math.max(0f, Math.min(1f, vMax));
 
+        Log.d(TAG, "TEXDEBUG_WINDOW_FINAL: uMin=" + uMin + ", uMax=" + uMax + ", vMin=" + vMin + ", vMax=" + vMax);
+
         // Build final texture coordinates by mapping sprite corners to the visible window
         float[] texCoords = new float[] {
                 uMin, vMax,  // top left
@@ -128,6 +169,10 @@ public class TextureCoordinateCalculator {
                 uMax, vMax,  // top right
                 uMax, vMin   // bottom right
         };
+
+        Log.d(TAG, "TEXDEBUG_FINAL_COORDS: topLeft=(" + uMin + "," + vMax + "), " +
+                "bottomLeft=(" + uMin + "," + vMin + "), topRight=(" + uMax + "," + vMax + "), " +
+                "bottomRight=(" + uMax + "," + vMin + ")");
 
         // Update the texture coordinate buffer
         texCoordBuffer.clear();
@@ -152,6 +197,7 @@ public class TextureCoordinateCalculator {
      * @param originalHeight original sprite height
      * @param textureScale current texture scale
      * @param textureScaleFactor texture scale factor in world space
+     * @param originalTexCoordinates original texture coordinates for aspect ratio calculation
      * @return array of [clampedOffsetU, clampedOffsetV]
      */
     public static float[] clampTextureOffset(
@@ -164,7 +210,8 @@ public class TextureCoordinateCalculator {
             float originalWidth,
             float originalHeight,
             float textureScale,
-            float textureScaleFactor) {
+            float textureScaleFactor,
+            float[] originalTexCoordinates) {
 
         // Calculate the growth scale
         float widthGrowth = width / originalWidth;
@@ -175,14 +222,36 @@ public class TextureCoordinateCalculator {
         float textureWidthInWorld = originalWidth * textureScaleFactor * growthScale;
         float textureHeightInWorld = originalHeight * textureScaleFactor * growthScale;
 
-        // Calculate visible window
-        float uScale = width / textureWidthInWorld;
-        float vScale = height / textureHeightInWorld;
+        // Get the texture's aspect ratio
+        float textureAspectRatio = 1.0f;
+        if (originalTexCoordinates != null && originalTexCoordinates.length >= 4) {
+            float texWidth = Math.abs(originalTexCoordinates[4] - originalTexCoordinates[0]);
+            float texHeight = Math.abs(originalTexCoordinates[3] - originalTexCoordinates[1]);
+            if (texHeight > 0) {
+                textureAspectRatio = texWidth / texHeight;
+            }
+        }
 
-        float baseWindowSizeU = 1.0f / textureScale;
-        float baseWindowSizeV = 1.0f / textureScale;
-        float windowSizeU = baseWindowSizeU * uScale;
-        float windowSizeV = baseWindowSizeV * vScale;
+        // Calculate the sprite's aspect ratio
+        float spriteAspectRatio = width / height;
+
+        // Use uniform scaling to maintain texture aspect ratio
+        float uniformScale;
+        if (textureAspectRatio > spriteAspectRatio) {
+            // Texture is wider than sprite - constrain by width
+            uniformScale = width / textureWidthInWorld;
+        } else {
+            // Texture is taller than sprite - constrain by height
+            uniformScale = height / textureHeightInWorld;
+        }
+
+        // Apply texture scale (zoom) to the uniform scale
+        float baseWindowSize = 1.0f / textureScale;
+        float windowSize = baseWindowSize * uniformScale;
+
+        // Calculate window dimensions maintaining aspect ratio
+        float windowSizeU = windowSize * textureAspectRatio;
+        float windowSizeV = windowSize;
 
         // Apply deltas
         float newOffsetU = currentOffsetU + deltaU;
@@ -213,6 +282,39 @@ public class TextureCoordinateCalculator {
         }
 
         return new float[] { newOffsetU, newOffsetV };
+    }
+
+    /**
+     * Offset texture coordinates and clamp to valid bounds (legacy version without texture coordinates).
+     * For backwards compatibility when texture aspect ratio is not available.
+     *
+     * @param currentOffsetU current U offset
+     * @param currentOffsetV current V offset
+     * @param deltaU delta to apply to U
+     * @param deltaV delta to apply to V
+     * @param width current sprite width
+     * @param height current sprite height
+     * @param originalWidth original sprite width
+     * @param originalHeight original sprite height
+     * @param textureScale current texture scale
+     * @param textureScaleFactor texture scale factor in world space
+     * @return array of [clampedOffsetU, clampedOffsetV]
+     */
+    public static float[] clampTextureOffset(
+            float currentOffsetU,
+            float currentOffsetV,
+            float deltaU,
+            float deltaV,
+            float width,
+            float height,
+            float originalWidth,
+            float originalHeight,
+            float textureScale,
+            float textureScaleFactor) {
+        // Call the overloaded version with null texture coordinates
+        // This will assume a square texture (1:1 aspect ratio)
+        return clampTextureOffset(currentOffsetU, currentOffsetV, deltaU, deltaV, width, height,
+                originalWidth, originalHeight, textureScale, textureScaleFactor, null);
     }
 }
 
