@@ -49,6 +49,8 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     public static final String RESULT_TEXTURE_SCALE = "result_texture_scale";
     public static final String RESULT_TEXTURE_OFFSET_U = "result_texture_offset_u";
     public static final String RESULT_TEXTURE_OFFSET_V = "result_texture_offset_v";
+    public static final String RESULT_TEXTURE_RESOURCE = "result_texture_resource";
+    public static final String RESULT_TEXTURE_RESOURCE_ID = "result_texture_resource_id";
 
     private SquareGLSurfaceView glSurfaceView;
     private SceneManager renderer;
@@ -302,7 +304,9 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     return;
                 }
 
-                // Update the sprite with the new texture ID
+                // Update the sprite with the new texture resource name and ID
+                sprite.setTextureResource(imageName);
+                sprite.setTextureResourceId(resourceId);
                 sprite.setTextureId(textureId);
 
                 // Keep sprite dimensions unchanged
@@ -317,6 +321,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 textureEditState = newTextureState;
 
                 Log.d(TAG, "Texture coordinates reset to: scale=1.0, offsetU=0.0, offsetV=0.0");
+                Log.d(TAG, "Updated sprite texture resource: " + imageName + " (resourceId=" + resourceId + ")");
 
                 // Update the sliders to reflect new texture state on the UI thread
                 runOnUiThread(() -> {
@@ -542,6 +547,10 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             // Use original (unscaled) dimensions to avoid returning gyro-scaled values
             resultIntent.putExtra(RESULT_WIDTH, currentSprite.getWidth());
             resultIntent.putExtra(RESULT_HEIGHT, currentSprite.getHeight());
+
+            // Return texture resource information (name and ID)
+            resultIntent.putExtra(RESULT_TEXTURE_RESOURCE, currentSprite.getTextureResource());
+            resultIntent.putExtra(RESULT_TEXTURE_RESOURCE_ID, currentSprite.getTextureResourceId());
 
             // Return texture edit state values
             if (textureEditState != null) {

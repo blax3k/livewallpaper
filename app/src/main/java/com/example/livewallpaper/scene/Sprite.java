@@ -21,9 +21,9 @@ public class Sprite {
     private FloatBuffer edgeLineBuffer;
     private FloatBuffer edgeLineParallaxMultiplierBuffer;
     private int textureId = 0;
-    private final int textureResourceId;
-    private final String name;
-    private final String textureResource;
+    private int textureResourceId;
+    private String name;
+    private String textureResource;
 
     // Sprite properties for positioning and sizing
     private float positionX;
@@ -461,10 +461,28 @@ public class Sprite {
         return textureResource;
     }
     /**
+     * Set the texture resource name.
+     * Use this when changing the sprite's texture to a different resource.
+     *
+     * @param textureResource the name of the texture resource (e.g., "background", "player")
+     */
+    public void setTextureResource(String textureResource) {
+        this.textureResource = textureResource;
+    }
+    /**
      * Get the texture resource id (original drawable id).
      */
     public int getTextureResourceId() {
         return textureResourceId;
+    }
+    /**
+     * Set the texture resource ID.
+     * Use this when changing the sprite's texture to a different drawable resource ID.
+     *
+     * @param textureResourceId the drawable resource ID
+     */
+    public void setTextureResourceId(int textureResourceId) {
+        this.textureResourceId = textureResourceId;
     }
 
     /**

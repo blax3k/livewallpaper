@@ -415,8 +415,20 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 float textureScale = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_SCALE, 1.0f);
                 float textureOffsetU = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_U, 0f);
                 float textureOffsetV = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_V, 0f);
+                String textureResource = data.getStringExtra(EditTextureActivity.RESULT_TEXTURE_RESOURCE);
+                int textureResourceId = data.getIntExtra(EditTextureActivity.RESULT_TEXTURE_RESOURCE_ID, currentSprite.getTextureResourceId());
 
+                // Update sprite dimensions
                 renderer.updateSpriteDimensions(currentSprite, width, height);
+
+                // Update texture resource information if provided
+                if (textureResource != null) {
+                    currentSprite.setTextureResource(textureResource);
+                    currentSprite.setTextureResourceId(textureResourceId);
+                    Log.d(TAG, "Updated sprite texture resource to: " + textureResource + " (resourceId=" + textureResourceId + ")");
+                }
+
+                // Update texture coordinates
                 renderer.updateSpriteTexture(currentSprite, textureScale, textureOffsetU, textureOffsetV);
 
                 Log.d(TAG, "Applied texture edits from EditTextureActivity to sprite: " + spriteName);
