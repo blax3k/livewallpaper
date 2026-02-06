@@ -126,15 +126,20 @@ public class TextureCoordinateCalculator {
         );
 
         // Step 4: Calculate window size accounting for zoom and sprite dimensions
-        // The window represents how much of the texture is visible within the sprite bounds
-        // Calculate visible texture portion for each dimension based on sprite size vs texture size
-        float visibleTextureWidthFraction = width / data.textureWidthInWorld;
-        float visibleTextureHeightFraction = height / data.textureHeightInWorld;
+        // The texture should maintain its aspect ratio while fitting within the sprite bounds.
+        // As sprite dimensions change, we reveal more/less texture in each dimension independently.
 
-        // Apply zoom: textureScale > 1.0 means zoomed in, so we see less (smaller window)
-        // textureScale < 1.0 means zoomed out, so we see more (larger window)
-        data.windowSizeU = (visibleTextureWidthFraction / textureScale) * data.textureAspectRatio;
-        data.windowSizeV = visibleTextureHeightFraction / textureScale;
+        // Calculate how sprite dimensions relate to texture dimensions in world space
+        float scaleByWidth = width / data.textureWidthInWorld;
+        float scaleByHeight = height / data.textureHeightInWorld;
+
+        // Base window size from zoom
+        float baseWindowSize = 1.0f / textureScale;
+
+        // Calculate window for each dimension independently based on sprite size
+        // This allows revealing more texture as sprite grows in each dimension
+        data.windowSizeU = baseWindowSize * scaleByWidth * data.textureAspectRatio;
+        data.windowSizeV = baseWindowSize * scaleByHeight;
 
         // Clamp window size to max 1.0 (can't see more than the full texture)
         data.windowSizeU = Math.min(1.0f, data.windowSizeU);
@@ -385,22 +390,20 @@ public class TextureCoordinateCalculator {
             }
         }
 
-        // Calculate the sprite's aspect ratio
-        float spriteAspectRatio = width / height;
-
-        // Use uniform scaling to maintain texture's original aspect ratio
-        // regardless of sprite aspect ratio changes
+        // Calculate how sprite dimensions relate to texture dimensions
         float scaleByWidth = width / textureWidthInWorld;
         float scaleByHeight = height / textureHeightInWorld;
-        float uniformScale = Math.min(scaleByWidth, scaleByHeight);
 
-        // Apply texture scale (zoom) to the uniform scale
+        // Base window size from zoom
         float baseWindowSize = 1.0f / textureScale;
-        float windowSize = baseWindowSize * uniformScale;
 
-        // Calculate window dimensions maintaining aspect ratio
-        float windowSizeU = windowSize * textureAspectRatio;
-        float windowSizeV = windowSize;
+        // Calculate window for each dimension independently
+        float windowSizeU = baseWindowSize * scaleByWidth * textureAspectRatio;
+        float windowSizeV = baseWindowSize * scaleByHeight;
+
+        // Clamp
+        windowSizeU = Math.min(1.0f, windowSizeU);
+        windowSizeV = Math.min(1.0f, windowSizeV);
 
         // Apply deltas
         float newOffsetU = currentOffsetU + deltaU;
