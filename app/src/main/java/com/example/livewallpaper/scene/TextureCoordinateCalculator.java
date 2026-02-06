@@ -109,8 +109,12 @@ public class TextureCoordinateCalculator {
         data.spriteAspectRatio = width / height;
 
         // Step 2: Calculate texture dimensions in world space
-        data.textureWidthInWorld = originalWidth * textureScaleFactor * data.growthScale;
-        data.textureHeightInWorld = originalHeight * textureScaleFactor * data.growthScale;
+        // NOTE: Texture dimensions are based on BASELINE (originalWidth/originalHeight), NOT current dimensions.
+        // This ensures the texture maintains its size and aspect ratio as the sprite grows.
+        // The texture will expand only if the sprite grows large enough to require more texture surface,
+        // which is handled by the uniformScale calculation in Step 3.
+        data.textureWidthInWorld = originalWidth * textureScaleFactor;
+        data.textureHeightInWorld = originalHeight * textureScaleFactor;
 
         // Step 3: Calculate uniform scale to fit texture within sprite bounds
         data.uniformScale = calculateUniformScale(
@@ -121,10 +125,23 @@ public class TextureCoordinateCalculator {
                 data.textureHeightInWorld
         );
 
-        // Step 4: Calculate window size accounting for zoom
-        data.windowSize = calculateWindowSize(textureScale, data.uniformScale);
-        data.windowSizeU = data.windowSize * data.textureAspectRatio;
-        data.windowSizeV = data.windowSize;
+        // Step 4: Calculate window size accounting for zoom and sprite dimensions
+        // The window represents how much of the texture is visible within the sprite bounds
+        // Calculate visible texture portion for each dimension based on sprite size vs texture size
+        float visibleTextureWidthFraction = width / data.textureWidthInWorld;
+        float visibleTextureHeightFraction = height / data.textureHeightInWorld;
+
+        // Apply zoom: textureScale > 1.0 means zoomed in, so we see less (smaller window)
+        // textureScale < 1.0 means zoomed out, so we see more (larger window)
+        data.windowSizeU = (visibleTextureWidthFraction / textureScale) * data.textureAspectRatio;
+        data.windowSizeV = visibleTextureHeightFraction / textureScale;
+
+        // Clamp window size to max 1.0 (can't see more than the full texture)
+        data.windowSizeU = Math.min(1.0f, data.windowSizeU);
+        data.windowSizeV = Math.min(1.0f, data.windowSizeV);
+
+        // For compatibility with existing code that uses data.windowSize
+        data.windowSize = data.windowSizeV;
 
         logWindowSizeDebug(data);
 
@@ -182,7 +199,12 @@ public class TextureCoordinateCalculator {
     }
 
     /**
-     * Calculate uniform scale to maintain texture aspect ratio while fitting within sprite bounds.
+     * Calculate uniform scale to maintain texture's original aspect ratio.
+     * The texture maintains its aspect ratio regardless of sprite aspect ratio.
+     * It is scaled uniformly based on the SMALLER of the two constraints:
+     * - Fitting within sprite width while maintaining texture aspect ratio
+     * - Fitting within sprite height while maintaining texture aspect ratio
+     * This ensures the entire texture is visible without distortion.
      */
     public static float calculateUniformScale(
             float textureAspectRatio,
@@ -191,13 +213,14 @@ public class TextureCoordinateCalculator {
             float height,
             float textureWidthInWorld,
             float textureHeightInWorld) {
-        if (textureAspectRatio > spriteAspectRatio) {
-            // Texture is wider than sprite - constrain by width
-            return width / textureWidthInWorld;
-        } else {
-            // Texture is taller than sprite - constrain by height
-            return height / textureHeightInWorld;
-        }
+        // Calculate how much to scale texture to fit within sprite bounds
+        // while maintaining the texture's ORIGINAL aspect ratio
+        float scaleByWidth = width / textureWidthInWorld;
+        float scaleByHeight = height / textureHeightInWorld;
+
+        // Use the smaller scale to ensure texture fits entirely within sprite bounds
+        // This may leave empty space if sprite aspect ratio differs from texture aspect ratio
+        return Math.min(scaleByWidth, scaleByHeight);
     }
 
     /**
@@ -345,14 +368,12 @@ public class TextureCoordinateCalculator {
             float textureScaleFactor,
             float[] originalTexCoordinates) {
 
-        // Calculate the growth scale
-        float widthGrowth = width / originalWidth;
-        float heightGrowth = height / originalHeight;
-        float growthScale = Math.max(widthGrowth, heightGrowth);
-
         // Calculate texture dimensions in world space
-        float textureWidthInWorld = originalWidth * textureScaleFactor * growthScale;
-        float textureHeightInWorld = originalHeight * textureScaleFactor * growthScale;
+        // NOTE: Use baseline dimensions (originalWidth/originalHeight), NOT current dimensions.
+        // This ensures texture maintains consistent size as sprite grows, revealing more texture
+        // as the sprite expands while maintaining the original texture aspect ratio.
+        float textureWidthInWorld = originalWidth * textureScaleFactor;
+        float textureHeightInWorld = originalHeight * textureScaleFactor;
 
         // Get the texture's aspect ratio
         float textureAspectRatio = 1.0f;
@@ -367,15 +388,11 @@ public class TextureCoordinateCalculator {
         // Calculate the sprite's aspect ratio
         float spriteAspectRatio = width / height;
 
-        // Use uniform scaling to maintain texture aspect ratio
-        float uniformScale;
-        if (textureAspectRatio > spriteAspectRatio) {
-            // Texture is wider than sprite - constrain by width
-            uniformScale = width / textureWidthInWorld;
-        } else {
-            // Texture is taller than sprite - constrain by height
-            uniformScale = height / textureHeightInWorld;
-        }
+        // Use uniform scaling to maintain texture's original aspect ratio
+        // regardless of sprite aspect ratio changes
+        float scaleByWidth = width / textureWidthInWorld;
+        float scaleByHeight = height / textureHeightInWorld;
+        float uniformScale = Math.min(scaleByWidth, scaleByHeight);
 
         // Apply texture scale (zoom) to the uniform scale
         float baseWindowSize = 1.0f / textureScale;
