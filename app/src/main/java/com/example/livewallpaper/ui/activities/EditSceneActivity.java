@@ -421,6 +421,13 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 // Update sprite dimensions
                 renderer.updateSpriteDimensions(currentSprite, width, height);
 
+                // CRITICAL: Ensure textureEditingBaseline matches current sprite dimensions
+                // This fixes the texture coordinate shift bug where baseline dimensions
+                // were stale (1.6 x 5.0) while current dimensions were updated (1.7520001 x 5.4750004)
+                currentSprite.setTextureEditingBaseline(currentSprite.getWidth(), currentSprite.getHeight());
+                Log.d(TAG, "Updated texture baseline to match current dimensions: " +
+                      currentSprite.getWidth() + " x " + currentSprite.getHeight());
+
                 // Update texture resource information if provided
                 if (textureResource != null) {
                     currentSprite.setTextureResource(textureResource);
