@@ -41,8 +41,10 @@ public class Sprite {
     private float originalPositionX;
     private float originalPositionY;
 
-    // Store texture editing session baseline dimensions (used for texture coordinate calculations during editing)
-    // When not in editing mode, these are equal to originalWidth/originalHeight
+    // Store texture editing baseline dimensions (reference dimensions for texture coordinate calculations)
+    // These are set once when entering a texture editing session and remain fixed during editing
+    // This ensures texture coordinates are calculated relative to a stable baseline, preventing stretching
+    // as the sprite dimensions change via sliders
     private float textureEditingBaselineWidth;
     private float textureEditingBaselineHeight;
 
@@ -445,6 +447,7 @@ public class Sprite {
     /**
      * Set the texture editing baseline dimensions.
      * Call this when entering an editing session to establish the base dimensions for texture coordinate calculations.
+     * These dimensions remain fixed during editing to prevent texture stretching as sprite dimensions change.
      *
      * @param baselineWidth the width to use as the baseline for this editing session
      * @param baselineHeight the height to use as the baseline for this editing session
@@ -452,6 +455,7 @@ public class Sprite {
     public void setTextureEditingBaseline(float baselineWidth, float baselineHeight) {
         this.textureEditingBaselineWidth = baselineWidth;
         this.textureEditingBaselineHeight = baselineHeight;
+        Log.d(TAG, "Texture editing baseline set to: " + baselineWidth + " x " + baselineHeight);
     }
 
     public String getName() {

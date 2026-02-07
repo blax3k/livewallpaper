@@ -418,15 +418,14 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 String textureResource = data.getStringExtra(EditTextureActivity.RESULT_TEXTURE_RESOURCE);
                 int textureResourceId = data.getIntExtra(EditTextureActivity.RESULT_TEXTURE_RESOURCE_ID, currentSprite.getTextureResourceId());
 
-                // Update sprite dimensions
+                // Update sprite current dimensions
                 renderer.updateSpriteDimensions(currentSprite, width, height);
 
-                // CRITICAL: Ensure textureEditingBaseline matches current sprite dimensions
-                // This fixes the texture coordinate shift bug where baseline dimensions
-                // were stale (1.6 x 5.0) while current dimensions were updated (1.7520001 x 5.4750004)
-                currentSprite.setTextureEditingBaseline(currentSprite.getWidth(), currentSprite.getHeight());
-                Log.d(TAG, "Updated texture baseline to match current dimensions: " +
-                      currentSprite.getWidth() + " x " + currentSprite.getHeight());
+                // Update the original dimensions to match the new current dimensions
+                // This ensures the updated dimensions are saved to JSON correctly
+                currentSprite.setWidthAndUpdateOriginal(width);
+                currentSprite.setHeightAndUpdateOriginal(height);
+                Log.d(TAG, "Updated sprite original dimensions to: " + width + " x " + height);
 
                 // Update texture resource information if provided
                 if (textureResource != null) {
