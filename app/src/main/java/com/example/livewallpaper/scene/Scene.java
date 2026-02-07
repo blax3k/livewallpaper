@@ -239,7 +239,9 @@ public class Scene {
      */
     public void enableGyroScaling() {
         this.isGyroScaled = true;
-        Log.d(TAG, "Gyro scaling enabled for scene '" + sceneName + "'");
+        for(Sprite sprite : sprites) {
+            sprite.setGyroScaled(true);
+        }
     }
 
     /**
@@ -247,6 +249,7 @@ public class Scene {
      */
     public void disableGyroScaling() {
         for (Sprite sprite : sprites) {
+            sprite.setGyroScaled(false);
             sprite.resetScale();
             sprite.resetPosition();
         }
