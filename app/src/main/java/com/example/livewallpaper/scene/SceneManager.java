@@ -567,6 +567,14 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
             // Update both current and original values so edits are saved to JSON
             sprite.setWidthAndUpdateOriginal(newWidth);
             sprite.setHeightAndUpdateOriginal(newHeight);
+
+            // CRITICAL: Also update the texture editing baseline to match the new dimensions
+            // This ensures texture coordinate calculations use the correct baseline
+            // and prevents texture stretching when dimensions change
+            sprite.setTextureEditingBaseline(newWidth, newHeight);
+
+            Log.d("SceneManager", "Updated sprite dimensions and texture baseline to: " +
+                  newWidth + " x " + newHeight);
         }
     }
 

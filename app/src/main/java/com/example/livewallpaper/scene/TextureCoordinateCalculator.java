@@ -63,7 +63,17 @@ public class TextureCoordinateCalculator {
             float textureScaleFactor) {
 
         if (originalTexCoordinates == null || texCoordBuffer == null) {
+            Log.d(TAG, "TEXDEBUG_UPDATE: Skipping - null coordinates or buffer");
             return;
+        }
+
+        Log.d(TAG, "TEXDEBUG_UPDATE: Called with width=" + width + ", height=" + height +
+                ", textureScale=" + textureScale + ", offsets=[" + textureOffsets[0] + "," + textureOffsets[1] + "]");
+
+        // Log stack trace to identify caller
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        if (stackTrace.length > 4) {
+            Log.d(TAG, "TEXDEBUG_CALLER: " + stackTrace[3].getClassName() + "." + stackTrace[3].getMethodName() + ":" + stackTrace[3].getLineNumber());
         }
 
         // Calculate all intermediate values
@@ -80,6 +90,7 @@ public class TextureCoordinateCalculator {
         float[] texCoords = buildTextureCoordinateArray(data);
         applyTextureCoordinatesToBuffer(texCoordBuffer, texCoords);
 
+        Log.d(TAG, "TEXDEBUG_UPDATE_COMPLETE: Final texture coordinates applied");
         Log.d(TAG, "Texture coordinates updated - scale: " + textureScale +
                 ", offsetU: " + textureOffsets[0] + ", offsetV: " + textureOffsets[1]);
     }
@@ -103,6 +114,20 @@ public class TextureCoordinateCalculator {
 
         TextureCoordinateData data = new TextureCoordinateData();
 
+        // Log input parameters for debugging
+        Log.d(TAG, "TEXDEBUG_INPUT: width=" + width + ", height=" + height +
+                ", originalWidth=" + originalWidth + ", originalHeight=" + originalHeight);
+        Log.d(TAG, "TEXDEBUG_INPUT: textureScale=" + textureScale +
+                ", textureOffsetU=" + textureOffsetU + ", textureOffsetV=" + textureOffsetV);
+        Log.d(TAG, "TEXDEBUG_INPUT: textureScaleFactor=" + textureScaleFactor);
+        if (originalTexCoordinates != null && originalTexCoordinates.length >= 8) {
+            Log.d(TAG, "TEXDEBUG_INPUT: originalTexCoords=[" +
+                    originalTexCoordinates[0] + "," + originalTexCoordinates[1] + "," +
+                    originalTexCoordinates[2] + "," + originalTexCoordinates[3] + "," +
+                    originalTexCoordinates[4] + "," + originalTexCoordinates[5] + "," +
+                    originalTexCoordinates[6] + "," + originalTexCoordinates[7] + "]");
+        }
+
         // Step 1: Calculate growth and aspect ratios
         data.growthScale = calculateGrowthScale(width, height, originalWidth, originalHeight);
         data.textureAspectRatio = calculateTextureAspectRatio(originalTexCoordinates);
@@ -117,6 +142,7 @@ public class TextureCoordinateCalculator {
         data.textureHeightInWorld = originalHeight * textureScaleFactor;
 
         // Step 3: Calculate uniform scale to fit texture within sprite bounds
+        // This is used for reference but the actual window calculation happens in Step 4
         data.uniformScale = calculateUniformScale(
                 data.textureAspectRatio,
                 data.spriteAspectRatio,
@@ -129,21 +155,57 @@ public class TextureCoordinateCalculator {
         // The texture should maintain its aspect ratio while fitting within the sprite bounds.
         // As sprite dimensions change, we reveal more/less texture in each dimension independently.
 
-        // Calculate how sprite dimensions relate to texture dimensions in world space
-        float scaleByWidth = width / data.textureWidthInWorld;
-        float scaleByHeight = height / data.textureHeightInWorld;
-
-        // Base window size from zoom
+        // Base window size from zoom (how much of the texture is visible at current zoom level)
         float baseWindowSize = 1.0f / textureScale;
 
-        // Calculate window for each dimension independently based on sprite size
-        // This allows revealing more texture as sprite grows in each dimension
-        data.windowSizeU = baseWindowSize * scaleByWidth * data.textureAspectRatio;
-        data.windowSizeV = baseWindowSize * scaleByHeight;
+        // Calculate how much the sprite has grown relative to its original size
+        float widthGrowthFactor = width / originalWidth;
+        float heightGrowthFactor = height / originalHeight;
+
+        Log.d(TAG, "TEXDEBUG_GROWTH: widthGrowthFactor=" + widthGrowthFactor +
+                ", heightGrowthFactor=" + heightGrowthFactor);
+
+        // Calculate window size for each dimension independently
+        // The texture reveals more as the sprite grows, maintaining texture aspect ratio
+        // U dimension: accounts for texture aspect ratio and width growth
+        data.windowSizeU = baseWindowSize * widthGrowthFactor * data.textureAspectRatio;
+        // V dimension: accounts for height growth
+        data.windowSizeV = baseWindowSize * heightGrowthFactor;
+
+        Log.d(TAG, "TEXDEBUG_PRE_CLAMP: windowSizeU=" + data.windowSizeU +
+                ", windowSizeV=" + data.windowSizeV);
 
         // Clamp window size to max 1.0 (can't see more than the full texture)
         data.windowSizeU = Math.min(1.0f, data.windowSizeU);
         data.windowSizeV = Math.min(1.0f, data.windowSizeV);
+
+        Log.d(TAG, "TEXDEBUG_POST_CLAMP: windowSizeU=" + data.windowSizeU +
+                ", windowSizeV=" + data.windowSizeV +
+                ", uClamped=" + (data.windowSizeU >= 1.0f) +
+                ", vClamped=" + (data.windowSizeV >= 1.0f));
+
+        // Handle case where texture needs to maintain aspect ratio as sprite dimensions change
+        // When one dimension is clamped and the sprite aspect ratio differs from texture aspect ratio,
+        // we need to adjust the window to maintain the texture's original aspect ratio
+
+        boolean uIsClamped = (data.windowSizeU >= 1.0f);
+        boolean vIsClamped = (data.windowSizeV >= 1.0f);
+
+        if (uIsClamped && data.spriteAspectRatio > data.textureAspectRatio) {
+            // U is at maximum, sprite is wider than texture aspect ratio
+            // Adjust V to maintain texture aspect ratio (clip top/bottom)
+            data.windowSizeV = 1.0f / data.spriteAspectRatio * data.textureAspectRatio;
+            Log.d(TAG, "TEXDEBUG_ASPECT_ADJUST: U clamped, adjusted windowSizeV to " + data.windowSizeV +
+                  " (sprite wider than texture, spriteAR=" + data.spriteAspectRatio +
+                  ", textureAR=" + data.textureAspectRatio + ")");
+        } else if (vIsClamped && data.spriteAspectRatio < data.textureAspectRatio) {
+            // V is at maximum, sprite is taller than texture aspect ratio
+            // Adjust U to maintain texture aspect ratio (clip left/right)
+            data.windowSizeU = 1.0f * data.spriteAspectRatio / data.textureAspectRatio;
+            Log.d(TAG, "TEXDEBUG_ASPECT_ADJUST: V clamped, adjusted windowSizeU to " + data.windowSizeU +
+                  " (sprite taller than texture, spriteAR=" + data.spriteAspectRatio +
+                  ", textureAR=" + data.textureAspectRatio + ")");
+        }
 
         // For compatibility with existing code that uses data.windowSize
         data.windowSize = data.windowSizeV;
