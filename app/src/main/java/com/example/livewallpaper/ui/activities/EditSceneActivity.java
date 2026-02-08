@@ -308,8 +308,11 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         Intent intent = new Intent(this, EditTextureActivity.class);
         intent.putExtra(EditTextureActivity.EXTRA_SPRITE_NAME, currentSprite.getName());
         intent.putExtra(EditTextureActivity.EXTRA_SCENE_FILE_NAME, getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME));
-        intent.putExtra(EditTextureActivity.EXTRA_WIDTH, currentSprite.getWidth());
-        intent.putExtra(EditTextureActivity.EXTRA_HEIGHT, currentSprite.getHeight());
+        
+        // Pass original (unscaled) dimensions to ensure EditTextureActivity works with the true baseline
+        // and avoid issues where gyro-scaled dimensions are treated as the edit base.
+        intent.putExtra(EditTextureActivity.EXTRA_WIDTH, currentSprite.getOriginalWidth());
+        intent.putExtra(EditTextureActivity.EXTRA_HEIGHT, currentSprite.getOriginalHeight());
 
         TextureEditState currentState = currentSprite.getCurrentTextureEditState();
         intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_SCALE, currentState.getTextureScale());
@@ -410,8 +413,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
             try {
                 String spriteName = data.getStringExtra(EditTextureActivity.RESULT_SPRITE_NAME);
-                float width = data.getFloatExtra(EditTextureActivity.RESULT_WIDTH, currentSprite.getWidth());
-                float height = data.getFloatExtra(EditTextureActivity.RESULT_HEIGHT, currentSprite.getHeight());
+                // Return values are expected to be the unscaled (pre-gyro) dimensions
+                float width = data.getFloatExtra(EditTextureActivity.RESULT_WIDTH, currentSprite.getOriginalWidth());
+                float height = data.getFloatExtra(EditTextureActivity.RESULT_HEIGHT, currentSprite.getOriginalHeight());
                 float textureScale = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_SCALE, 1.0f);
                 float textureOffsetU = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_U, 0f);
                 float textureOffsetV = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_V, 0f);
