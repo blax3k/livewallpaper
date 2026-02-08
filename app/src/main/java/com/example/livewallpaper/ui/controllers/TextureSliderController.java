@@ -58,9 +58,9 @@ public class TextureSliderController {
         float currentHeight = sprite.getHeight();
         float currentTextureScale = state.getTextureScale();
 
-        // Width/Height: max 11.0, increments of 0.2 (slider value = dimension / 0.2)
-        widthSlider.setProgress(Math.round(currentWidth / 0.2f));
-        heightSlider.setProgress(Math.round(currentHeight / 0.2f));
+        // Width/Height: max 11.0, increments of 0.1 (slider value = dimension / 0.1)
+        widthSlider.setProgress(Math.round(currentWidth / 0.1f));
+        heightSlider.setProgress(Math.round(currentHeight / 0.1f));
 
         // Texture Scale: 1.0 to 8.0, increments of 0.1
         // Formula: (scale - 1.0) / 0.1
@@ -82,7 +82,7 @@ public class TextureSliderController {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser && currentSprite != null) {
-                    float width = progress * 0.2f;
+                    float width = progress * 0.1f;
                     currentSprite.setWidth(width);
                     updateWidthDisplay(width);
                     updateTextureScaleDisplay(textureEditState.getTextureScale());
@@ -102,7 +102,7 @@ public class TextureSliderController {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser && currentSprite != null) {
-                    float height = progress * 0.2f;
+                    float height = progress * 0.1f;
                     currentSprite.setHeight(height);
                     updateHeightDisplay(height);
                     updateTextureScaleDisplay(textureEditState.getTextureScale());
