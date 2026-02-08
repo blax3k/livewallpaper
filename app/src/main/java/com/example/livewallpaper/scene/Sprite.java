@@ -273,6 +273,22 @@ public class Sprite {
     }
 
     /**
+     * Set the position and update the original position (for user edits in the UI).
+     * Use this when the user manually changes the sprite position to ensure
+     * the new position is saved to JSON correctly.
+     *
+     * @param x the x position in world units
+     * @param y the y position in world units
+     */
+    public void setPositionAndUpdateOriginal(float x, float y) {
+        this.positionX = x;
+        this.positionY = y;
+        this.originalPositionX = x;
+        this.originalPositionY = y;
+        updateVertexBuffer();
+    }
+
+    /**
      * Set only the X position of this sprite.
      *
      * @param x the x position in world units
@@ -282,12 +298,34 @@ public class Sprite {
     }
 
     /**
+     * Set only the X position and update the original position (for user edits in the UI).
+     * Use this when the user manually changes the sprite X position to ensure
+     * the new position is saved to JSON correctly.
+     *
+     * @param x the x position in world units
+     */
+    public void setPositionXAndUpdateOriginal(float x) {
+        setPositionAndUpdateOriginal(x, this.positionY);
+    }
+
+    /**
      * Set only the Y position of this sprite.
      *
      * @param y the y position in world units
      */
     public void setPositionY(float y) {
         setPosition(this.positionX, y);
+    }
+
+    /**
+     * Set only the Y position and update the original position (for user edits in the UI).
+     * Use this when the user manually changes the sprite Y position to ensure
+     * the new position is saved to JSON correctly.
+     *
+     * @param y the y position in world units
+     */
+    public void setPositionYAndUpdateOriginal(float y) {
+        setPositionAndUpdateOriginal(this.positionX, y);
     }
 
     /**

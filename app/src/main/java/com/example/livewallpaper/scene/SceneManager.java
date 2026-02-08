@@ -508,8 +508,10 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
      */
     public void updateSpritePosition(Sprite sprite, float x, float y) {
         if (sprite != null) {
-            sprite.setPositionX(x);
-            sprite.setPositionY(y);
+            // Use the new methods that update both current and original position
+            // This ensures user edits are saved to JSON correctly
+            sprite.setPositionXAndUpdateOriginal(x);
+            sprite.setPositionYAndUpdateOriginal(y);
         }
     }
 
