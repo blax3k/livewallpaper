@@ -168,6 +168,11 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
             float guideWidth = 9.99f * (9f / 21f);  // width = height * aspect ratio
             float xOffset = -guideWidth/2f + (xFocus * guideWidth);
             phoneGuide.setXOffset(xOffset);
+
+            // Also initialize the scroll offset processor with the same xFocus value
+            // This ensures the scene renders with the correct scroll offset immediately
+            // rather than starting at the default (0) and jumping when the slider is first moved
+            updateScrollOffsetFromXFocus(xFocus);
             Log.d(TAG, "PhoneGuide created and positioned with xOffset: " + xOffset + " (xFocus: " + xFocus + ")");
         } else {
             Log.d(TAG, "PhoneGuide created with default position");
