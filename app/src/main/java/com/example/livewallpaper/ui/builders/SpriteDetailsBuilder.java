@@ -109,8 +109,11 @@ public class SpriteDetailsBuilder {
         float aspectRatio = renderer.calculateAspectRatio(sprite);
         scaleController.setup(sprite);
 
-        // Set up dimension fields
+        // Set up dimension fields and connect scale slider to dimension updates
         dimensionController.setup(sprite, aspectRatio);
+        scaleController.setOnDimensionChangeCallback(() ->
+            dimensionController.updateDisplays(sprite.getOriginalWidth(), sprite.getOriginalHeight())
+        );
 
         // Set up parallax multiplier slider
         sliderManager.setupSlider(new SliderController.SliderConfig(

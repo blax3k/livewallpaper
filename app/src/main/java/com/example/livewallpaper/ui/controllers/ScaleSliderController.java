@@ -24,6 +24,7 @@ public class ScaleSliderController {
     private final SceneManager renderer;
     private final SeekBar scaleSlider;
     private final TextView scaleValue;
+    private Runnable onDimensionChangeCallback;
 
     public ScaleSliderController(Context context, SceneManager renderer,
                                 SeekBar scaleSlider, TextView scaleValue) {
@@ -31,6 +32,14 @@ public class ScaleSliderController {
         this.renderer = renderer;
         this.scaleSlider = scaleSlider;
         this.scaleValue = scaleValue;
+    }
+
+    /**
+     * Set a callback to be invoked when dimensions change.
+     * This allows other UI components to update when the scale slider changes.
+     */
+    public void setOnDimensionChangeCallback(Runnable callback) {
+        this.onDimensionChangeCallback = callback;
     }
 
     /**
@@ -152,6 +161,11 @@ public class ScaleSliderController {
 
                     updateDisplay(desiredScale);
 
+                    // Notify listeners that dimensions have changed
+                    if (onDimensionChangeCallback != null) {
+                        onDimensionChangeCallback.run();
+                    }
+
                     Log.d(TAG, "Scale changed to: " + desiredScale + "x");
                 }
             }
@@ -189,6 +203,11 @@ public class ScaleSliderController {
 
                 updateDisplay(scale);
                 updateDisplay(sprite);
+
+                // Notify listeners that dimensions have changed
+                if (onDimensionChangeCallback != null) {
+                    onDimensionChangeCallback.run();
+                }
 
                 Log.d(TAG, "Scale manually edited to: " + scale);
             } catch (NumberFormatException e) {
