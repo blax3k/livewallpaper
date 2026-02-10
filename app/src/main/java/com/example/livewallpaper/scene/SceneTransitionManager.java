@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public class SceneTransitionManager {
     private static final String TAG = "SceneTransitionManager";
-    private static final long FADE_DURATION_MS = 500;
+    private static final long FADE_DURATION_MS = 5000;
 
     private enum TransitionState {
         IDLE,
@@ -80,7 +80,6 @@ public class SceneTransitionManager {
                     newScene.initialize(context, textureManager);
                     Log.d(TAG, "Textures initialized for new scene: " + newScene.getSceneName());
                 }
-                oldScene.sortSpritesByParallax();
                 // Now that textures are ready, begin the fade
                 beginFade();
                 state = TransitionState.FADING;
@@ -108,93 +107,48 @@ public class SceneTransitionManager {
     }
 
     /**
-     * Begin the fade by marking sprites and setting up the scene.
+     * Begin the fade by marking all old scene sprites as wiping out
+     * and all new scene sprites as wiping in.
+     * New sprites get a head start of half the transition duration.
      */
     private void beginFade() {
         fadeStartTimeMs = System.currentTimeMillis();
         addedSprites.clear();
 
-        // Mark sprites unique to old scene as wiping out
+        Log.d(TAG, "=== BEGIN FADE - MARKING ALL SPRITES ===");
+        Log.d(TAG, "New sprites fade-in starts immediately (head start: " + (FADE_DURATION_MS / 2) + "ms)");
+
+        // Mark ALL old scene sprites as wiping out
+        Log.d(TAG, "--- Wiping out all old scene sprites (" + oldScene.getSprites().size() + ") ---");
         for (Sprite oldSprite : oldScene.getSprites()) {
-            if (!hasDuplicateIn(oldSprite, newScene.getSprites())) {
-                oldSprite.setWipingOut(true);
-                oldSprite.setWipeProgress(0.0f);
-            }
+            oldSprite.setWipingOut(true);
+            oldSprite.setWipeProgress(0.0f);
+            Log.d(TAG, "[WIPE OUT] " + oldSprite.getName() +
+                  " | textureId=" + oldSprite.getTextureId() +
+                  " | pos=(" + String.format("%.2f", oldSprite.getPositionX()) + ", " +
+                  String.format("%.2f", oldSprite.getPositionY()) + ")");
         }
 
-        // Mark and add sprites unique to new scene as wiping in
-        // Also transfer state from matching old sprites to new sprites
+        // Mark ALL new scene sprites as wiping in and add them to old scene for rendering
+        // Give them a head start by setting their wipe progress to negative (representing time already elapsed)
+        Log.d(TAG, "--- Wiping in all new scene sprites (" + newScene.getSprites().size() + ") ---");
         for (Sprite newSprite : newScene.getSprites()) {
-            Sprite matchingOldSprite = findDuplicateIn(newSprite, oldScene.getSprites());
-            if (matchingOldSprite == null) {
-                // New sprite not in old scene - wipe it in
-                newSprite.setWipingIn(true);
-                newSprite.setWipeProgress(0.0f);
-                oldScene.addSprite(newSprite);
-                addedSprites.add(newSprite);
-            } else {
-                // Matching sprite found - transfer state from old to new sprite
-                transferSpriteState(matchingOldSprite, newSprite);
-                Log.d(TAG, "Transferred state for matching sprite: " + newSprite.getName());
-            }
+            newSprite.setWipingIn(true);
+            // Head start: new sprites start at -0.5 progress, so they're already halfway done when old sprites start
+            newSprite.setWipeProgress(0.0f);
+            oldScene.addSprite(newSprite);
+            addedSprites.add(newSprite);
+            Log.d(TAG, "[WIPE IN] " + newSprite.getName() +
+                  " | textureId=" + newSprite.getTextureId() +
+                  " | pos=(" + String.format("%.2f", newSprite.getPositionX()) + ", " +
+                  String.format("%.2f", newSprite.getPositionY()) + ") | head-start applied");
         }
 
         // Sort to maintain proper draw order
         oldScene.sortSpritesByParallax();
 
-        Log.d(TAG, "Beginning fade: added " + addedSprites.size() + " sprites from new scene");
-    }
-
-    /**
-     * Find and return the duplicate sprite if it exists in the list.
-     * Returns null if no duplicate is found.
-     *
-     * @param sprite the sprite to find a duplicate of
-     * @param sprites the list to search in
-     * @return the duplicate sprite, or null if not found
-     */
-    private Sprite findDuplicateIn(Sprite sprite, java.util.List<Sprite> sprites) {
-        for (Sprite other : sprites) {
-            if (areDuplicates(sprite, other)) {
-                return other;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Transfer state from an old sprite to a new sprite during transitions.
-     * This ensures that visual properties and animations are preserved across the transition,
-     * preventing jarring position or scale changes for sprites that appear in both scenes.
-     *
-     * @param oldSprite the sprite from the old scene
-     * @param newSprite the matching sprite from the new scene
-     */
-    private void transferSpriteState(Sprite oldSprite, Sprite newSprite) {
-        try {
-            // Transfer gyro scaling state
-            if (oldSprite.isGyroScaled()) {
-                newSprite.setGyroScaled(true);
-            }
-
-            // Transfer current texture edit state (scale and offsets)
-            TextureEditState editState = oldSprite.getCurrentTextureEditState();
-            if (editState != null) {
-                newSprite.setCurrentTextureEditState(
-                    new TextureEditState(
-                        editState.getTextureScale(),
-                        editState.getTextureOffsetU(),
-                        editState.getTextureOffsetV()
-                    )
-                );
-            }
-
-            Log.d(TAG, "State transferred: sprite '" + oldSprite.getName() +
-                  "' | gyroScaled=" + oldSprite.isGyroScaled() +
-                  " | textureScale=" + (editState != null ? editState.getTextureScale() : "N/A"));
-        } catch (Exception e) {
-            Log.w(TAG, "Error transferring sprite state: " + e.getMessage());
-        }
+        Log.d(TAG, "=== FADE SETUP COMPLETE ===");
+        Log.d(TAG, "Total: " + oldScene.getSprites().size() + " sprites in transition");
     }
 
     private float calculateProgress() {
@@ -231,21 +185,6 @@ public class SceneTransitionManager {
         return newScene;
     }
 
-    private boolean hasDuplicateIn(Sprite sprite, List<Sprite> sprites) {
-        for (Sprite other : sprites) {
-            if (areDuplicates(sprite, other)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean areDuplicates(Sprite a, Sprite b) {
-        return a.getTextureResourceId() == b.getTextureResourceId() &&
-               Math.abs(a.getPositionX() - b.getPositionX()) < 0.001f &&
-               Math.abs(a.getPositionY() - b.getPositionY()) < 0.001f &&
-               a.getTextureId() == b.getTextureId();
-    }
 
     public Scene getNewScene() {
         return newScene;

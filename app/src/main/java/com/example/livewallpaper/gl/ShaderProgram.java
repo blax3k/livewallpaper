@@ -101,6 +101,7 @@ public class ShaderProgram {
         //               -1.0 = fade in (wipe reveals from top-left to bottom-right)
         //                0.0 = no wipe effect (fully visible)
         // useColorOverride: 1.0 = use overrideColor instead of texture
+        // WIPE_FEATHER: controls the softness of the wipe edge (0.0 sharp, 0.4 moderate, 0.6+ very soft)
         return "precision mediump float;"
                 + "uniform sampler2D samplerTexture;"
                 + "uniform float wipeProgress;"
@@ -108,6 +109,7 @@ public class ShaderProgram {
                 + "uniform vec4 overrideColor;"
                 + "uniform float useColorOverride;"
                 + "varying vec2 texCoord;"
+                + "const float WIPE_FEATHER = 0.1;"
                 + "void main() {"
                 + "  vec4 texColor;"
                 + "  if (useColorOverride > 0.5) {"
@@ -115,26 +117,19 @@ public class ShaderProgram {
                 + "  } else {"
                 + "    texColor = texture2D(samplerTexture, texCoord);"
                 + "  }"
-                // Calculate diagonal position: 0.0 at top-left, 1.0 at bottom-right
-                // texCoord: x goes 0->1 left to right, y goes 0->1 bottom to top
-                // So top-left is (0,1), bottom-right is (1,0)
-                // diagonal = (x + (1-y)) / 2 gives us 0 at top-left, 1 at bottom-right
                 + "  float diagonal = (texCoord.x + (1.0 - texCoord.y)) / 2.0;"
-                + "  float alpha = 1.0;"
-                + "  float softness = 0.4;"
+                + "  float wipeFade = 1.0;"
                 + "  if (wipeDirection > 0.5) {"
-                // Fade out: as progress goes 0->1, erase from top-left to bottom-right
-                // Map progress so wipe line travels from before top-left to past bottom-right
-                + "    float wipePos = wipeProgress * (1.0 + softness) - softness * 0.5;"
-                // Alpha is 1 where diagonal > wipePos, 0 where diagonal < wipePos
-                + "    alpha = smoothstep(wipePos - softness * 0.5, wipePos + softness * 0.5, diagonal);"
+                + "    float wipePos = wipeProgress * (1.0 + WIPE_FEATHER) - WIPE_FEATHER * 0.5;"
+                + "    wipeFade = smoothstep(wipePos - WIPE_FEATHER * 0.5, wipePos + WIPE_FEATHER * 0.5, diagonal);"
                 + "  } else if (wipeDirection < -0.5) {"
-                // Fade in: as progress goes 0->1, reveal from top-left to bottom-right
-                + "    float wipePos = wipeProgress * (1.0 + softness) - softness * 0.5;"
-                // Alpha is 0 where diagonal > wipePos, 1 where diagonal < wipePos
-                + "    alpha = 1.0 - smoothstep(wipePos - softness * 0.5, wipePos + softness * 0.5, diagonal);"
+                + "    float wipePos = wipeProgress * (1.0 + WIPE_FEATHER) - WIPE_FEATHER * 0.5;"
+                + "    wipeFade = 1.0 - smoothstep(wipePos - WIPE_FEATHER * 0.5, wipePos + WIPE_FEATHER * 0.5, diagonal);"
                 + "  }"
-                + "  texColor.a *= alpha;"
+                + "  if (wipeFade < 0.5) {"
+                + "    float edgeBlend = wipeFade * 2.0;"
+                + "    texColor.a = texColor.a * edgeBlend;"
+                + "  }"
                 + "  gl_FragColor = texColor;"
                 + "}";
     }
