@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public class SceneTransitionManager {
     private static final String TAG = "SceneTransitionManager";
-    private static final long FADE_DURATION_MS = 3000;
+    private static final long FADE_DURATION_MS = 800;
 
     private enum TransitionState {
         IDLE,
