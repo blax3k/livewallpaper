@@ -18,11 +18,11 @@ public class GyroSensorProcessor {
     private long lastUpdateTimeNs = 0L;
 
     private float motionOffsetLimit = 0.5f; // max translation applied to sprites
-    private float gyroSensitivity = 0.8f;   // conversion from radians to screen units
+    private float gyroSensitivity = 1.0f;   // conversion from radians to screen units
 
     // Time-based smoothing: duration in seconds over which we'll reach the target offset.
     // Similar to ScrollOffsetInterpolator's scrollSmoothingDuration.
-    private float gyroChasingDuration = 0.12f;
+    private float gyroChasingDuration = 0.18f;
 
     // Current displayed offsets (what's rendered)
     private float currentOffsetX = 0f;
@@ -42,20 +42,6 @@ public class GyroSensorProcessor {
     public GyroSensorProcessor() {
     }
 
-    /**
-     * Calculate the scale factor needed to expand sprites for gyro motion.
-     * The scale factor accounts for the maximum gyro motion offset and expands sprites
-     * accordingly to prevent visible edges from appearing during device tilt.
-     *
-     * @param motionOffsetLimit the maximum offset applied by gyro (from GyroSensorProcessor)
-     * @param worldHeight the vertical world-space height that maps to screen height
-     * @return the scale factor to apply to sprites (1.0 = no scaling, >1.0 = expansion)
-     */
-    public static float calculateScaleFactor(float motionOffsetLimit, float worldHeight) {
-        // Calculate the percentage of screen height that gyro motion can shift
-        // Add 1.0 to account for the original size
-        return 1.0f + (2.0f * motionOffsetLimit / worldHeight);
-    }
 
     public void setMotionOffsetLimit(float limit) {
         this.motionOffsetLimit = limit;
@@ -220,15 +206,6 @@ public class GyroSensorProcessor {
         isPaused = false;
         lastUpdateTimeNs = 0L; // Reset timing so next sensor event doesn't create a large delta
         Log.d(TAG, "Gyro tracking resumed");
-    }
-
-    /**
-     * Check if gyro tracking is currently paused.
-     *
-     * @return true if paused, false if actively tracking
-     */
-    public boolean isPaused() {
-        return isPaused;
     }
 
     /**
