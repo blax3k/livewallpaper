@@ -114,7 +114,7 @@ public class ShaderProgram {
                 + "uniform float useColorOverride;"
                 + "varying vec2 texCoord;"
                 + "varying vec2 normalizedPosition;"
-                + "const float WIPE_FEATHER = 0.1;"
+                + "const float WIPE_FEATHER = 0.8;"
                 + "void main() {"
                 + "  vec4 texColor;"
                 + "  if (useColorOverride > 0.5) {"
