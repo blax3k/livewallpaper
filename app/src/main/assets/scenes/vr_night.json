@@ -1,0 +1,97 @@
+{
+  "sprites": [
+    {
+      "height": 5.7749996,
+      "name": "backgroundsheet",
+      "parallaxMultiplier": 0.5,
+      "positionX": 0.0,
+      "positionY": 0.0,
+      "texCoordinates": [
+        0.5,
+        1.0,
+        0.5,
+        0.5,
+        1.0,
+        1.0,
+        1.0,
+        0.5
+      ],
+      "textureOffsetU": 0.25,
+      "textureOffsetV": 0.25,
+      "textureResource": "backgroundsheet",
+      "textureResourceId": 0,
+      "textureScale": 2.0,
+      "width": 5.7749996
+    },
+    {
+      "height": 9.999999,
+      "name": "room_sunset",
+      "parallaxMultiplier": 0.8,
+      "positionX": 0.0,
+      "positionY": 0.0,
+      "texCoordinates": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "textureOffsetU": 0.0,
+      "textureOffsetV": 0.0,
+      "textureResource": "room_night",
+      "textureResourceId": 0,
+      "textureScale": 1.0,
+      "width": 9.999999
+    },
+    {
+      "height": 5.1,
+      "name": "girlspritesheet",
+      "parallaxMultiplier": 1.15,
+      "positionX": 2.1,
+      "positionY": 2.8,
+      "texCoordinates": [
+        0.63353246,
+        1.0,
+        0.63353246,
+        0.49,
+        0.8135324,
+        1.0,
+        0.8135324,
+        0.49
+      ],
+      "textureOffsetU": 0.22353242,
+      "textureOffsetV": 0.245,
+      "textureResource": "girlspritesheet",
+      "textureResourceId": 0,
+      "textureScale": 2.0,
+      "width": 1.8000001
+    },
+    {
+      "height": 6.05,
+      "name": "bed",
+      "parallaxMultiplier": 1.3,
+      "positionX": 2.2,
+      "positionY": 5.5,
+      "texCoordinates": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "textureOffsetU": 0.0,
+      "textureOffsetV": 0.0,
+      "textureResource": "bed",
+      "textureResourceId": 0,
+      "textureScale": 1.0,
+      "width": 16.5
+    }
+  ],
+  "xFocus": 0.95
+}
