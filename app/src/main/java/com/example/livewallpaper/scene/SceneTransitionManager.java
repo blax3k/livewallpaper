@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public class SceneTransitionManager {
     private static final String TAG = "SceneTransitionManager";
-    private static final long FADE_DURATION_MS = 5000;
+    private static final long FADE_DURATION_MS = 3000;
 
     private enum TransitionState {
         IDLE,
@@ -35,6 +35,9 @@ public class SceneTransitionManager {
 
     // Sprites added to oldScene during transition (need to be removed when done)
     private final List<Sprite> addedSprites = new ArrayList<>();
+
+    // Track which progress milestones have been logged to avoid duplicates
+    private int lastLoggedProgressPercent = -1;
 
     public SceneTransitionManager(TextureManager textureManager) {
         this.textureManager = textureManager;
@@ -60,6 +63,7 @@ public class SceneTransitionManager {
         this.newScene = newScene;
         this.context = context;
         this.state = TransitionState.WAITING_FOR_TEXTURES;
+        this.lastLoggedProgressPercent = -1; // Reset milestone tracker
 
         Log.d(TAG, "Started transition: " + oldScene.getSceneName() + " -> " + newScene.getSceneName());
     }
@@ -89,11 +93,21 @@ public class SceneTransitionManager {
                 float progress = calculateProgress();
                 oldScene.updateWipeProgress(progress);
 
-                Log.d(TAG, "=== FADING PROGRESS: " + String.format("%.2f", progress * 100) + "% ===");
-                for (Sprite s : oldScene.getSprites()) {
-                    Log.d(TAG, "  sprite: " + s.getName() + " | parallax=" + s.getParallaxMultiplier() +
-                          " | wipeProgress=" + String.format("%.2f", s.getWipeProgress()) +
-                          " | wipingOut=" + s.isWipingOut() + " | wipingIn=" + s.isWipingIn());
+                // Log only at specific milestones: 0%, 20%, 40%, 60%, 80%, 100%
+                // Only log once per milestone to avoid duplicate logs
+                int progressPercent = Math.round(progress * 100);
+                int[] milestones = {0, 20, 40, 60, 80, 100};
+                for (int milestone : milestones) {
+                    if (progressPercent >= milestone && lastLoggedProgressPercent < milestone) {
+                        lastLoggedProgressPercent = milestone;
+                        Log.d(TAG, "=== FADING PROGRESS: " + milestone + "% ===");
+                        for (Sprite s : oldScene.getSprites()) {
+                            Log.d(TAG, "  sprite: " + s.getName() + " | parallax=" + s.getParallaxMultiplier() +
+                                  " | wipeProgress=" + String.format("%.2f", s.getWipeProgress()) +
+                                  " | wipingOut=" + s.isWipingOut() + " | wipingIn=" + s.isWipingIn());
+                        }
+                        break;
+                    }
                 }
 
                 if (progress >= 1.0f) {
@@ -122,7 +136,7 @@ public class SceneTransitionManager {
         Log.d(TAG, "--- Wiping out all old scene sprites (" + oldScene.getSprites().size() + ") ---");
         for (Sprite oldSprite : oldScene.getSprites()) {
             oldSprite.setWipingOut(true);
-            oldSprite.setWipeProgress(0.0f);
+            oldSprite.setWipeProgress(-0.5f);
             Log.d(TAG, "[WIPE OUT] " + oldSprite.getName() +
                   " | textureId=" + oldSprite.getTextureId() +
                   " | pos=(" + String.format("%.2f", oldSprite.getPositionX()) + ", " +

@@ -18,6 +18,7 @@ public class Handles {
     public int wipeDirectionHandle;
     public int overrideColorHandle;
     public int useColorOverrideHandle;
+    public int normalizedPositionHandle;
 
     public Handles(int program)
     {
@@ -56,6 +57,9 @@ public class Handles {
 
         useColorOverrideHandle = GLES20.glGetUniformLocation(program, "useColorOverride");
         Log.d(TAG, "useColorOverrideHandle: " + useColorOverrideHandle);
+
+        normalizedPositionHandle = GLES20.glGetAttribLocation(program, "vNormalizedPosition");
+        Log.d(TAG, "normalizedPositionHandle: " + normalizedPositionHandle);
 
         // Check for any -1 values which indicate errors
         if (positionHandle == -1 || texCoordHandle == -1 || samplerHandle == -1) {

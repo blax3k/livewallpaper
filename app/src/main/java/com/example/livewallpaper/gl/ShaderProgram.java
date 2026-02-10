@@ -83,8 +83,10 @@ public class ShaderProgram {
                 + "uniform float gyroOffsetY;"
                 + "attribute vec4 vPosition;"
                 + "attribute vec2 vTexCoord;"
+                + "attribute vec2 vNormalizedPosition;"
                 + "attribute float parallaxMultiplier;"
                 + "varying vec2 texCoord;"
+                + "varying vec2 normalizedPosition;"
 
                 + "void main() {"
                 + "  vec4 position = vPosition;"
@@ -92,6 +94,7 @@ public class ShaderProgram {
                 + "  position.y += gyroOffsetY * parallaxMultiplier;"
                 + "  gl_Position = projectionMatrix * position;"
                 + "  texCoord = vTexCoord;"
+                + "  normalizedPosition = vNormalizedPosition;"
                 + "}";
     }
 
@@ -102,6 +105,7 @@ public class ShaderProgram {
         //                0.0 = no wipe effect (fully visible)
         // useColorOverride: 1.0 = use overrideColor instead of texture
         // WIPE_FEATHER: controls the softness of the wipe edge (0.0 sharp, 0.4 moderate, 0.6+ very soft)
+        // normalizedPosition: sprite's vertex position normalized to 0-1 range (independent of texture sheet)
         return "precision mediump float;"
                 + "uniform sampler2D samplerTexture;"
                 + "uniform float wipeProgress;"
@@ -109,6 +113,7 @@ public class ShaderProgram {
                 + "uniform vec4 overrideColor;"
                 + "uniform float useColorOverride;"
                 + "varying vec2 texCoord;"
+                + "varying vec2 normalizedPosition;"
                 + "const float WIPE_FEATHER = 0.1;"
                 + "void main() {"
                 + "  vec4 texColor;"
@@ -117,7 +122,7 @@ public class ShaderProgram {
                 + "  } else {"
                 + "    texColor = texture2D(samplerTexture, texCoord);"
                 + "  }"
-                + "  float diagonal = (texCoord.x + (1.0 - texCoord.y)) / 2.0;"
+                + "  float diagonal = (normalizedPosition.x + (1.0 - normalizedPosition.y)) / 2.0;"
                 + "  float wipeFade = 1.0;"
                 + "  if (wipeDirection > 0.5) {"
                 + "    float wipePos = wipeProgress * (1.0 + WIPE_FEATHER) - WIPE_FEATHER * 0.5;"

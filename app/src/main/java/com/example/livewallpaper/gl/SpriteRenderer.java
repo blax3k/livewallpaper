@@ -17,6 +17,7 @@ public class SpriteRenderer {
     private final int wipeDirectionHandle;
     private final int overrideColorHandle;
     private final int useColorOverrideHandle;
+    private final int normalizedPositionHandle;
 
     public SpriteRenderer(Handles handles) {
         this.positionHandle = handles.positionHandle;
@@ -27,6 +28,7 @@ public class SpriteRenderer {
         this.wipeDirectionHandle = handles.wipeDirectionHandle;
         this.overrideColorHandle = handles.overrideColorHandle;
         this.useColorOverrideHandle = handles.useColorOverrideHandle;
+        this.normalizedPositionHandle = handles.normalizedPositionHandle;
     }
 
     public void drawSprite(Sprite sprite) {
@@ -51,6 +53,8 @@ public class SpriteRenderer {
         enableVertexAttribute(positionHandle, 3, 12, sprite.getVertexBuffer());
         // Enable texture coordinate attribute array
         enableVertexAttribute(texCoordHandle, 2, 8, sprite.getTexCoordBuffer());
+        // Enable normalized position attribute array
+        enableVertexAttribute(normalizedPositionHandle, 2, 8, sprite.getNormalizedPositionBuffer());
         // Enable parallax multiplier attribute array
         enableVertexAttribute(parallaxMultiplierHandle, 1, 4, sprite.getParallaxMultiplierBuffer());
 
@@ -58,7 +62,7 @@ public class SpriteRenderer {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, sprite.getVertexCount());
 
         // Disable attribute arrays
-        disableAttributeArrays(positionHandle, texCoordHandle, parallaxMultiplierHandle);
+        disableAttributeArrays(positionHandle, texCoordHandle, normalizedPositionHandle, parallaxMultiplierHandle);
 
         // Draw edge highlight if enabled
         if (sprite.isShowEdgeHighlight()) {

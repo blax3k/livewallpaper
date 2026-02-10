@@ -17,6 +17,7 @@ public class Sprite {
 
     private FloatBuffer vertexBuffer;
     private FloatBuffer texCoordBuffer;
+    private FloatBuffer normalizedPositionBuffer;
     private FloatBuffer parallaxMultiplierBuffer;
     private FloatBuffer edgeLineBuffer;
     private FloatBuffer edgeLineParallaxMultiplierBuffer;
@@ -162,6 +163,19 @@ public class Sprite {
         texCoordBuffer = tbb.asFloatBuffer();
         texCoordBuffer.put(texCoords);
         texCoordBuffer.position(0);
+
+        // Initialize normalized position buffer (normalized 0-1 coordinates within sprite bounds)
+        float[] normalizedPositions = {
+                0.0f, 1.0f,  // top left
+                0.0f, 0.0f,  // bottom left
+                1.0f, 1.0f,  // top right
+                1.0f, 0.0f   // bottom right
+        };
+        ByteBuffer npbb = ByteBuffer.allocateDirect(normalizedPositions.length * 4);
+        npbb.order(ByteOrder.nativeOrder());
+        normalizedPositionBuffer = npbb.asFloatBuffer();
+        normalizedPositionBuffer.put(normalizedPositions);
+        normalizedPositionBuffer.position(0);
 
         // Initialize parallax multiplier buffer (one value per vertex)
         float[] parallaxMultipliers = {parallaxMultiplier, parallaxMultiplier, parallaxMultiplier, parallaxMultiplier};
@@ -685,6 +699,10 @@ public class Sprite {
 
     public FloatBuffer getTexCoordBuffer() {
         return texCoordBuffer;
+    }
+
+    public FloatBuffer getNormalizedPositionBuffer() {
+        return normalizedPositionBuffer;
     }
 
     public FloatBuffer getParallaxMultiplierBuffer() {
