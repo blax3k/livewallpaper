@@ -55,6 +55,9 @@ dependencies {
     // JSON parsing for scene data
     implementation("com.google.code.gson:gson:2.10.1")
 
+    // DocumentFile for URI-based file operations
+    implementation("androidx.documentfile:documentfile:1.0.1")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

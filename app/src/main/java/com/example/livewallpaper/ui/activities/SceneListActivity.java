@@ -59,6 +59,14 @@ public class SceneListActivity extends AppCompatActivity {
         // Initialize SceneFileManager to access persistent storage
         sceneFileManager = new SceneFileManager(this, null);
 
+        // Load scenes immediately - no permission needed since we use app-specific storage
+        loadAndDisplayScenes();
+    }
+
+    /**
+     * Load and display the scenes in the list view
+     */
+    private void loadAndDisplayScenes() {
         scenesList = findViewById(R.id.scenes_list);
         if (scenesList != null) {
             sceneFileNames = loadSceneFileNames();
