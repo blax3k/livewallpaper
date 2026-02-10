@@ -80,13 +80,13 @@ public class SceneTransitionManager {
                     newScene.initialize(context, textureManager);
                     Log.d(TAG, "Textures initialized for new scene: " + newScene.getSceneName());
                 }
+                oldScene.sortSpritesByParallax();
                 // Now that textures are ready, begin the fade
                 beginFade();
                 state = TransitionState.FADING;
                 return oldScene;
 
             case FADING:
-                oldScene.sortSpritesByParallax();
                 float progress = calculateProgress();
                 oldScene.updateWipeProgress(progress);
 
