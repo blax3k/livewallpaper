@@ -29,6 +29,7 @@ import androidx.appcompat.widget.PopupMenu;
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
+import com.example.livewallpaper.scene.SpriteData;
 import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
@@ -305,20 +306,25 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             return;
         }
 
-        Intent intent = new Intent(this, EditTextureActivity.class);
-        intent.putExtra(EditTextureActivity.EXTRA_SPRITE_NAME, currentSprite.getName());
-        intent.putExtra(EditTextureActivity.EXTRA_SCENE_FILE_NAME, getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME));
-        
-        // Pass original (unscaled) dimensions to ensure EditTextureActivity works with the true baseline
-        // and avoid issues where gyro-scaled dimensions are treated as the edit base.
-        intent.putExtra(EditTextureActivity.EXTRA_WIDTH, currentSprite.getOriginalWidth());
-        intent.putExtra(EditTextureActivity.EXTRA_HEIGHT, currentSprite.getOriginalHeight());
+        // Create sprite data from the current sprite
+        com.example.livewallpaper.scene.SpriteData spriteData = new com.example.livewallpaper.scene.SpriteData();
+        spriteData.name = currentSprite.getName();
+        spriteData.textureResource = currentSprite.getTextureResource();
+        spriteData.textureResourceId = currentSprite.getTextureResourceId();
+        spriteData.width = currentSprite.getOriginalWidth();
+        spriteData.height = currentSprite.getOriginalHeight();
+        spriteData.positionX = currentSprite.getPositionX();
+        spriteData.positionY = currentSprite.getPositionY();
+        spriteData.parallaxMultiplier = currentSprite.getParallaxMultiplier();
+        spriteData.texCoordinates = currentSprite.getOriginalTextureCoordinates();
 
         TextureEditState currentState = currentSprite.getCurrentTextureEditState();
-        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_SCALE, currentState.getTextureScale());
-        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_OFFSET_U, currentState.getTextureOffsetU());
-        intent.putExtra(EditTextureActivity.EXTRA_TEXTURE_OFFSET_V, currentState.getTextureOffsetV());
+        spriteData.textureScale = currentState.getTextureScale();
+        spriteData.textureOffsetU = currentState.getTextureOffsetU();
+        spriteData.textureOffsetV = currentState.getTextureOffsetV();
 
+        Intent intent = new Intent(this, EditTextureActivity.class);
+        intent.putExtra(EditTextureActivity.EXTRA_SPRITE_DATA, spriteData);
         startActivityForResult(intent, 100);
     }
 

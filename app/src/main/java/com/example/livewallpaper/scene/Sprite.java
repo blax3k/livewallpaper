@@ -70,7 +70,8 @@ public class Sprite {
      */
     public Sprite(SpriteData config) {
         this(config.textureResourceId, config.name, config.width, config.height,
-                config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource, config.texCoordinates);
+                config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource,
+                config.texCoordinates != null ? config.texCoordinates.clone() : null);
 
         // Initialize texture edit state with saved scale and offsets
         // This restores the texture zoom level and pan position from the last save
@@ -144,7 +145,8 @@ public class Sprite {
         // Define texture coordinates (use custom if provided and non-empty, otherwise use default)
         float[] texCoords;
         if (customTexCoordinates != null && customTexCoordinates.length == 8) {
-            texCoords = customTexCoordinates;
+            // ALWAYS clone the passed-in coordinates to avoid sharing references between sprites
+            texCoords = customTexCoordinates.clone();
         } else {
             // Default: full texture mapping
             texCoords = new float[]{
@@ -155,7 +157,7 @@ public class Sprite {
             };
         }
 
-        // Store original texture coordinates for scaling
+        // Store original texture coordinates for scaling (always make a fresh clone)
         this.originalTexCoordinates = texCoords.clone();
 
         ByteBuffer tbb = ByteBuffer.allocateDirect(texCoords.length * 4);
@@ -619,6 +621,21 @@ public class Sprite {
      */
     public boolean isTransitioning() {
         return spriteWipe.isTransitioning();
+    }
+
+    /**
+     * Get the original texture coordinates as a float array (8 floats).
+     * These are the unmodified base coordinates before any texture editing transformations.
+     * Use this when you need the baseline coordinates for texture calculations.
+     *
+     * @return an array of 8 floats representing the original texture coordinates
+     */
+    public float[] getOriginalTextureCoordinates() {
+        if (originalTexCoordinates == null) {
+            return null;
+        }
+        // Return a clone to prevent external modification
+        return originalTexCoordinates.clone();
     }
 
     /**

@@ -77,6 +77,32 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
     }
 
     /**
+     * Constructor for editing a sprite's texture with preloaded sprite data.
+     * Creates a minimal scene containing only the provided sprite for texture editing.
+     *
+     * @param context the application context
+     * @param spriteData the sprite data containing all sprite properties
+     */
+    public SceneManager(Context context, SpriteData spriteData) {
+        this.context = context;
+        this.sceneFileName = null;
+        this.spriteNameToDisplay = spriteData.name;
+        this.gyroProcessor = new GyroSensorProcessor();
+
+        // Create a minimal scene with just the provided sprite
+        Scene scene = new Scene("TextureEditScene");
+        Sprite sprite = new Sprite(spriteData);
+        scene.addSprite(sprite);
+        this.preloadedScene = scene;
+        this.currentScene = scene;
+
+        // Set the sprite as selected so texture editing can access it
+        this.selectedSprite = sprite;
+
+        Log.d(TAG, "SceneManager created for texture editing with sprite: " + spriteData.name);
+    }
+
+    /**
      * Constructor for wallpaper mode that enables scene switching and cycling.
      * Loads the initial scene and sets up automatic scene cycling.
      *
@@ -148,10 +174,20 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
             Log.d(TAG, "Scene already loaded, reloading textures only");
             currentScene.reloadTextures(context, textureManager);
             // Disable edge highlights after surface recreation and reset selected sprite
+            // EXCEPT: don't reset if this is a preloaded scene for texture editing (selectedSprite was already set)
             for (Sprite sprite : currentScene.getSprites()) {
                 sprite.setShowEdgeHighlight(false);
             }
-            selectedSprite = null;
+            // Only clear selectedSprite if this is NOT a preloaded texture editing scene
+            // (In texture editing mode, selectedSprite was set in the constructor and should be preserved)
+            if (preloadedScene == null) {
+                selectedSprite = null;
+            } else {
+                // For preloaded scenes, re-enable highlight on the selected sprite
+                if (selectedSprite != null) {
+                    selectedSprite.setShowEdgeHighlight(true);
+                }
+            }
         }
 
         // Initialize PhoneGuide after scene is loaded

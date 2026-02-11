@@ -25,6 +25,7 @@ import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.Scene;
 import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
+import com.example.livewallpaper.scene.SpriteData;
 import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.ui.views.SquareGLSurfaceView;
 import com.example.livewallpaper.sensors.MotionConfig;
@@ -34,13 +35,7 @@ import com.example.livewallpaper.ui.utils.ImageDimensionsUtils;
 
 public class EditTextureActivity extends AppCompatActivity implements SensorEventListener {
     private static final String TAG = "EditTextureActivity";
-    public static final String EXTRA_SPRITE_NAME = "sprite_name";
-    public static final String EXTRA_SCENE_FILE_NAME = "scene_file_name";
-    public static final String EXTRA_WIDTH = "width";
-    public static final String EXTRA_HEIGHT = "height";
-    public static final String EXTRA_TEXTURE_SCALE = "texture_scale";
-    public static final String EXTRA_TEXTURE_OFFSET_U = "texture_offset_u";
-    public static final String EXTRA_TEXTURE_OFFSET_V = "texture_offset_v";
+    public static final String EXTRA_SPRITE_DATA = "sprite_data";
 
     // Result data keys for passing sprite changes back to EditSceneActivity
     public static final String RESULT_SPRITE_NAME = "result_sprite_name";
@@ -56,8 +51,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     private SceneManager renderer;
     private SensorManager sensorManager;
     private Sensor gyroscopeSensor;
-    private String spriteName;
-    private String sceneFileName;
+    private SpriteData spriteData;
     private boolean glSetupComplete = false;
     private TextureSliderController textureSliderController;
     private TextureEditState textureEditState;
@@ -65,11 +59,6 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     private float lastTouchY = 0;
     private boolean isTouching = false;
     private boolean hasUnsavedChanges = false;
-    private float passedWidth = 0.0f;
-    private float passedHeight = 0.0f;
-    private float passedTextureScale = 1.0f;
-    private float passedTextureOffsetU = 0.0f;
-    private float passedTextureOffsetV = 0.0f;
     private boolean wasGyroMotionEnabled = true;  // Track original gyro state to restore on exit
 
     @Override
@@ -96,27 +85,19 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             }
         });
 
-        // Get sprite name and scene file name from intent
-        spriteName = getIntent().getStringExtra(EXTRA_SPRITE_NAME);
-        sceneFileName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
+        // Get sprite data from intent
+        spriteData = getIntent().getParcelableExtra(EXTRA_SPRITE_DATA);
 
-        if (spriteName == null || sceneFileName == null) {
-            Log.e(TAG, "Missing sprite name or scene file name!");
+        if (spriteData == null) {
+            Log.e(TAG, "Missing sprite data!");
             Toast.makeText(this, "Error: Missing sprite data", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // Get texture coordinates from intent (if provided)
-        passedWidth = getIntent().getFloatExtra(EXTRA_WIDTH, 0.0f);
-        passedHeight = getIntent().getFloatExtra(EXTRA_HEIGHT, 0.0f);
-        passedTextureScale = getIntent().getFloatExtra(EXTRA_TEXTURE_SCALE, 1.0f);
-        passedTextureOffsetU = getIntent().getFloatExtra(EXTRA_TEXTURE_OFFSET_U, 0.0f);
-        passedTextureOffsetV = getIntent().getFloatExtra(EXTRA_TEXTURE_OFFSET_V, 0.0f);
-
-        Log.d(TAG, "Sprite name: " + spriteName + ", Scene file: " + sceneFileName +
-              ", Width: " + passedWidth + ", Height: " + passedHeight +
-              ", TextureScale: " + passedTextureScale + ", OffsetU: " + passedTextureOffsetU + ", OffsetV: " + passedTextureOffsetV);
+        Log.d(TAG, "Sprite data received: " + spriteData.name +
+              ", Width: " + spriteData.width + ", Height: " + spriteData.height +
+              ", TextureScale: " + spriteData.textureScale + ", OffsetU: " + spriteData.textureOffsetU + ", OffsetV: " + spriteData.textureOffsetV);
 
         // Initialize sensor manager
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -145,23 +126,26 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         }
 
         try {
-            Log.d(TAG, "Setting up GLSurfaceView renderer for scene: " + sceneFileName);
+            Log.d(TAG, "Setting up GLSurfaceView renderer with sprite: " + spriteData.name);
 
-            // Create renderer that loads the full scene
-            renderer = new SceneManager(this, sceneFileName, spriteName);
+            // Create renderer with the sprite data (creates a minimal scene with just this sprite)
+            renderer = new SceneManager(this, spriteData);
             glSurfaceView.setRenderer(renderer);
 
             glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 
             // Set up touch listener for texture coordinate manipulation
-            glSurfaceView.setOnTouchListener(this::handleGLViewTouch);
+            glSurfaceView.setOnTouchListener((v, event) -> {
+                v.performClick();
+                return handleGLViewTouch(v, event);
+            });
 
             glSetupComplete = true;
 
             // Initialize sliders after a short delay to ensure scene is loaded
             new Handler(Looper.getMainLooper()).postDelayed(this::initializeSliders, 500);
 
-            Log.d(TAG, "GLSurfaceView configured successfully for scene: " + sceneFileName);
+            Log.d(TAG, "GLSurfaceView configured successfully for sprite: " + spriteData.name);
         } catch (Exception e) {
             Log.e(TAG, "Error setting up GLSurfaceView: " + e.getMessage(), e);
             Toast.makeText(this, "Error setting up preview: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -195,48 +179,21 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 Sprite sprite = scene.getSprites().get(0);
 
                 if (sprite != null) {
-                    // Use original (unscaled) dimensions to avoid working with gyro-scaled values
-                    float originalWidth = sprite.getOriginalWidth();
-                    float originalHeight = sprite.getOriginalHeight();
+                    // Set sprite dimensions from the sprite data
+                    sprite.setWidth(spriteData.width);
+                    sprite.setHeight(spriteData.height);
 
-                    // Apply dimensions passed from EditSceneActivity
-                    if (passedWidth > 0) {
-                        sprite.setWidth(passedWidth);
-                    } else {
-                        // Use original width if no passed width
-                        sprite.setWidth(originalWidth);
-                    }
-                    if (passedHeight > 0) {
-                        sprite.setHeight(passedHeight);
-                    } else {
-                        // Use original height if no passed height
-                        sprite.setHeight(originalHeight);
-                    }
+                    // Set the texture editing baseline to the sprite data dimensions
+                    // These are the true base dimensions for texture coordinate calculations
+                    sprite.setTextureEditingBaseline(spriteData.width, spriteData.height);
 
-                    // Set the texture editing baseline to the ORIGINAL dimensions
-                    // These are the true base dimensions from when the sprite was first created
-                    // This ensures texture growth factors are calculated correctly even when
-                    // re-entering the editor after previously edited dimensions
-                    sprite.setTextureEditingBaseline(originalWidth, originalHeight);
+                    // Create texture edit state from sprite data
+                    textureEditState = new TextureEditState(spriteData.textureScale, spriteData.textureOffsetU, spriteData.textureOffsetV);
+                    sprite.updateTextureCoordinates(textureEditState);
 
-                    // Get the texture edit state from the sprite (stored when previously applied)
-                    // This is the authoritative source for the current texture scale and offsets
-                    TextureEditState storedState = sprite.getCurrentTextureEditState();
-
-                    // If we have passed texture values that differ from defaults, use those instead
-                    // This ensures newly set values override what was previously stored
-                    if (passedTextureScale != 1.0f || passedTextureOffsetU != 0.0f || passedTextureOffsetV != 0.0f) {
-                        textureEditState = new TextureEditState(passedTextureScale, passedTextureOffsetU, passedTextureOffsetV);
-                        sprite.updateTextureCoordinates(textureEditState);
-                        Log.d(TAG, "Applied passed texture values - scale: " + passedTextureScale +
-                              ", offsetU: " + passedTextureOffsetU + ", offsetV: " + passedTextureOffsetV);
-                    } else {
-                        // Use the stored texture edit state directly
-                        // This contains the scale and offset that were previously applied
-                        textureEditState = storedState;
-                        Log.d(TAG, "Using stored texture state - scale: " + textureEditState.getTextureScale() +
-                              ", offsetU: " + textureEditState.getTextureOffsetU() + ", offsetV: " + textureEditState.getTextureOffsetV());
-                    }
+                    Log.d(TAG, "Applied sprite data - width: " + spriteData.width +
+                          ", height: " + spriteData.height + ", textureScale: " + spriteData.textureScale +
+                          ", offsetU: " + spriteData.textureOffsetU + ", offsetV: " + spriteData.textureOffsetV);
 
                     // Set up the sliders with the sprite and texture state
                     textureSliderController.setup(sprite, textureEditState);
@@ -543,7 +500,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
 
             // Create an Intent to return the edited sprite data
             Intent resultIntent = new Intent();
-            resultIntent.putExtra(RESULT_SPRITE_NAME, spriteName);
+            resultIntent.putExtra(RESULT_SPRITE_NAME, spriteData.name);
             // Use original (unscaled) dimensions to avoid returning gyro-scaled values
             resultIntent.putExtra(RESULT_WIDTH, currentSprite.getWidth());
             resultIntent.putExtra(RESULT_HEIGHT, currentSprite.getHeight());
@@ -563,7 +520,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             setResult(RESULT_OK, resultIntent);
             hasUnsavedChanges = false;
             Toast.makeText(this, "Changes saved", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "Texture changes saved for sprite: " + spriteName);
+            Log.d(TAG, "Texture changes saved for sprite: " + spriteData.name);
 
             // Finish the activity and return to EditSceneActivity
             finish();
