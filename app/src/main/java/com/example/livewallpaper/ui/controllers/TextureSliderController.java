@@ -83,7 +83,7 @@ public class TextureSliderController {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser && currentSprite != null) {
                     float width = progress * 0.1f;
-                    currentSprite.setWidth(width);
+                    currentSprite.setWidthAndUpdateOriginal(width);
                     updateWidthDisplay(width);
                     updateTextureScaleDisplay(textureEditState.getTextureScale());
                     notifyChange();
@@ -103,7 +103,7 @@ public class TextureSliderController {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser && currentSprite != null) {
                     float height = progress * 0.1f;
-                    currentSprite.setHeight(height);
+                    currentSprite.setHeightAndUpdateOriginal(height);
                     updateHeightDisplay(height);
                     updateTextureScaleDisplay(textureEditState.getTextureScale());
                     notifyChange();

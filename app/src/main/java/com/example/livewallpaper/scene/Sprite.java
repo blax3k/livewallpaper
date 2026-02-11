@@ -77,11 +77,8 @@ public class Sprite {
                 config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource,
                 config.texCoordinates != null ? config.texCoordinates.clone() : null);
 
-        // Initialize texture edit state with saved scale and offsets
-        // This restores the texture zoom level and pan position from the last save
-        this.currentTextureEditState = new TextureEditState(config.textureScale, config.textureOffsetU, config.textureOffsetV);
-        Log.d("Sprite", "Initialized sprite '" + config.name + "' with texture state - scale: " + config.textureScale +
-              ", offsetU: " + config.textureOffsetU + ", offsetV: " + config.textureOffsetV);
+        // Initialize texture edit state to default (scale/offset will be derived from texture coordinates if needed)
+        this.currentTextureEditState = new TextureEditState(1.0f, 0.0f, 0.0f);
     }
 
     /**
@@ -802,5 +799,22 @@ public class Sprite {
         texCoordBuffer = null;
         parallaxMultiplierBuffer = null;
         Log.d(TAG, "Sprite destroyed (CPU resources released)");
+    }
+
+    /**
+     * Set the texture coordinates directly from a float array.
+     * This is the primary way to update texture coordinates - all texture state derives from these values.
+     *
+     * @param texCoords an array of 8 floats representing the texture coordinates
+     */
+    public void setTextureCoordinates(float[] texCoords) {
+        if (texCoords == null || texCoords.length != 8 || texCoordBuffer == null) {
+            Log.d(TAG, "Cannot set texture coordinates - invalid input");
+            return;
+        }
+        texCoordBuffer.clear();
+        texCoordBuffer.put(texCoords);
+        texCoordBuffer.position(0);
+        Log.d(TAG, "Texture coordinates updated");
     }
 }

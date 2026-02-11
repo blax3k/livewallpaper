@@ -26,6 +26,7 @@ import com.example.livewallpaper.scene.Scene;
 import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
 import com.example.livewallpaper.scene.SpriteData;
+import com.example.livewallpaper.scene.TextureCoordinateCalculator;
 import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.ui.views.SquareGLSurfaceView;
 import com.example.livewallpaper.sensors.MotionConfig;
@@ -41,9 +42,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     public static final String RESULT_SPRITE_NAME = "result_sprite_name";
     public static final String RESULT_WIDTH = "result_width";
     public static final String RESULT_HEIGHT = "result_height";
-    public static final String RESULT_TEXTURE_SCALE = "result_texture_scale";
-    public static final String RESULT_TEXTURE_OFFSET_U = "result_texture_offset_u";
-    public static final String RESULT_TEXTURE_OFFSET_V = "result_texture_offset_v";
+    public static final String RESULT_TEXTURE_COORDINATES = "result_texture_coordinates";
     public static final String RESULT_TEXTURE_RESOURCE = "result_texture_resource";
     public static final String RESULT_TEXTURE_RESOURCE_ID = "result_texture_resource_id";
 
@@ -96,8 +95,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         }
 
         Log.d(TAG, "Sprite data received: " + spriteData.name +
-              ", Width: " + spriteData.width + ", Height: " + spriteData.height +
-              ", TextureScale: " + spriteData.textureScale + ", OffsetU: " + spriteData.textureOffsetU + ", OffsetV: " + spriteData.textureOffsetV);
+              ", Width: " + spriteData.width + ", Height: " + spriteData.height);
 
         // Initialize sensor manager
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -187,16 +185,39 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     sprite.setPositionAtZero(true);
 
                     // Set the texture editing baseline to the sprite data dimensions
-                    // These are the true base dimensions for texture coordinate calculations
                     sprite.setTextureEditingBaseline(spriteData.width, spriteData.height);
 
-                    // Create texture edit state from sprite data
-                    textureEditState = new TextureEditState(spriteData.textureScale, spriteData.textureOffsetU, spriteData.textureOffsetV);
-                    sprite.updateTextureCoordinates(textureEditState);
+                    // Load the texture coordinates from spriteData (if available)
+                    // These contain the persisted texture state
+                    float[] texCoordsToLoad = spriteData.texCoordinates;
+                    if (texCoordsToLoad == null || texCoordsToLoad.length != 8) {
+                        // Use default if not available
+                        texCoordsToLoad = new float[]{
+                                0.0f, 1.0f,  // top left
+                                0.0f, 0.0f,  // bottom left
+                                1.0f, 1.0f,  // top right
+                                1.0f, 0.0f   // bottom right
+                        };
+                    }
+                    sprite.setTextureCoordinates(texCoordsToLoad);
+
+                    // Initialize textureEditState from the loaded coordinates
+                    // Extract scale and offset from the texture coordinate range
+                    float scale = TextureCoordinateCalculator.extractScaleFromCoordinates(
+                            texCoordsToLoad,
+                            spriteData.width,
+                            spriteData.height,
+                            sprite.getOriginalTextureCoordinates()
+                    );
+                    float offsetU = TextureCoordinateCalculator.extractOffsetUFromCoordinates(texCoordsToLoad);
+                    float offsetV = TextureCoordinateCalculator.extractOffsetVFromCoordinates(texCoordsToLoad);
+
+                    textureEditState = new TextureEditState(scale, offsetU, offsetV);
 
                     Log.d(TAG, "Applied sprite data - width: " + spriteData.width +
-                          ", height: " + spriteData.height + ", textureScale: " + spriteData.textureScale +
-                          ", offsetU: " + spriteData.textureOffsetU + ", offsetV: " + spriteData.textureOffsetV);
+                          ", height: " + spriteData.height +
+                          ", loaded texture state - scale: " + scale +
+                          ", offsetU: " + offsetU + ", offsetV: " + offsetV);
 
                     // Set up the sliders with the sprite and texture state
                     textureSliderController.setup(sprite, textureEditState);
@@ -204,6 +225,11 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             }
         }
     }
+
+    /**
+     * Extract the texture scale from texture coordinates.
+     * Scale is determined by the size of the UV window (e.g., 0.25-0.75 = 2x zoom).
+     */
 
     /**
      * Show the image picker dialog to select a new texture for the sprite.
@@ -523,7 +549,6 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             // Create an Intent to return the edited sprite data
             Intent resultIntent = new Intent();
             resultIntent.putExtra(RESULT_SPRITE_NAME, spriteData.name);
-            // Use original (unscaled) dimensions to avoid returning gyro-scaled values
             resultIntent.putExtra(RESULT_WIDTH, currentSprite.getWidth());
             resultIntent.putExtra(RESULT_HEIGHT, currentSprite.getHeight());
 
@@ -531,11 +556,11 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             resultIntent.putExtra(RESULT_TEXTURE_RESOURCE, currentSprite.getTextureResource());
             resultIntent.putExtra(RESULT_TEXTURE_RESOURCE_ID, currentSprite.getTextureResourceId());
 
-            // Return texture edit state values
-            if (textureEditState != null) {
-                resultIntent.putExtra(RESULT_TEXTURE_SCALE, textureEditState.getTextureScale());
-                resultIntent.putExtra(RESULT_TEXTURE_OFFSET_U, textureEditState.getTextureOffsetU());
-                resultIntent.putExtra(RESULT_TEXTURE_OFFSET_V, textureEditState.getTextureOffsetV());
+            // Return the texture coordinates - this is the ONLY texture state that matters
+            float[] texCoordinates = currentSprite.getTextureCoordinates();
+            if (texCoordinates != null) {
+                resultIntent.putExtra(RESULT_TEXTURE_COORDINATES, texCoordinates);
+                Log.d(TAG, "Returning texture coordinates: [" + texCoordinates[0] + "," + texCoordinates[1] + ",...]");
             }
 
             // Set the result and finish

@@ -387,6 +387,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         }
 
         // Create sprite data from the current sprite
+        // Only pass the texture coordinates - all other texture state will be derived from these
         com.example.livewallpaper.scene.SpriteData spriteData = new com.example.livewallpaper.scene.SpriteData();
         spriteData.name = currentSprite.getName();
         spriteData.textureResource = currentSprite.getTextureResource();
@@ -398,10 +399,6 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         spriteData.parallaxMultiplier = currentSprite.getParallaxMultiplier();
         spriteData.texCoordinates = currentSprite.getOriginalTextureCoordinates();
 
-        TextureEditState currentState = currentSprite.getCurrentTextureEditState();
-        spriteData.textureScale = currentState.getTextureScale();
-        spriteData.textureOffsetU = currentState.getTextureOffsetU();
-        spriteData.textureOffsetV = currentState.getTextureOffsetV();
 
         Intent intent = new Intent(this, EditTextureActivity.class);
         intent.putExtra(EditTextureActivity.EXTRA_SPRITE_DATA, spriteData);
@@ -562,14 +559,13 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
             try {
                 String spriteName = data.getStringExtra(EditTextureActivity.RESULT_SPRITE_NAME);
-                // Return values are expected to be the unscaled (pre-gyro) dimensions
                 float width = data.getFloatExtra(EditTextureActivity.RESULT_WIDTH, currentSprite.getOriginalWidth());
                 float height = data.getFloatExtra(EditTextureActivity.RESULT_HEIGHT, currentSprite.getOriginalHeight());
-                float textureScale = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_SCALE, 1.0f);
-                float textureOffsetU = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_U, 0f);
-                float textureOffsetV = data.getFloatExtra(EditTextureActivity.RESULT_TEXTURE_OFFSET_V, 0f);
+                float[] texCoordinates = data.getFloatArrayExtra(EditTextureActivity.RESULT_TEXTURE_COORDINATES);
                 String textureResource = data.getStringExtra(EditTextureActivity.RESULT_TEXTURE_RESOURCE);
                 int textureResourceId = data.getIntExtra(EditTextureActivity.RESULT_TEXTURE_RESOURCE_ID, currentSprite.getTextureResourceId());
+
+                Log.d(TAG, "Received texture edits from EditTextureActivity - texCoordinates updated");
 
                 // Update sprite current dimensions
                 renderer.updateSpriteDimensions(currentSprite, width, height);
@@ -587,8 +583,11 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                     Log.d(TAG, "Updated sprite texture resource to: " + textureResource + " (resourceId=" + textureResourceId + ")");
                 }
 
-                // Update texture coordinates
-                renderer.updateSpriteTexture(currentSprite, textureScale, textureOffsetU, textureOffsetV);
+                // Update texture coordinates - this is the ONLY texture state that matters
+                if (texCoordinates != null && texCoordinates.length == 8) {
+                    currentSprite.setTextureCoordinates(texCoordinates);
+                    Log.d(TAG, "Updated sprite texture coordinates");
+                }
 
                 Log.d(TAG, "Applied texture edits from EditTextureActivity to sprite: " + spriteName);
 

@@ -17,13 +17,7 @@ public class SpriteData implements Parcelable {
     public float parallaxMultiplier;
     public float positionX;
     public float positionY;
-    public float[] texCoordinates;
-
-    // Texture editing state fields (texture scale and offsets)
-    // These are persisted alongside texCoordinates to maintain editing state across save/load cycles
-    public float textureScale = 1.0f;  // Default to 1.0 (no zoom) if not specified
-    public float textureOffsetU = 0.0f;  // Default to 0.0 (centered) if not specified
-    public float textureOffsetV = 0.0f;  // Default to 0.0 (centered) if not specified
+    public float[] texCoordinates;  // The ONLY texture state that matters
 
     // Set after resource resolution
     public int textureResourceId;
@@ -40,9 +34,6 @@ public class SpriteData implements Parcelable {
         positionX = in.readFloat();
         positionY = in.readFloat();
         texCoordinates = in.createFloatArray();
-        textureScale = in.readFloat();
-        textureOffsetU = in.readFloat();
-        textureOffsetV = in.readFloat();
         textureResourceId = in.readInt();
         name = in.readString();
     }
@@ -73,9 +64,6 @@ public class SpriteData implements Parcelable {
         dest.writeFloat(positionX);
         dest.writeFloat(positionY);
         dest.writeFloatArray(texCoordinates);
-        dest.writeFloat(textureScale);
-        dest.writeFloat(textureOffsetU);
-        dest.writeFloat(textureOffsetV);
         dest.writeInt(textureResourceId);
         dest.writeString(name);
     }

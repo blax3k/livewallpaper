@@ -5,6 +5,7 @@ import android.util.Log;
 import com.example.livewallpaper.gl.TextureManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,7 +22,9 @@ public class Scene {
     private float xFocus = 0.5f; // Default to center; represents the x-position to focus on (0.0 = left, 0.5 = center, 1.0 = right)
     public Scene(String sceneName) {
         this.sceneName = sceneName;
-        this.sprites = new ArrayList<>();
+        // Use Collections.synchronizedList to make the list thread-safe
+        // This prevents ConcurrentModificationException when sprites are added from UI thread while rendering
+        this.sprites = Collections.synchronizedList(new ArrayList<>());
     }
     /**
      * Get the name of this scene.

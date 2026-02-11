@@ -59,6 +59,7 @@ dependencies {
     implementation("androidx.documentfile:documentfile:1.0.1")
 
     testImplementation(libs.junit)
+    testImplementation("org.robolectric:robolectric:4.11.1")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

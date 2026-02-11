@@ -655,18 +655,9 @@ public class SceneFileManager {
             spriteData.parallaxMultiplier = sprite.getParallaxMultiplier();
             spriteData.texCoordinates = sprite.getTextureCoordinates();
 
-            // Save the current texture editing state (scale and offsets)
-            // This preserves the texture zoom level and pan position across save/load cycles
-            TextureEditState textureEditState = sprite.getCurrentTextureEditState();
-            if (textureEditState != null) {
-                spriteData.textureScale = textureEditState.getTextureScale();
-                spriteData.textureOffsetU = textureEditState.getTextureOffsetU();
-                spriteData.textureOffsetV = textureEditState.getTextureOffsetV();
-                Log.d(TAG, "Saving texture state for sprite: " + sprite.getName() +
-                      " - scale: " + spriteData.textureScale +
-                      ", offsetU: " + spriteData.textureOffsetU +
-                      ", offsetV: " + spriteData.textureOffsetV);
-            }
+            // Texture coordinates are now the ONLY texture state stored
+            // Scale/offset are derived from these coordinates if needed for UI display
+            Log.d(TAG, "Saving texture coordinates for sprite: " + sprite.getName());
 
             spriteDatas.add(spriteData);
         }
@@ -725,16 +716,9 @@ public class SceneFileManager {
             spriteData.parallaxMultiplier = sprite.getParallaxMultiplier();
             spriteData.texCoordinates = sprite.getTextureCoordinates();
 
-            TextureEditState textureEditState = sprite.getCurrentTextureEditState();
-            if (textureEditState != null) {
-                spriteData.textureScale = textureEditState.getTextureScale();
-                spriteData.textureOffsetU = textureEditState.getTextureOffsetU();
-                spriteData.textureOffsetV = textureEditState.getTextureOffsetV();
-                Log.d(TAG, "Saving texture state for sprite: " + sprite.getName() +
-                      " - scale: " + spriteData.textureScale +
-                      ", offsetU: " + spriteData.textureOffsetU +
-                      ", offsetV: " + spriteData.textureOffsetV);
-            }
+            // Texture coordinates are now the ONLY texture state stored
+            // Scale/offset are derived from these coordinates if needed for UI display
+            Log.d(TAG, "Saving texture coordinates for sprite: " + sprite.getName());
 
             spriteDatas.add(spriteData);
         }

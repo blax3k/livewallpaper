@@ -530,5 +530,120 @@ public class TextureCoordinateCalculator {
         return clampTextureOffset(currentOffsetU, currentOffsetV, deltaU, deltaV, width, height,
                 originalWidth, originalHeight, textureScale, textureScaleFactor, null);
     }
-}
 
+    /**
+     * Extract texture scale from texture coordinates.
+     * This is the reverse operation of calculateTextureCoordinates for scale.
+     * Requires sprite dimensions to correctly account for non-square sprites.
+     *
+     * @param texCoords the texture coordinates array [uMin, vMax, uMin, vMin, uMax, vMax, uMax, vMin]
+     * @param spriteOriginalWidth the original (baseline) width of the sprite
+     * @param spriteOriginalHeight the original (baseline) height of the sprite
+     * @param originalTexCoordinates the original texture coordinates to calculate texture aspect ratio
+     * @return the extracted texture scale
+     */
+    public static float extractScaleFromCoordinates(float[] texCoords, float spriteOriginalWidth, float spriteOriginalHeight, float[] originalTexCoordinates) {
+        if (texCoords == null || texCoords.length < 8) {
+            return 1.0f;
+        }
+
+        // texCoords: [uMin, vMax, uMin, vMin, uMax, vMax, uMax, vMin]
+        float vMin = texCoords[3];
+        float vMax = texCoords[1];
+
+        // Window size in V dimension
+        float windowSizeV = Math.abs(vMax - vMin);
+
+        // To extract scale, we need to reverse the forward calculation:
+        // data.windowSizeV = baseWindowSize * heightGrowthFactor;
+        //
+        // Since growth factors are 1.0 when sprite dimensions match original:
+        // windowSizeV = baseWindowSize
+        //
+        // Therefore: baseWindowSize = windowSizeV
+        // And: scale = 1.0 / baseWindowSize
+
+        // Use the V dimension to extract the base window size (height is not affected by texture aspect ratio)
+        float baseWindowSize = windowSizeV;
+
+        // Clamp to valid range (avoid division by zero and extreme scales)
+        if (baseWindowSize <= 0.0f) {
+            return 1.0f;
+        }
+
+        float scale = 1.0f / baseWindowSize;
+
+        // Clamp to reasonable range
+        return Math.max(1.0f, Math.min(8.0f, scale));
+    }
+
+    /**
+     * Extract texture scale from texture coordinates (legacy version).
+     * For backwards compatibility when sprite dimensions are not available.
+     * This assumes a square sprite and may give incorrect results for non-square sprites.
+     *
+     * @param texCoords the texture coordinates array
+     * @return the extracted texture scale (may be inaccurate for non-square sprites)
+     */
+    public static float extractScaleFromCoordinates(float[] texCoords) {
+        if (texCoords == null || texCoords.length < 8) {
+            return 1.0f;
+        }
+
+        // texCoords: [uMin, vMax, uMin, vMin, uMax, vMax, uMax, vMin]
+        float uMin = texCoords[0];
+        float uMax = texCoords[4];
+        float vMin = texCoords[3];
+        float vMax = texCoords[1];
+
+        // Window size
+        float windowWidth = Math.abs(uMax - uMin);
+        float windowHeight = Math.abs(vMax - vMin);
+
+        // If window is full (0-1), scale is 1.0
+        // If window is half (0.25-0.75), scale is 2.0
+        // Scale = 1.0 / windowSize
+        float scale = 1.0f / Math.min(windowWidth, windowHeight);
+
+        // Clamp to reasonable range
+        return Math.max(1.0f, Math.min(8.0f, scale));
+    }
+
+    /**
+     * Extract the U offset from texture coordinates.
+     * This is the reverse operation of calculateTextureCoordinates for U offset.
+     */
+    public static float extractOffsetUFromCoordinates(float[] texCoords) {
+        if (texCoords == null || texCoords.length < 8) {
+            return 0.0f;
+        }
+
+        float uMin = texCoords[0];
+        float uMax = texCoords[4];
+
+        // Center of the window
+        float center = (uMin + uMax) / 2.0f;
+
+        // Offset from 0.5 (center of full texture)
+        return center - 0.5f;
+    }
+
+    /**
+     * Extract the V offset from texture coordinates.
+     * This is the reverse operation of calculateTextureCoordinates for V offset.
+     */
+    public static float extractOffsetVFromCoordinates(float[] texCoords) {
+        if (texCoords == null || texCoords.length < 8) {
+            return 0.0f;
+        }
+
+        float vMin = texCoords[3];
+        float vMax = texCoords[1];
+
+        // Center of the window
+        float center = (vMin + vMax) / 2.0f;
+
+        // Offset from 0.5 (center of full texture)
+        return center - 0.5f;
+    }
+}
