@@ -183,6 +183,9 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     sprite.setWidth(spriteData.width);
                     sprite.setHeight(spriteData.height);
 
+                    // Position the sprite at (0, 0) for texture editing to center it on screen
+                    sprite.setPositionAtZero(true);
+
                     // Set the texture editing baseline to the sprite data dimensions
                     // These are the true base dimensions for texture coordinate calculations
                     sprite.setTextureEditingBaseline(spriteData.width, spriteData.height);
@@ -447,10 +450,29 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
      * Handle back button press. Shows a confirmation dialog if there are unsaved changes.
      */
     private void onBackButtonPressed() {
+        // Reset sprite position flag when exiting texture editing
+        resetTextureEditingState();
+
         if (hasUnsavedChanges) {
             showUnsavedChangesDialog();
         } else {
             finish();
+        }
+    }
+
+    /**
+     * Reset the sprite to normal state after texture editing.
+     */
+    private void resetTextureEditingState() {
+        if (renderer != null) {
+            Scene scene = renderer.getCurrentScene();
+            if (scene != null && !scene.getSprites().isEmpty()) {
+                Sprite sprite = scene.getSprites().get(0);
+                if (sprite != null) {
+                    sprite.setPositionAtZero(false);
+                    Log.d(TAG, "Reset texture editing state for sprite: " + sprite.getName());
+                }
+            }
         }
     }
 
@@ -521,6 +543,9 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             hasUnsavedChanges = false;
             Toast.makeText(this, "Changes saved", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Texture changes saved for sprite: " + spriteData.name);
+
+            // Reset sprite position flag when exiting texture editing
+            resetTextureEditingState();
 
             // Finish the activity and return to EditSceneActivity
             finish();

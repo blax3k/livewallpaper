@@ -62,6 +62,10 @@ public class Sprite {
     // Edge highlight toggle for debug/edit view
     private boolean showEdgeHighlight = false;
 
+    // Flag to force sprite to render at (0, 0) regardless of actual position
+    // Used when editing texture in EditTextureActivity
+    private boolean positionAtZero = false;
+
     /**
      * Constructor using a SpriteConfig object for cleaner initialization.
      * This is the primary constructor; all other initialization paths delegate here.
@@ -222,8 +226,12 @@ public class Sprite {
         float halfWidth = width / 2f;
         float halfHeight = height / 2f;
 
-        float scaledPositionX = positionX * scaleFactor;
-        float scaledPositionY = positionY * scaleFactor;
+        // Use (0, 0) if positionAtZero flag is true, otherwise use actual position
+        float effectivePositionX = positionAtZero ? 0.0f : positionX;
+        float effectivePositionY = positionAtZero ? 0.0f : positionY;
+
+        float scaledPositionX = effectivePositionX * scaleFactor;
+        float scaledPositionY = effectivePositionY * scaleFactor;
 
         float[] squareCoords = {
                 scaledPositionX - halfWidth, scaledPositionY + halfHeight, 0.0f,  // top left
@@ -764,6 +772,24 @@ public class Sprite {
      */
     public boolean isShowEdgeHighlight() {
         return showEdgeHighlight;
+    }
+
+    /**
+     * Set whether the sprite should render at position (0, 0) instead of its actual position.
+     * Use this when editing the sprite's texture to center it on screen.
+     *
+     * @param positionAtZero true to render at (0, 0), false to use actual position
+     */
+    public void setPositionAtZero(boolean positionAtZero) {
+        this.positionAtZero = positionAtZero;
+        updateVertexBuffer();
+    }
+
+    /**
+     * Check if this sprite is rendering at position (0, 0).
+     */
+    public boolean isPositionAtZero() {
+        return positionAtZero;
     }
 
     /**
