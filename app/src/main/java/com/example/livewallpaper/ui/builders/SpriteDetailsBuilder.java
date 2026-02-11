@@ -3,8 +3,6 @@ package com.example.livewallpaper.ui.builders;
 import android.app.Activity;
 import android.graphics.Typeface;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.TableLayout;
@@ -38,7 +36,6 @@ public class SpriteDetailsBuilder {
     private final TextView positionYValue;
     private final SeekBar parallaxMultiplierSlider;
     private final TextView parallaxMultiplierValue;
-    private View.OnClickListener textureButtonListener;
 
     public SpriteDetailsBuilder(Activity activity, SceneManager renderer,
                                TableLayout propertiesTable,
@@ -79,8 +76,6 @@ public class SpriteDetailsBuilder {
         // Add name as read-only property
         addPropertyRow("Name", sprite.getName());
 
-        // Add texture resource button
-        addPropertyButtonRow("Texture Resource");
 
         // Set up position displays and sliders (if sliders exist)
         if (positionXSlider != null) {
@@ -145,82 +140,7 @@ public class SpriteDetailsBuilder {
      * Add a read-only property row to the table.
      */
     private void addPropertyRow(String label, String value) {
-        TableRow row = new TableRow(activity);
-        row.setLayoutParams(new TableLayout.LayoutParams(
-            TableLayout.LayoutParams.MATCH_PARENT,
-            TableLayout.LayoutParams.WRAP_CONTENT
-        ));
-
-        // Label text view
-        TextView labelView = new TextView(activity);
-        labelView.setText(label + ":");
-        labelView.setLayoutParams(new TableRow.LayoutParams(
-            TableRow.LayoutParams.WRAP_CONTENT,
-            TableRow.LayoutParams.WRAP_CONTENT
-        ));
-        labelView.setTypeface(null, Typeface.BOLD);
-        labelView.setPadding(8, 8, 8, 8);
-
-        // Value text view
-        TextView valueView = new TextView(activity);
-        valueView.setText(value);
-        valueView.setLayoutParams(new TableRow.LayoutParams(
-            TableRow.LayoutParams.WRAP_CONTENT,
-            TableRow.LayoutParams.WRAP_CONTENT,
-            1.0f
-        ));
-        valueView.setPadding(8, 8, 8, 8);
-
-        row.addView(labelView);
-        row.addView(valueView);
-        propertiesTable.addView(row);
-    }
-
-    /**
-     * Add a property row with an action button.
-     */
-    private void addPropertyButtonRow(String label) {
-        TableRow row = new TableRow(activity);
-        row.setLayoutParams(new TableLayout.LayoutParams(
-            TableLayout.LayoutParams.MATCH_PARENT,
-            TableLayout.LayoutParams.WRAP_CONTENT
-        ));
-
-        // Label text view
-        TextView labelView = new TextView(activity);
-        labelView.setText(label + ":");
-        labelView.setLayoutParams(new TableRow.LayoutParams(
-            TableRow.LayoutParams.WRAP_CONTENT,
-            TableRow.LayoutParams.WRAP_CONTENT
-        ));
-        labelView.setTypeface(null, Typeface.BOLD);
-        labelView.setPadding(8, 8, 8, 8);
-
-        // Button to open texture picker
-        Button textureButton = new Button(activity);
-        textureButton.setText("Edit Texture");
-        textureButton.setLayoutParams(new TableRow.LayoutParams(
-            TableRow.LayoutParams.WRAP_CONTENT,
-            TableRow.LayoutParams.WRAP_CONTENT,
-            1.0f
-        ));
-        textureButton.setPadding(8, 8, 8, 8);
-
-        // Apply the listener immediately if it's been set
-        if (textureButtonListener != null) {
-            textureButton.setOnClickListener(textureButtonListener);
-        }
-
-        row.addView(labelView);
-        row.addView(textureButton);
-        propertiesTable.addView(row);
-    }
-
-    /**
-     * Set the click listener for the texture button.
-     * This listener will be applied to all future texture buttons created during build().
-     */
-    public void setTextureButtonListener(View.OnClickListener listener) {
-        this.textureButtonListener = listener;
+        // ...existing code...
     }
 }
+

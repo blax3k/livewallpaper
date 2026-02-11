@@ -160,9 +160,6 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                         parallaxMultiplierSlider, parallaxMultiplierValue);
                 sceneFileManager = new SceneFileManager(this, renderer);
 
-                // Set up texture button listener
-                spriteDetailsBuilder.setTextureButtonListener(v -> openEditTextureActivity());
-
                 // Set up focus point slider
                 setupFocusPointSlider(focusPointSlider, focusPointValue);
 
@@ -411,7 +408,10 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 popupMenu.getMenuInflater().inflate(R.menu.menu_sprite_options, popupMenu.getMenu());
 
                 popupMenu.setOnMenuItemClickListener(item -> {
-                    if (item.getItemId() == R.id.menu_sprite_delete) {
+                    if (item.getItemId() == R.id.menu_sprite_edit_texture) {
+                        openEditTextureActivity();
+                        return true;
+                    } else if (item.getItemId() == R.id.menu_sprite_delete) {
                         showDeleteSpriteConfirmDialog();
                         return true;
                     }
