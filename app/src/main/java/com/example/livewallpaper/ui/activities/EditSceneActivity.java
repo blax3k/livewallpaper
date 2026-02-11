@@ -282,8 +282,28 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
             Log.d(TAG, "Added new sprite: " + imageName);
 
-            // Refresh the spinner to show the new sprite
-            refreshSpritesList();
+            // Sort sprites by parallax multiplier since the new sprite might not be in order
+            renderer.getCurrentScene().sortSpritesByParallax();
+            Log.d(TAG, "Sprites sorted by parallax multiplier");
+
+            // Select the new sprite and update UI to reflect it
+            renderer.setSelectedSprite(newSprite);
+            showSpriteDetails(newSprite);
+            Log.d(TAG, "New sprite selected and details displayed");
+
+            // Refresh the spinner to show the new sprite and update selection
+            // Find the index of the new sprite in the scene
+            List<Sprite> allSprites = renderer.getAllSprites();
+            int newSpriteIndex = -1;
+            for (int i = 0; i < allSprites.size(); i++) {
+                if (allSprites.get(i) == newSprite) {
+                    newSpriteIndex = i;
+                    break;
+                }
+            }
+
+            refreshSpritesListAndSelect(newSpriteIndex);
+            Log.d(TAG, "Sprite list refreshed and new sprite selected at index: " + newSpriteIndex);
 
             Toast.makeText(this, "Sprite '" + imageName + "' added", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
@@ -297,6 +317,66 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
      */
     private void refreshSpritesList() {
         populateSpritesListView();
+    }
+
+    /**
+     * Refresh the sprites list in the spinner and select a sprite by index.
+     *
+     * @param spriteIndex the index of the sprite to select after populating the list
+     */
+    private void refreshSpritesListAndSelect(int spriteIndex) {
+        if (spritesSpinner != null && renderer != null) {
+            try {
+                // Get the sprite list from the renderer
+                List<Sprite> allSprites = renderer.getAllSprites();
+
+                // Create a list of sprite names
+                List<String> spriteNames = new ArrayList<>();
+                for (Sprite sprite : allSprites) {
+                    spriteNames.add(sprite.getName());
+                }
+
+                // Create and set the custom adapter (includes "+ sprite" button)
+                SpritesDropdownAdapter adapter = new SpritesDropdownAdapter(this, spriteNames);
+                spritesSpinner.setAdapter(adapter);
+
+                // Set up item selection listener
+                spritesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        // Check if the "+ sprite" item was selected
+                        if (adapter.isAddSpriteItem(position)) {
+                            // Show image picker dialog
+                            showAddSpriteDialog();
+                            // Reset spinner to the first sprite
+                            if (adapter.getSpriteCount() > 0) {
+                                spritesSpinner.setSelection(0);
+                            }
+                        } else {
+                            // Normal sprite selection
+                            Sprite selectedSprite = renderer.selectSpriteByIndex(position);
+                            if (selectedSprite != null) {
+                                showSpriteDetails(selectedSprite);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {}
+                });
+
+                Log.d(TAG, "Sprites spinner refreshed with " + spriteNames.size() + " items");
+
+                // Select the sprite at the specified index
+                if (spriteIndex >= 0 && spriteIndex < allSprites.size()) {
+                    spritesSpinner.setSelection(spriteIndex);
+                    Log.d(TAG, "Sprite selected at index: " + spriteIndex);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error refreshing sprites spinner: " + e.getMessage(), e);
+                Toast.makeText(this, "Error refreshing sprite list: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void openEditTextureActivity() {
