@@ -3,15 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="4dp">
 
     <!-- Header with scene name and save button -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginBottom="8dp"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/scene_name_display"
@@ -25,10 +25,10 @@
             android:id="@+id/menu_ellipsis_button"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:src="@android:drawable/ic_menu_more"
+            android:background="?attr/selectableItemBackground"
             android:contentDescription="More options"
             android:scaleType="centerInside"
-            android:background="?attr/selectableItemBackground" />
+            android:src="@android:drawable/ic_menu_more" />
     </LinearLayout>
 
     <!-- Square GLSurfaceView for scene preview -->
@@ -52,7 +52,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_weight="1"
         android:orientation="vertical">
 
@@ -62,13 +62,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="visible">
+            android:visibility="visible"
+            android:background="@android:color/darker_gray"
+            android:padding="8dp">
 
             <Spinner
                 android:id="@+id/sprites_spinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="0dp" />
+                android:layout_margin="0dp"/>
         </LinearLayout>
 
         <!-- Scrollable sprite details view -->
@@ -85,25 +87,25 @@
                 android:orientation="vertical"
                 android:padding="4dp">
 
-                    <!-- Position X and Y Fields (single row) -->
-                    <include layout="@layout/component_position_controls" />
+                <!-- Position X and Y Fields (single row) -->
+                <include layout="@layout/component_position_controls" />
 
-                    <!-- Scale Control with Width and Height Fields -->
-                    <include layout="@layout/component_scale_controls" />
+                <!-- Scale Control with Width and Height Fields -->
+                <include layout="@layout/component_scale_controls" />
 
-                    <!-- Parallax Multiplier Slider -->
-                    <include layout="@layout/component_parallax_controls" />
+                <!-- Parallax Multiplier Slider -->
+                <include layout="@layout/component_parallax_controls" />
 
-                    <!-- Properties Table -->
-                    <TableLayout
-                        android:id="@+id/sprite_properties_table"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="8dp"
-                        android:stretchColumns="1"></TableLayout>
-                </LinearLayout>
-            </ScrollView>
+                <!-- Properties Table -->
+                <TableLayout
+                    android:id="@+id/sprite_properties_table"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:stretchColumns="1"></TableLayout>
+            </LinearLayout>
+        </ScrollView>
 
-</LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>
