@@ -88,7 +88,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:min="0"
-                    android:max="55" />
+                    android:max="150" />
 
                 <TextView
                     android:id="@+id/width_value"
@@ -121,7 +121,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:min="0"
-                    android:max="55" />
+                    android:max="150" />
 
                 <TextView
                     android:id="@+id/height_value"

@@ -58,7 +58,7 @@ public class TextureSliderController {
         float currentHeight = sprite.getHeight();
         float currentTextureScale = state.getTextureScale();
 
-        // Width/Height: max 11.0, increments of 0.1 (slider value = dimension / 0.1)
+        // Width/Height: max 15.0, increments of 0.1 (slider value = dimension / 0.1)
         widthSlider.setProgress(Math.round(currentWidth / 0.1f));
         heightSlider.setProgress(Math.round(currentHeight / 0.1f));
 
