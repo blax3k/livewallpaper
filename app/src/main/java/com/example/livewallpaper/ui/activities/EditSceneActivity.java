@@ -108,6 +108,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         // Set up menu ellipsis button
         setupMenuEllipsis();
 
+        // Set up sprite menu button
+        setupSpriteMenuButton();
+
         // Get the scene file name from the intent
         String sceneFileName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
         if (sceneFileName != null) {
@@ -398,6 +401,66 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 popupMenu.show();
             });
         }
+    }
+
+    private void setupSpriteMenuButton() {
+        ImageButton spriteMenuButton = findViewById(R.id.sprite_menu_button);
+        if (spriteMenuButton != null) {
+            spriteMenuButton.setOnClickListener(v -> {
+                PopupMenu popupMenu = new PopupMenu(EditSceneActivity.this, v);
+                popupMenu.getMenuInflater().inflate(R.menu.menu_sprite_options, popupMenu.getMenu());
+
+                popupMenu.setOnMenuItemClickListener(item -> {
+                    if (item.getItemId() == R.id.menu_sprite_delete) {
+                        showDeleteSpriteConfirmDialog();
+                        return true;
+                    }
+                    return false;
+                });
+                popupMenu.show();
+            });
+        }
+    }
+
+    private void showDeleteSpriteConfirmDialog() {
+        Sprite currentSprite = renderer != null ? renderer.getSelectedSprite() : null;
+        if (currentSprite == null) {
+            Toast.makeText(this, "No sprite selected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Sprite");
+        builder.setMessage("Are you sure you want to delete \"" + currentSprite.getName() + "\"?");
+
+        builder.setPositiveButton("Continue", (dialog, which) -> {
+            try {
+                // Delete the sprite from the scene
+                renderer.deleteSpriteFromScene(currentSprite);
+
+                // Hide sprite details container
+                if (spriteDetailsContainer != null) {
+                    spriteDetailsContainer.setVisibility(View.GONE);
+                }
+
+                // Refresh the sprites list
+                refreshSpritesList();
+
+                Toast.makeText(EditSceneActivity.this,
+                        "Sprite \"" + currentSprite.getName() + "\" deleted",
+                        Toast.LENGTH_SHORT).show();
+
+                Log.d(TAG, "Sprite deleted: " + currentSprite.getName());
+            } catch (Exception e) {
+                Log.e(TAG, "Error deleting sprite: " + e.getMessage(), e);
+                Toast.makeText(EditSceneActivity.this,
+                        "Error deleting sprite: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.show();
     }
 
     @Override

@@ -26,7 +26,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackground"
-            android:contentDescription="More options"
+            android:contentDescription="@string/more_options"
             android:scaleType="centerInside"
             android:src="@android:drawable/ic_menu_more" />
     </LinearLayout>
@@ -61,16 +61,27 @@
             android:id="@+id/sprites_list_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="visible"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:background="@android:color/darker_gray"
             android:padding="8dp">
 
             <Spinner
                 android:id="@+id/sprites_spinner"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_margin="0dp"/>
+
+            <ImageButton
+                android:id="@+id/sprite_menu_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackground"
+                android:contentDescription="@string/sprite_options"
+                android:scaleType="centerInside"
+                android:src="@android:drawable/ic_menu_more"
+                android:layout_marginStart="8dp"/>
         </LinearLayout>
 
         <!-- Scrollable sprite details view -->

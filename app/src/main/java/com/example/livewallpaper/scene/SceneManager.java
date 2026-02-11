@@ -633,6 +633,24 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         }
     }
 
+    public void deleteSpriteFromScene(Sprite sprite) {
+        if (currentScene == null || sprite == null) {
+            Log.w(TAG, "Cannot delete sprite: scene or sprite is null");
+            return;
+        }
+        //TODO: we need to figure out a way to make sprite names unique
+        String spriteName = sprite.getName();
+        currentScene.getSprites().removeIf(s -> s.getName().equals(spriteName));
+
+        // If the deleted sprite was selected, deselect it
+        if (selectedSprite != null && selectedSprite.getName().equals(spriteName)) {
+            selectedSprite = null;
+            selectedSpriteName = null;
+        }
+
+        Log.d(TAG, "Deleted sprite: " + spriteName);
+    }
+
     private void highlightSelectedSprite() {
         if (selectedSpriteName != null) for (Sprite sprite : currentScene.getSprites()) {
             sprite.setShowEdgeHighlight(false);

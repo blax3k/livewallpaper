@@ -7,4 +7,6 @@
     <string name="unsaved_changes_message">You have unsaved changes. Do you want to save them before leaving?</string>
     <string name="save_button">Save</string>
     <string name="discard_button">Discard</string>
+    <string name="more_options">More options</string>
+    <string name="sprite_options">Sprite options</string>
 </resources>
