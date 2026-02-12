@@ -476,12 +476,11 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
      * Handle back button press. Shows a confirmation dialog if there are unsaved changes.
      */
     private void onBackButtonPressed() {
-        // Reset sprite position flag when exiting texture editing
-        resetTextureEditingState();
-
         if (hasUnsavedChanges) {
             showUnsavedChangesDialog();
         } else {
+            // Reset sprite position flag when exiting texture editing
+            resetTextureEditingState();
             finish();
         }
     }
@@ -512,11 +511,13 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
 
         builder.setPositiveButton(R.string.save_button, (dialog, which) -> {
             saveChanges();
+            resetTextureEditingState();
             finish();
         });
 
         builder.setNegativeButton(R.string.discard_button, (dialog, which) -> {
             // Discard changes and exit
+            resetTextureEditingState();
             finish();
         });
 
@@ -569,8 +570,6 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             Toast.makeText(this, "Changes saved", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Texture changes saved for sprite: " + spriteData.name);
 
-            // Reset sprite position flag when exiting texture editing
-            resetTextureEditingState();
 
             // Finish the activity and return to EditSceneActivity
             finish();
