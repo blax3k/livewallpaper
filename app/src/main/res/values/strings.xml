@@ -9,6 +9,10 @@
     <string name="discard_button">Discard</string>
     <string name="more_options">More options</string>
     <string name="sprite_options">Sprite options</string>
+    <string name="edit_name">Edit Name</string>
     <string name="edit_texture">Edit Texture</string>
     <string name="delete">Delete</string>
+    <string name="sprite_name">Name</string>
+    <string name="sprite_name_empty_error">Invalid name: name cannot be empty</string>
+    <string name="sprite_name_must_be_unique">Name must be unique</string>
 </resources>

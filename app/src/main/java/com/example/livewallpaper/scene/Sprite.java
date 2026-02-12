@@ -520,6 +520,18 @@ public class Sprite {
     public String getName() {
         return name;
     }
+
+    /**
+     * Set the sprite name.
+     * Use this to rename a sprite.
+     *
+     * @param name the new name for the sprite
+     */
+    public void setName(String name) {
+        this.name = name;
+        Log.d(TAG, "Sprite name changed to: " + name);
+    }
+
     public String getTextureResource() {
         return textureResource;
     }

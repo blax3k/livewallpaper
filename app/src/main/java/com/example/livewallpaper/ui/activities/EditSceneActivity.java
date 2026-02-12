@@ -159,6 +159,13 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                         null, positionXValue, null, positionYValue,
                         scaleSlider, scaleValue, widthEdit, heightEdit,
                         parallaxMultiplierSlider, parallaxMultiplierValue);
+
+                // Set up the sprite name change listener to refresh the spinner when sprite name changes
+                spriteDetailsBuilder.setOnSpriteNameChangeListener((sprite, newName) -> {
+                    Log.d(TAG, "Sprite name changed, refreshing sprites list");
+                    refreshSpritesListAndSelect(renderer.getAllSprites().indexOf(sprite));
+                });
+
                 sceneFileManager = new SceneFileManager(this, renderer);
 
                 // Set up focus point slider
@@ -262,11 +269,14 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 return;
             }
 
+            // Get a unique name for the sprite to prevent duplicates in the scene
+            String uniqueSpriteName = renderer.getCurrentScene().getUniqueName(imageName);
+
             // Create a new sprite with default properties (1.0x1.0, at origin, full parallax)
             com.example.livewallpaper.scene.SpriteData spriteData = new com.example.livewallpaper.scene.SpriteData();
             spriteData.textureResource = imageName;
             spriteData.textureResourceId = resourceId;
-            spriteData.name = imageName;
+            spriteData.name = uniqueSpriteName;
             spriteData.width = 1.0f;
             spriteData.height = 1.0f;
             spriteData.positionX = 0.0f;
@@ -491,7 +501,10 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 popupMenu.getMenuInflater().inflate(R.menu.menu_sprite_options, popupMenu.getMenu());
 
                 popupMenu.setOnMenuItemClickListener(item -> {
-                    if (item.getItemId() == R.id.menu_sprite_edit_texture) {
+                    if (item.getItemId() == R.id.menu_sprite_edit_name) {
+                        showSpriteNameEditDialog();
+                        return true;
+                    } else if (item.getItemId() == R.id.menu_sprite_edit_texture) {
                         openEditTextureActivity();
                         return true;
                     } else if (item.getItemId() == R.id.menu_sprite_delete) {
@@ -669,6 +682,21 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         }
 
         return false;
+    }
+
+    /**
+     * Show dialog to edit the selected sprite's name.
+     */
+    private void showSpriteNameEditDialog() {
+        Sprite currentSprite = renderer != null ? renderer.getSelectedSprite() : null;
+        if (currentSprite == null) {
+            Toast.makeText(this, "No sprite selected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (spriteDetailsBuilder != null) {
+            spriteDetailsBuilder.showNameEditDialog(currentSprite);
+        }
     }
 
     /**

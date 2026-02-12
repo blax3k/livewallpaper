@@ -284,4 +284,38 @@ public class Scene {
         }
         return usedIds;
     }
+
+    /**
+     * Get a unique sprite name for this scene.
+     * If the base name doesn't exist, returns it as-is.
+     * If the name already exists, appends a number suffix (e.g., "sprite2", "sprite3").
+     *
+     * @param baseName the desired sprite name
+     * @return a unique name that doesn't exist in this scene
+     */
+    public String getUniqueName(String baseName) {
+        if (baseName == null || baseName.trim().isEmpty()) {
+            baseName = "sprite";
+        }
+
+        final String finalBaseName = baseName;
+
+        // Check if the base name already exists
+        boolean nameExists = sprites.stream().anyMatch(s -> s.getName().equals(finalBaseName));
+        if (!nameExists) {
+            return baseName;
+        }
+
+        // Find a unique name by appending numbers
+        int counter = 2;
+        while (true) {
+            String candidateName = finalBaseName + counter;
+            boolean candidateExists = sprites.stream().anyMatch(s -> s.getName().equals(candidateName));
+            if (!candidateExists) {
+                Log.d(TAG, "Generated unique name for sprite: " + finalBaseName + " -> " + candidateName);
+                return candidateName;
+            }
+            counter++;
+        }
+    }
 }
