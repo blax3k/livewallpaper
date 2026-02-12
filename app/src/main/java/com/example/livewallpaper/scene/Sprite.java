@@ -1,5 +1,7 @@
 package com.example.livewallpaper.scene;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
@@ -11,7 +13,7 @@ import java.nio.FloatBuffer;
  * This class now only owns geometry buffers and sprite properties; texture loading and draw calls
  * are delegated to TextureManager and SpriteRenderer respectively.
  */
-public class Sprite {
+public class Sprite implements Parcelable {
     private static final String TAG = "Sprite";
     private static final int VERTEX_COUNT = 4;
 
@@ -829,4 +831,101 @@ public class Sprite {
         texCoordBuffer.position(0);
         Log.d(TAG, "Texture coordinates updated");
     }
+
+    // ==================== Parcelable Implementation ====================
+
+    protected Sprite(Parcel in) {
+        textureResourceId = in.readInt();
+        name = in.readString();
+        textureResource = in.readString();
+        width = in.readFloat();
+        height = in.readFloat();
+        parallaxMultiplier = in.readFloat();
+        positionX = in.readFloat();
+        positionY = in.readFloat();
+        originalWidth = in.readFloat();
+        originalHeight = in.readFloat();
+        originalPositionX = in.readFloat();
+        originalPositionY = in.readFloat();
+        textureEditingBaselineWidth = in.readFloat();
+        textureEditingBaselineHeight = in.readFloat();
+
+        // Read texture coordinates
+        int texCoordLength = in.readInt();
+        if (texCoordLength > 0) {
+            originalTexCoordinates = new float[texCoordLength];
+            in.readFloatArray(originalTexCoordinates);
+        }
+
+        // Initialize textureScaleFactor (final field) to 1.0f (default value)
+        // This matches the behavior of regular constructors
+        this.textureScaleFactor = 1.0f;
+
+        // Initialize geometry with the deserialized texture coordinates
+        initializeGeometry(originalTexCoordinates);
+
+        // Restore texture edit state
+        float scale = in.readFloat();
+        float offsetU = in.readFloat();
+        float offsetV = in.readFloat();
+        currentTextureEditState = new TextureEditState(scale, offsetU, offsetV);
+
+        // Use readInt instead of readBoolean for API 24 compatibility (readBoolean requires API 29)
+        isGyroScaled = in.readInt() != 0;
+        showEdgeHighlight = in.readInt() != 0;
+        positionAtZero = in.readInt() != 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(textureResourceId);
+        dest.writeString(name);
+        dest.writeString(textureResource);
+        dest.writeFloat(width);
+        dest.writeFloat(height);
+        dest.writeFloat(parallaxMultiplier);
+        dest.writeFloat(positionX);
+        dest.writeFloat(positionY);
+        dest.writeFloat(originalWidth);
+        dest.writeFloat(originalHeight);
+        dest.writeFloat(originalPositionX);
+        dest.writeFloat(originalPositionY);
+        dest.writeFloat(textureEditingBaselineWidth);
+        dest.writeFloat(textureEditingBaselineHeight);
+
+        // Write texture coordinates
+        if (originalTexCoordinates != null) {
+            dest.writeInt(originalTexCoordinates.length);
+            dest.writeFloatArray(originalTexCoordinates);
+        } else {
+            dest.writeInt(0);
+        }
+
+        // Write texture edit state
+        dest.writeFloat(currentTextureEditState.getTextureScale());
+        dest.writeFloat(currentTextureEditState.getTextureOffsetU());
+        dest.writeFloat(currentTextureEditState.getTextureOffsetV());
+
+        // Use writeInt instead of writeBoolean for API 24 compatibility (writeBoolean requires API 29)
+        dest.writeInt(isGyroScaled ? 1 : 0);
+        dest.writeInt(showEdgeHighlight ? 1 : 0);
+        dest.writeInt(positionAtZero ? 1 : 0);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator<Sprite> CREATOR = new Creator<Sprite>() {
+        @Override
+        public Sprite createFromParcel(Parcel in) {
+            return new Sprite(in);
+        }
+
+        @Override
+        public Sprite[] newArray(int size) {
+            return new Sprite[size];
+        }
+    };
 }

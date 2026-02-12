@@ -103,6 +103,25 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
     }
 
     /**
+     * Constructor for previewing a scene with preloaded Scene data.
+     * Used when passing the current scene from EditSceneActivity to FullscreenPreviewActivity.
+     * The scene is loaded with all current edits, not reloaded from disk.
+     *
+     * @param context the application context
+     * @param scene the preloaded Scene object with all current data
+     */
+    public SceneManager(Context context, Scene scene) {
+        this.context = context;
+        this.sceneFileName = null;
+        this.spriteNameToDisplay = null;
+        this.preloadedScene = scene;
+        this.currentScene = scene;
+        this.gyroProcessor = new GyroSensorProcessor();
+
+        Log.d(TAG, "SceneManager created with preloaded scene: " + scene.getSceneName());
+    }
+
+    /**
      * Constructor for wallpaper mode that enables scene switching and cycling.
      * Loads the initial scene and sets up automatic scene cycling.
      *
@@ -969,4 +988,5 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         }
     }
 }
+
 

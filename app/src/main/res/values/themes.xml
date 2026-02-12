@@ -4,4 +4,14 @@
     <style name="Theme.Livewallpaper" parent="Theme.AppCompat.Light.NoActionBar" />
 
     <style name="Theme.Livewallpaper.WithActionBar" parent="Theme.AppCompat.Light" />
+
+    <style name="Theme.Livewallpaper.Fullscreen" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+    </style>
 </resources>

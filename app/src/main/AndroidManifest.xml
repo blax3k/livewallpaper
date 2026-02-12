@@ -38,6 +38,11 @@
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper" />
 
+        <activity
+            android:name=".ui.activities.FullscreenPreviewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Livewallpaper.Fullscreen" />
+
         <service
             android:name=".gl.GLWallpaperService"
             android:label="@string/app_name"

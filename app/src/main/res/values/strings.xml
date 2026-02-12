@@ -15,4 +15,6 @@
     <string name="sprite_name">Name</string>
     <string name="sprite_name_empty_error">Invalid name: name cannot be empty</string>
     <string name="sprite_name_must_be_unique">Name must be unique</string>
+    <string name="preview">Preview</string>
+    <string name="close">Close</string>
 </resources>

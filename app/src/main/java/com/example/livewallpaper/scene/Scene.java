@@ -1,5 +1,7 @@
 package com.example.livewallpaper.scene;
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import com.example.livewallpaper.gl.TextureManager;
@@ -13,7 +15,7 @@ import java.util.Set;
  * Represents a scene containing a collection of sprites.
  * Scenes can be switched to display different sets of sprites on screen.
  */
-public class Scene {
+public class Scene implements Parcelable {
     private static final String TAG = "Scene";
     private final String sceneName;
     private final List<Sprite> sprites;
@@ -318,4 +320,46 @@ public class Scene {
             counter++;
         }
     }
+
+    // ==================== Parcelable Implementation ====================
+
+    protected Scene(Parcel in) {
+        this.sceneName = in.readString();
+        this.xFocus = in.readFloat();
+        // Use readInt instead of readBoolean for API 24 compatibility (readBoolean requires API 29)
+        this.isInitialized = in.readInt() != 0;
+        this.isGyroScaled = in.readInt() != 0;
+
+        // Reconstruct synchronized list
+        List<Sprite> spriteList = new ArrayList<>();
+        in.readList(spriteList, Sprite.class.getClassLoader());
+        this.sprites = Collections.synchronizedList(spriteList);
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(sceneName);
+        dest.writeFloat(xFocus);
+        // Use writeInt instead of writeBoolean for API 24 compatibility (writeBoolean requires API 29)
+        dest.writeInt(isInitialized ? 1 : 0);
+        dest.writeInt(isGyroScaled ? 1 : 0);
+        dest.writeList(new ArrayList<>(sprites));
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator<Scene> CREATOR = new Creator<Scene>() {
+        @Override
+        public Scene createFromParcel(Parcel in) {
+            return new Scene(in);
+        }
+
+        @Override
+        public Scene[] newArray(int size) {
+            return new Scene[size];
+        }
+    };
 }

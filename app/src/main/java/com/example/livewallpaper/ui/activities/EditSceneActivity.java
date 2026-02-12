@@ -468,7 +468,10 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 popupMenu.getMenu().findItem(R.id.menu_enable_gyro).setChecked(MotionConfig.isGyroMotionEnabled());
 
                 popupMenu.setOnMenuItemClickListener(item -> {
-                    if (item.getItemId() == R.id.menu_save) {
+                    if (item.getItemId() == R.id.menu_preview) {
+                        startFullscreenPreview();
+                        return true;
+                    } else if (item.getItemId() == R.id.menu_save) {
                         String currentSceneName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
                         // Pass a callback to be executed after successful save
                         sceneFileManager.showSaveDialog(currentSceneName, () -> {
@@ -491,6 +494,19 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 popupMenu.show();
             });
         }
+    }
+
+    private void startFullscreenPreview() {
+        if (renderer == null || renderer.getCurrentScene() == null) {
+            Toast.makeText(this, "Error: Scene not loaded", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(this, FullscreenPreviewActivity.class);
+        // Pass the current scene data instead of loading from file
+        // This ensures the preview shows all current edits
+        intent.putExtra(FullscreenPreviewActivity.EXTRA_SCENE_DATA, renderer.getCurrentScene());
+        startActivity(intent);
     }
 
     private void setupSpriteMenuButton() {

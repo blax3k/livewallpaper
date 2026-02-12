@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fullscreen_preview_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- Full screen GLSurfaceView that fills entire screen -->
+    <android.opengl.GLSurfaceView
+        android:id="@+id/fullscreen_preview_gl_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Close button in top right corner -->
+    <ImageButton
+        android:id="@+id/fullscreen_close_button"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/close"
+        android:scaleType="centerInside"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:tint="@android:color/white" />
+
+</FrameLayout>
