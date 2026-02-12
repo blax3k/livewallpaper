@@ -24,7 +24,6 @@ public class TextureCoordinateCalculator {
     public static class TextureCoordinateData {
         public float textureAspectRatio;
         public float spriteAspectRatio;
-        public float growthScale;
         public float textureWidthInWorld;
         public float textureHeightInWorld;
         public float uniformScale;
@@ -128,8 +127,7 @@ public class TextureCoordinateCalculator {
                     originalTexCoordinates[6] + "," + originalTexCoordinates[7] + "]");
         }
 
-        // Step 1: Calculate growth and aspect ratios
-        data.growthScale = calculateGrowthScale(width, height, originalWidth, originalHeight);
+        // Step 1: Calculate aspect ratios
         data.textureAspectRatio = calculateTextureAspectRatio(originalTexCoordinates);
         data.spriteAspectRatio = width / height;
 
@@ -237,17 +235,6 @@ public class TextureCoordinateCalculator {
         return data;
     }
 
-    /**
-     * Calculate growth scale from sprite dimension changes.
-     * Uses the maximum of width and height growth for uniform scaling.
-     */
-    public static float calculateGrowthScale(
-            float width, float height,
-            float originalWidth, float originalHeight) {
-        float widthGrowth = width / originalWidth;
-        float heightGrowth = height / originalHeight;
-        return Math.max(widthGrowth, heightGrowth);
-    }
 
     /**
      * Calculate texture aspect ratio from original texture coordinates.
