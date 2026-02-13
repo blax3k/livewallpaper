@@ -60,6 +60,7 @@ public class SceneListAdapter extends ArrayAdapter<String> {
         TextView sceneNameTextView = convertView.findViewById(R.id.scene_file_name);
         TextView sceneTimeOfDayTextView = convertView.findViewById(R.id.scene_time_of_day);
         Button optionsButton = convertView.findViewById(R.id.scene_options_button);
+        View rootView = convertView.findViewById(R.id.scene_item_root);
 
         String fileName = sceneFileNames.get(position);
         sceneNameTextView.setText(fileName);
@@ -77,8 +78,9 @@ public class SceneListAdapter extends ArrayAdapter<String> {
             sceneTimeOfDayTextView.setVisibility(View.GONE);
         }
 
-        // Set up click listener for the text (to open edit activity)
-        sceneNameTextView.setOnClickListener(v -> {
+        // Set up click listener on the entire root row (to open edit activity)
+        // This makes the entire row tappable and provides visual feedback
+        rootView.setOnClickListener(v -> {
             if (interactionListener != null) {
                 interactionListener.onSceneSelected(position, fileName);
             }
@@ -92,7 +94,7 @@ public class SceneListAdapter extends ArrayAdapter<String> {
         });
 
         // Set up long-press listener on the entire item
-        convertView.setOnLongClickListener(v -> {
+        rootView.setOnLongClickListener(v -> {
             if (interactionListener != null) {
                 interactionListener.onOptionsMenuRequested(position, fileName, optionsButton);
                 return true;

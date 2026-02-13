@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scene_item_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
     android:orientation="horizontal"
-    android:padding="16dp"
-    android:layout_marginBottom="8dp">
+    android:padding="4dp">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -23,9 +26,9 @@
             android:id="@+id/scene_time_of_day"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
+            android:layout_marginTop="4dp"
             android:textColor="@android:color/darker_gray"
-            android:layout_marginTop="4dp" />
+            android:textSize="12sp" />
 
     </LinearLayout>
 
@@ -33,12 +36,12 @@
         android:id="@+id/scene_options_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="⋮"
-        android:textSize="20sp"
-        android:padding="8dp"
         android:layout_marginStart="16dp"
         android:background="?attr/selectableItemBackground"
         android:focusable="false"
-        android:focusableInTouchMode="false" />
+        android:focusableInTouchMode="false"
+        android:padding="8dp"
+        android:text="⋮"
+        android:textSize="20sp" />
 
 </LinearLayout>
