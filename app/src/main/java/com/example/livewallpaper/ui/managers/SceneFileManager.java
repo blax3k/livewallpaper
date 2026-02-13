@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Manages scene file operations using persistent URI permissions.
@@ -115,11 +117,39 @@ public class SceneFileManager {
     }
 
     /**
-     * Load all available .json files from the configured scenes folder.
-     * If no folder is configured, copies all scene files from the app bundle to a fallback directory.
+     * Load all scene files and cache their metadata (filename and timeOfDay).
+     * This is more efficient than loading individual files on-demand.
      *
-     * @return array of scene filenames, sorted alphabetically
+     * @return a Map of filename -> timeOfDay string (e.g., "DAWN", "DAY", "SUNSET", "NIGHT")
      */
+    public Map<String, String> loadSceneMetadata() {
+        Map<String, String> sceneMetadata = new HashMap<>();
+        Gson gson = new Gson();
+
+        // Load from fallback directory (always available)
+        File fallbackDir = getFallbackScenesDirectory();
+        File[] sceneFiles = fallbackDir.listFiles((dir, name) -> name.endsWith(".json"));
+
+        if (sceneFiles != null) {
+            for (File sceneFile : sceneFiles) {
+                try (java.io.FileReader reader = new java.io.FileReader(sceneFile)) {
+                    SceneData sceneData = gson.fromJson(reader, SceneData.class);
+                    String timeOfDayStr = (sceneData != null && sceneData.timeOfDay != null)
+                        ? sceneData.timeOfDay.toString()
+                        : "DAY"; // Default to DAY if not found
+                    sceneMetadata.put(sceneFile.getName(), timeOfDayStr);
+                    Log.d(TAG, "Loaded metadata for " + sceneFile.getName() + ": " + timeOfDayStr);
+                } catch (IOException e) {
+                    Log.w(TAG, "Error loading metadata for scene " + sceneFile.getName() + ": " + e.getMessage());
+                    // Put a default value if loading fails
+                    sceneMetadata.put(sceneFile.getName(), "DAY");
+                }
+            }
+        }
+
+        Log.d(TAG, "Loaded metadata for " + sceneMetadata.size() + " scenes");
+        return sceneMetadata;
+    }
     public String[] loadAvailableSceneFiles() {
         // If no directory is configured, use fallback directory and copy from bundle
         if (scenesDirectoryUri == null) {

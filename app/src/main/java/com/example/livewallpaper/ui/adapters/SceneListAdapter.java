@@ -1,7 +1,6 @@
 package com.example.livewallpaper.ui.adapters;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,21 +11,15 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.scene.SceneData;
-import com.example.livewallpaper.scene.SceneLoader;
-import com.google.gson.Gson;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public class SceneListAdapter extends ArrayAdapter<String> {
-    private static final String TAG = "SceneListAdapter";
     private final Context context;
     private final List<String> sceneFileNames;
     private OnSceneInteractionListener interactionListener;
-    private String persistentScenesPath;
+    private Map<String, String> sceneMetadata; // Cache of filename -> timeOfDay
 
     /**
      * Callback interface for scene list interactions
@@ -43,10 +36,10 @@ public class SceneListAdapter extends ArrayAdapter<String> {
     }
 
     /**
-     * Set the path to persistent scenes directory for loading scene data
+     * Set the cached scene metadata (filename -> timeOfDay map)
      */
-    public void setPersistentScenesPath(String path) {
-        this.persistentScenesPath = path;
+    public void setSceneMetadata(Map<String, String> metadata) {
+        this.sceneMetadata = metadata;
     }
 
     /**
@@ -71,11 +64,15 @@ public class SceneListAdapter extends ArrayAdapter<String> {
         String fileName = sceneFileNames.get(position);
         sceneNameTextView.setText(fileName);
 
-        // Load and display the timeOfDay for this scene
-        String timeOfDayText = loadTimeOfDayForScene(fileName);
-        if (timeOfDayText != null && !timeOfDayText.isEmpty()) {
-            sceneTimeOfDayTextView.setText("Time: " + timeOfDayText);
-            sceneTimeOfDayTextView.setVisibility(View.VISIBLE);
+        // Display the cached timeOfDay from metadata
+        if (sceneMetadata != null && sceneMetadata.containsKey(fileName)) {
+            String timeOfDay = sceneMetadata.get(fileName);
+            if (timeOfDay != null && !timeOfDay.isEmpty()) {
+                sceneTimeOfDayTextView.setText("Time: " + timeOfDay);
+                sceneTimeOfDayTextView.setVisibility(View.VISIBLE);
+            } else {
+                sceneTimeOfDayTextView.setVisibility(View.GONE);
+            }
         } else {
             sceneTimeOfDayTextView.setVisibility(View.GONE);
         }
@@ -104,39 +101,6 @@ public class SceneListAdapter extends ArrayAdapter<String> {
         });
 
         return convertView;
-    }
-
-    /**
-     * Load the timeOfDay value for a scene from its JSON file
-     */
-    private String loadTimeOfDayForScene(String fileName) {
-        try {
-            Gson gson = new Gson();
-            SceneData sceneData;
-
-            if (persistentScenesPath != null) {
-                // Load from persistent storage
-                File sceneFile = new File(persistentScenesPath, fileName);
-                if (sceneFile.exists()) {
-                    try (FileReader reader = new FileReader(sceneFile)) {
-                        sceneData = gson.fromJson(reader, SceneData.class);
-                    }
-                } else {
-                    return null;
-                }
-            } else {
-                // If no persistent path is set, return null (can't load from assets easily)
-                return null;
-            }
-
-            if (sceneData != null && sceneData.timeOfDay != null) {
-                return sceneData.timeOfDay.toString();
-            }
-        } catch (IOException e) {
-            Log.w(TAG, "Error loading timeOfDay for scene " + fileName + ": " + e.getMessage());
-        }
-
-        return null;
     }
 }
 

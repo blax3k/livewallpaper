@@ -23,6 +23,7 @@ import com.example.livewallpaper.ui.adapters.SceneListAdapter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SceneListActivity extends AppCompatActivity {
     private static final String TAG = "SceneListActivity";
@@ -36,11 +37,16 @@ public class SceneListActivity extends AppCompatActivity {
     private final ActivityResultLauncher<Intent> editSceneActivityLauncher =
         registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == RESULT_OK) {
-                // Scene was saved in EditSceneActivity, refresh the list
+                // Scene was saved in EditSceneActivity, refresh the list and metadata
                 Log.d(TAG, "Scene was saved, refreshing scene list");
                 sceneFileNames = loadSceneFileNames();
                 adapter.clear();
                 adapter.addAll(sceneFileNames);
+
+                // Reload metadata cache since scenes may have changed
+                var sceneMetadata = sceneFileManager.loadSceneMetadata();
+                adapter.setSceneMetadata(sceneMetadata);
+
                 adapter.notifyDataSetChanged();
 
                 // Also refresh the wallpaper since scene was modified
@@ -72,11 +78,9 @@ public class SceneListActivity extends AppCompatActivity {
             sceneFileNames = loadSceneFileNames();
             adapter = new SceneListAdapter(this, sceneFileNames);
 
-            // Set the persistent scenes path for loading timeOfDay data
-            String scenesPath = sceneFileManager.getPersistentScenesPath();
-            if (scenesPath != null) {
-                adapter.setPersistentScenesPath(scenesPath);
-            }
+            // Load all scene metadata at once for efficient caching
+            var sceneMetadata = sceneFileManager.loadSceneMetadata();
+            adapter.setSceneMetadata(sceneMetadata);
 
             scenesList.setAdapter(adapter);
 
