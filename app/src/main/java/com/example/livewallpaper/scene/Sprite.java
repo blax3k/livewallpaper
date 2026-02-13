@@ -668,8 +668,8 @@ public class Sprite implements Parcelable {
             return null;
         }
         float[] texCoords = new float[8];
-        texCoordBuffer.position(0);
         texCoordBuffer.get(texCoords);
+        texCoordBuffer.position(0);  // Reset position for rendering
         return texCoords;
     }
 
