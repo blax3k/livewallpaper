@@ -29,8 +29,6 @@ import androidx.appcompat.widget.PopupMenu;
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.SceneManager;
 import com.example.livewallpaper.scene.Sprite;
-import com.example.livewallpaper.scene.SpriteData;
-import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
 import com.example.livewallpaper.ui.adapters.SpritesDropdownAdapter;
@@ -471,6 +469,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                     if (item.getItemId() == R.id.menu_preview) {
                         startFullscreenPreview();
                         return true;
+                    } else if (item.getItemId() == R.id.menu_set_time) {
+                        showSetTimeDialog();
+                        return true;
                     } else if (item.getItemId() == R.id.menu_save) {
                         String currentSceneName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
                         // Pass a callback to be executed after successful save
@@ -778,6 +779,85 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
         builder.show();
+    }
+
+    /**
+     * Show dialog to set the time of day for the scene.
+     */
+    private void showSetTimeDialog() {
+        if (renderer == null || renderer.getCurrentScene() == null) {
+            Toast.makeText(this, "Error: Scene not loaded", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Set Time of Day");
+
+        // Get the current time of day value
+        com.example.livewallpaper.scene.SceneData.TimeOfDay currentTimeOfDay =
+            renderer.getCurrentScene().timeOfDay;
+
+        // Create the time of day options
+        com.example.livewallpaper.scene.SceneData.TimeOfDay[] timeValues =
+            com.example.livewallpaper.scene.SceneData.TimeOfDay.values();
+        String[] timeDisplayNames = new String[timeValues.length];
+        int currentSelection = 0;
+
+        for (int i = 0; i < timeValues.length; i++) {
+            timeDisplayNames[i] = timeValues[i].toString();
+            if (timeValues[i] == currentTimeOfDay) {
+                currentSelection = i;
+            }
+        }
+
+        // Create a spinner-like selector using a single choice list dialog
+        builder.setSingleChoiceItems(timeDisplayNames, currentSelection, (dialog, which) -> {
+            // Selection is handled in the positive button click
+        });
+
+        final int[] selectedIndex = {currentSelection};
+        builder.setOnDismissListener(dialogInterface -> {
+            // Store the selected index when dialog is dismissed
+        });
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            // Get the selected time of day
+            com.example.livewallpaper.scene.SceneData.TimeOfDay selectedTime =
+                timeValues[selectedIndex[0]];
+
+            // Update the scene's time of day
+            renderer.getCurrentScene().timeOfDay = selectedTime;
+            Log.d(TAG, "Scene time of day changed to: " + selectedTime);
+
+            Toast.makeText(EditSceneActivity.this,
+                "Time of day set to " + selectedTime,
+                Toast.LENGTH_SHORT).show();
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            // Do nothing, just close the dialog
+        });
+
+        // To properly capture the selected item, we need to create the dialog and
+        // override the click listener to capture the selection
+        AlertDialog dialog = builder.create();
+        dialog.setOnShowListener(dialogInterface -> {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                int selectedItem = ((AlertDialog) dialogInterface).getListView().getCheckedItemPosition();
+                if (selectedItem >= 0) {
+                    selectedIndex[0] = selectedItem;
+                    com.example.livewallpaper.scene.SceneData.TimeOfDay selectedTime =
+                        timeValues[selectedIndex[0]];
+                    renderer.getCurrentScene().timeOfDay = selectedTime;
+                    Log.d(TAG, "Scene time of day changed to: " + selectedTime);
+                    Toast.makeText(EditSceneActivity.this,
+                        "Time of day set to " + selectedTime,
+                        Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                }
+            });
+        });
+        dialog.show();
     }
 
     /**

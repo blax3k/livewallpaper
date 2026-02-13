@@ -22,6 +22,8 @@ public class Scene implements Parcelable {
     private boolean isInitialized = false;
     private boolean isGyroScaled = false;
     private float xFocus = 0.5f; // Default to center; represents the x-position to focus on (0.0 = left, 0.5 = center, 1.0 = right)
+    public SceneData.TimeOfDay timeOfDay = SceneData.TimeOfDay.DAY; // Time of day for this scene
+
     public Scene(String sceneName) {
         this.sceneName = sceneName;
         // Use Collections.synchronizedList to make the list thread-safe
@@ -48,6 +50,20 @@ public class Scene implements Parcelable {
      */
     public void setXFocus(float xFocus) {
         this.xFocus = xFocus;
+    }
+
+    /**
+     * Get the time of day for this scene.
+     */
+    public SceneData.TimeOfDay getTimeOfDay() {
+        return timeOfDay;
+    }
+
+    /**
+     * Set the time of day for this scene.
+     */
+    public void setTimeOfDay(SceneData.TimeOfDay timeOfDay) {
+        this.timeOfDay = timeOfDay;
     }
 
     /**
@@ -330,6 +346,10 @@ public class Scene implements Parcelable {
         this.isInitialized = in.readInt() != 0;
         this.isGyroScaled = in.readInt() != 0;
 
+        // Read timeOfDay enum
+        String timeOfDayStr = in.readString();
+        this.timeOfDay = timeOfDayStr != null ? SceneData.TimeOfDay.valueOf(timeOfDayStr) : SceneData.TimeOfDay.DAY;
+
         // Reconstruct synchronized list
         List<Sprite> spriteList = new ArrayList<>();
         in.readList(spriteList, Sprite.class.getClassLoader());
@@ -343,6 +363,8 @@ public class Scene implements Parcelable {
         // Use writeInt instead of writeBoolean for API 24 compatibility (writeBoolean requires API 29)
         dest.writeInt(isInitialized ? 1 : 0);
         dest.writeInt(isGyroScaled ? 1 : 0);
+        // Write timeOfDay enum as string
+        dest.writeString(timeOfDay != null ? timeOfDay.toString() : SceneData.TimeOfDay.DAY.toString());
         dest.writeList(new ArrayList<>(sprites));
     }
 

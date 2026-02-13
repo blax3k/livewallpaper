@@ -4,6 +4,9 @@
         android:id="@+id/menu_preview"
         android:title="@string/preview" />
     <item
+        android:id="@+id/menu_set_time"
+        android:title="Set Time" />
+    <item
         android:id="@+id/menu_save"
         android:title="Save" />
     <item

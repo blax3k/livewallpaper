@@ -103,6 +103,18 @@ public class SceneFileManager {
     }
 
     /**
+     * Get the path to the persistent scenes directory for loading scene data.
+     * Returns the fallback directory if no custom directory is configured.
+     *
+     * @return the absolute path to the scenes directory, or null if it cannot be determined
+     */
+    public String getPersistentScenesPath() {
+        // If a custom directory is configured, we can't easily get a File path from the URI
+        // So we return the fallback directory path which is always available
+        return getFallbackScenesDirectory().getAbsolutePath();
+    }
+
+    /**
      * Load all available .json files from the configured scenes folder.
      * If no folder is configured, copies all scene files from the app bundle to a fallback directory.
      *
@@ -639,6 +651,7 @@ public class SceneFileManager {
         // Create SceneData object with current sprite values
         SceneData sceneData = new SceneData();
         sceneData.xFocus = scene.getXFocus();
+        sceneData.timeOfDay = scene.getTimeOfDay();
 
         // Create SpriteData array from current sprites
         List<SpriteData> spriteDatas = new ArrayList<>();
@@ -702,6 +715,7 @@ public class SceneFileManager {
         // Create SceneData object with current sprite values
         SceneData sceneData = new SceneData();
         sceneData.xFocus = scene.getXFocus();
+        sceneData.timeOfDay = scene.getTimeOfDay();
 
         // Create SpriteData array from current sprites
         List<SpriteData> spriteDatas = new ArrayList<>();

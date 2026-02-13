@@ -71,6 +71,13 @@ public class SceneListActivity extends AppCompatActivity {
         if (scenesList != null) {
             sceneFileNames = loadSceneFileNames();
             adapter = new SceneListAdapter(this, sceneFileNames);
+
+            // Set the persistent scenes path for loading timeOfDay data
+            String scenesPath = sceneFileManager.getPersistentScenesPath();
+            if (scenesPath != null) {
+                adapter.setPersistentScenesPath(scenesPath);
+            }
+
             scenesList.setAdapter(adapter);
 
             // Set up interaction listener for options menu and scene selection

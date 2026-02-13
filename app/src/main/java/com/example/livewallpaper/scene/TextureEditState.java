@@ -84,32 +84,6 @@ public class TextureEditState {
 
     /**
      * Offset the texture coordinates by the given amounts, with clamping.
-     * Returns the clamped offset values.
-     *
-     * @param deltaU delta to apply to U offset
-     * @param deltaV delta to apply to V offset
-     * @param width current sprite width
-     * @param height current sprite height
-     * @param originalWidth original sprite width
-     * @param originalHeight original sprite height
-     * @param textureScaleFactor texture scale factor in world space
-     */
-    public void offsetTextureCoordinates(float deltaU, float deltaV, float width, float height,
-                                         float originalWidth, float originalHeight, float textureScaleFactor) {
-        float[] clamped = TextureCoordinateCalculator.clampTextureOffset(
-                textureOffsetU, textureOffsetV,
-                deltaU, deltaV,
-                width, height,
-                originalWidth, originalHeight,
-                textureScale, textureScaleFactor
-        );
-        this.textureOffsetU = clamped[0];
-        this.textureOffsetV = clamped[1];
-        Log.d(TAG, "Texture offset adjusted - U: " + this.textureOffsetU + ", V: " + this.textureOffsetV);
-    }
-
-    /**
-     * Offset the texture coordinates by the given amounts, with clamping.
      * This version accepts original texture coordinates for proper aspect ratio handling.
      *
      * @param deltaU delta to apply to U offset
