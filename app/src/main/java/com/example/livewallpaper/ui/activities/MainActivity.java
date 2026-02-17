@@ -24,6 +24,9 @@ public class MainActivity extends AppCompatActivity {
             super.onCreate(savedInstanceState);
             Log.d(TAG, "onCreate called");
 
+            // Initialize MotionConfig with persistent storage
+            MotionConfig.initialize(this);
+
             // Initialize persistent scenes folder on app startup
             initializePersistentScenes();
 
