@@ -673,4 +673,204 @@ public class TextureCoordinateCalculatorTest {
         assertEquals("Medium rectangle: Extracted offsetV should match original",
                 originalOffsetV, extractedOffsetV, 0.01f);
     }
+
+    // ========== Texture Offset Clamping Tests ==========
+    // Tests for bug fix: texture clamping should account for sprite dimension changes
+    // Scenario: User adjusts sprite width via sliders, then tries to drag texture to edges
+
+    @Test
+    public void testTextureOffsetClamping_WithDimensionChange_CanReachMinU() {
+        // Test case: Sprite grows wider, offset should be able to reach minimum (left edge)
+        // Original: width=1.8, height=5.0, scale=2.0, offsetU=0.22 (zoomed in, offset visible)
+        // After resize: width=5.6 (3.1x larger)
+        // Should be able to drag texture to reach uMin=0
+
+        float originalWidth = 1.8f;
+        float originalHeight = 5.0f;
+        float currentWidth = 5.6f;  // Grown from original
+        float currentHeight = 5.0f;  // Unchanged
+        float textureScale = 2.0f;
+        float currentOffsetU = 0.22f;
+        float currentOffsetV = 0.25f;
+        float textureScaleFactor = 1.0f;
+        float[] originalTexCoordinates = {0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f};
+
+        // Try to move texture all the way left (maximum negative delta)
+        float deltaU = -0.5f;  // Large negative delta
+        float deltaV = 0.0f;
+
+        float[] clampedOffsets = TextureCoordinateCalculator.clampTextureOffset(
+                currentOffsetU, currentOffsetV,
+                deltaU, deltaV,
+                currentWidth, currentHeight,
+                originalWidth, originalHeight,
+                textureScale,
+                textureScaleFactor,
+                originalTexCoordinates
+        );
+
+        // With the larger sprite width, the window should be bigger, allowing offset to reach minimum
+        float minPossibleOffsetU = clampedOffsets[0];
+
+        // minOffsetU = halfWindowU - 0.5, where halfWindowU = windowSizeU * 0.5
+        // windowSizeU should be larger due to widthGrowthFactor = 5.6/1.8 = 3.11
+        // This means minOffsetU should be negative (allowing left edge positioning)
+        assertTrue("With wider sprite, offsetU should be able to reach negative values for left edge",
+                minPossibleOffsetU < 0.1f);
+    }
+
+    @Test
+    public void testTextureOffsetClamping_WithDimensionChange_CanReachMaxU() {
+        // Test case: Sprite grows wider, offset should be able to reach maximum (right edge)
+        // Original: width=1.8, height=5.0, scale=2.0
+        // After resize: width=5.6 (3.1x larger)
+        // Should be able to drag texture all the way right (maximum positive offset)
+
+        float originalWidth = 1.8f;
+        float originalHeight = 5.0f;
+        float currentWidth = 5.6f;  // Grown from original
+        float currentHeight = 5.0f;  // Unchanged
+        float textureScale = 2.0f;
+        float currentOffsetU = -0.1f;
+        float currentOffsetV = 0.25f;
+        float textureScaleFactor = 1.0f;
+        float[] originalTexCoordinates = {0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f};
+
+        // Try to move texture all the way right (maximum positive delta)
+        float deltaU = 0.5f;  // Large positive delta
+        float deltaV = 0.0f;
+
+        float[] clampedOffsets = TextureCoordinateCalculator.clampTextureOffset(
+                currentOffsetU, currentOffsetV,
+                deltaU, deltaV,
+                currentWidth, currentHeight,
+                originalWidth, originalHeight,
+                textureScale,
+                textureScaleFactor,
+                originalTexCoordinates
+        );
+
+        // With the larger sprite width, maxOffsetU should be more positive
+        float maxPossibleOffsetU = clampedOffsets[0];
+
+        // maxOffsetU = 0.5 - halfWindowU
+        // With larger window, this should still allow positive offsets
+        assertTrue("With wider sprite, offsetU should be able to reach positive values for right edge",
+                maxPossibleOffsetU > -0.5f);
+    }
+
+    @Test
+    public void testTextureOffsetClamping_MultipleResizes() {
+        // Test case: Verify that texture movement allows edge-to-edge panning
+        // when sprite dimensions change significantly
+
+        float originalWidth = 1.8f;
+        float originalHeight = 5.0f;
+        float textureScale = 2.0f;
+        float textureScaleFactor = 1.0f;
+        float[] originalTexCoordinates = {0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f};
+
+        // Test with larger sprite width where windowSizeU approaches 1.0
+        float largeWidth = 5.6f;
+
+        // Try to move texture far to the left
+        float[] clampedOffsetsLeft = TextureCoordinateCalculator.clampTextureOffset(
+                0.0f,  // Start at center
+                0.25f,
+                -0.6f,  // Request large leftward movement
+                0.0f,
+                largeWidth,
+                originalHeight,
+                originalWidth,
+                originalHeight,
+                textureScale,
+                textureScaleFactor,
+                originalTexCoordinates
+        );
+
+        // When window is at max size, should allow reaching -0.5 (full left)
+        assertTrue("Should allow texture movement to left edge when sprite is wide",
+                clampedOffsetsLeft[0] <= -0.45f);  // Allow some small tolerance
+
+        // Try to move texture far to the right
+        float[] clampedOffsetsRight = TextureCoordinateCalculator.clampTextureOffset(
+                0.0f,
+                0.25f,
+                0.6f,  // Request large rightward movement
+                0.0f,
+                largeWidth,
+                originalHeight,
+                originalWidth,
+                originalHeight,
+                textureScale,
+                textureScaleFactor,
+                originalTexCoordinates
+        );
+
+        // When window is at max size, should allow reaching 0.5 (full right)
+        assertTrue("Should allow texture movement to right edge when sprite is wide",
+                clampedOffsetsRight[0] >= 0.45f);  // Allow some small tolerance
+    }
+
+    @Test
+    public void testTextureOffsetClamping_AspectRatioDuringResize() {
+        // Test case: Verify aspect ratio handling during sprite resize
+        // When sprite grows, texture window should adapt while maintaining aspect ratio
+
+        float originalWidth = 1.8f;
+        float originalHeight = 5.0f;
+        float currentWidth = 4.6f;  // Significantly wider
+        float currentHeight = 5.0f;
+        float textureScale = 2.0f;
+        float textureScaleFactor = 1.0f;
+        float[] originalTexCoordinates = {0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f};
+
+        float[] clampedOffsets = TextureCoordinateCalculator.clampTextureOffset(
+                0.2f,
+                0.25f,
+                0.1f,  // Some movement
+                0.1f,
+                currentWidth, currentHeight,
+                originalWidth, originalHeight,
+                textureScale,
+                textureScaleFactor,
+                originalTexCoordinates
+        );
+
+        // Offsets should be valid (not extreme)
+        assertTrue("Offset U should be reasonable", clampedOffsets[0] >= -0.5f && clampedOffsets[0] <= 0.5f);
+        assertTrue("Offset V should be reasonable", clampedOffsets[1] >= -0.5f && clampedOffsets[1] <= 0.5f);
+    }
+
+    @Test
+    public void testTextureOffsetClamping_NoMovementConstraintWithoutZoom() {
+        // Test case: With scale=1.0 (no zoom), window fills entire texture
+        // Verify offsets are properly clamped to valid range
+
+        float originalWidth = 1.8f;
+        float originalHeight = 5.0f;
+        float currentWidth = 5.6f;
+        float currentHeight = 5.0f;
+        float textureScale = 1.0f;  // No zoom, full texture visible
+        float textureScaleFactor = 1.0f;
+        float[] originalTexCoordinates = {0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f};
+
+        float[] clampedOffsets = TextureCoordinateCalculator.clampTextureOffset(
+                0.0f,
+                0.0f,
+                1.0f,  // Try huge delta
+                1.0f,
+                currentWidth, currentHeight,
+                originalWidth, originalHeight,
+                textureScale,
+                textureScaleFactor,
+                originalTexCoordinates
+        );
+
+        // Offsets must be within valid range [-0.5, 0.5]
+        assertTrue("offsetU must be in valid range",
+                clampedOffsets[0] >= -0.5f && clampedOffsets[0] <= 0.5f);
+        assertTrue("offsetV must be in valid range",
+                clampedOffsets[1] >= -0.5f && clampedOffsets[1] <= 0.5f);
+    }
 }

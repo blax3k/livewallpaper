@@ -439,20 +439,38 @@ public class TextureCoordinateCalculator {
             }
         }
 
-        // Calculate how sprite dimensions relate to texture dimensions
-        float scaleByWidth = width / textureWidthInWorld;
-        float scaleByHeight = height / textureHeightInWorld;
+        // Calculate growth factors based on CURRENT sprite dimensions vs original dimensions
+        // This allows proper adjustment of texture visibility window when sprite dimensions change
+        float widthGrowthFactor = width / originalWidth;
+        float heightGrowthFactor = height / originalHeight;
 
         // Base window size from zoom
         float baseWindowSize = 1.0f / textureScale;
 
-        // Calculate window for each dimension independently
-        float windowSizeU = baseWindowSize * scaleByWidth * textureAspectRatio;
-        float windowSizeV = baseWindowSize * scaleByHeight;
+        // Calculate window for each dimension independently, accounting for growth
+        float windowSizeU = baseWindowSize * widthGrowthFactor * textureAspectRatio;
+        float windowSizeV = baseWindowSize * heightGrowthFactor;
 
-        // Clamp
+        // Clamp window size to max 1.0 (can't see more than the full texture)
         windowSizeU = Math.min(1.0f, windowSizeU);
         windowSizeV = Math.min(1.0f, windowSizeV);
+
+        // Handle aspect ratio adjustments when clamped (same logic as calculateTextureCoordinates)
+        boolean uIsClamped = (windowSizeU >= 1.0f);
+        boolean vIsClamped = (windowSizeV >= 1.0f);
+        float spriteAspectRatio = width / height;
+
+        if (uIsClamped && spriteAspectRatio > textureAspectRatio) {
+            // U is at maximum, sprite is wider than texture aspect ratio
+            // Adjust V to maintain texture aspect ratio
+            windowSizeV = 1.0f / spriteAspectRatio * textureAspectRatio;
+            windowSizeV = Math.min(1.0f, windowSizeV);
+        } else if (vIsClamped && spriteAspectRatio < textureAspectRatio) {
+            // V is at maximum, sprite is taller than texture aspect ratio
+            // Adjust U to maintain texture aspect ratio
+            windowSizeU = 1.0f * spriteAspectRatio / textureAspectRatio;
+            windowSizeU = Math.min(1.0f, windowSizeU);
+        }
 
         // Apply deltas
         float newOffsetU = currentOffsetU + deltaU;
@@ -465,6 +483,12 @@ public class TextureCoordinateCalculator {
         float minOffsetU = halfWindowU - 0.5f;  // Ensures window left edge >= 0
         float maxOffsetU = 0.5f - halfWindowU;  // Ensures window right edge <= 1
 
+        // When windowSizeU >= 1.0 (showing full texture), allow full movement range
+        if (windowSizeU >= 0.99f) {  // Use 0.99 to account for floating point precision
+            minOffsetU = -0.5f;
+            maxOffsetU = 0.5f;
+        }
+
         if (newOffsetU < minOffsetU) {
             newOffsetU = minOffsetU;
         } else if (newOffsetU > maxOffsetU) {
@@ -475,6 +499,12 @@ public class TextureCoordinateCalculator {
         float halfWindowV = windowSizeV * 0.5f;
         float minOffsetV = halfWindowV - 0.5f;  // Ensures window top edge >= 0
         float maxOffsetV = 0.5f - halfWindowV;  // Ensures window bottom edge <= 1
+
+        // When windowSizeV >= 1.0 (showing full texture), allow full movement range
+        if (windowSizeV >= 0.99f) {  // Use 0.99 to account for floating point precision
+            minOffsetV = -0.5f;
+            maxOffsetV = 0.5f;
+        }
 
         if (newOffsetV < minOffsetV) {
             newOffsetV = minOffsetV;
