@@ -184,6 +184,19 @@ public class Scene implements Parcelable {
     }
 
     /**
+     * Reset texture IDs for all sprites and clear initialization state.
+     * Used when reusing a preloaded scene so textures can be re-initialized.
+     * This should be called before using a scene from the preloaded pool.
+     */
+    public void resetForReuse() {
+        Log.d(TAG, "Resetting scene '" + sceneName + "' for reuse");
+        isInitialized = false;
+        for (Sprite sprite : sprites) {
+            sprite.setTextureId(0);
+        }
+    }
+
+    /**
      * Load the texture for a sprite through the TextureManager asynchronously.
      * The texture will be applied to the sprite via callback when ready.
      * Public version for external calls.

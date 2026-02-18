@@ -6,6 +6,9 @@ import android.util.Log;
 import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Manages scene switching logic, cycling between multiple scenes on demand.
  * Handles loading the next scene, applying gyro scaling, initiating transitions,
@@ -30,6 +33,10 @@ public class SceneSwitchManager {
     // Callback for gyro scaling application
     private GyroScalingCallback gyroCallback;
 
+    // Scene picker for time-of-day based scene selection
+    private ScenePicker scenePicker;
+    private List<Scene> loadedScenes;
+
     /**
      * Callback interface for applying gyro scaling to new scenes
      */
@@ -43,11 +50,35 @@ public class SceneSwitchManager {
         this.textureManager = new TextureManager();
         this.transitionManager = new SceneTransitionManager(textureManager);
         this.sceneFiles = sceneFileManager.loadAvailableSceneFiles();
+        this.loadedScenes = new ArrayList<>();
 
         // Set the persistent scenes path on the loader
         String persistentPath = sceneFileManager.getPersistentScenesDirectoryPath();
         if (persistentPath != null) {
             sceneLoader.setPersistentScenesPath(persistentPath);
+        }
+
+        // Preload all scene files into memory
+        loadAllScenes();
+
+        // Initialize scene picker with all loaded scenes
+        this.scenePicker = new ScenePicker(this.loadedScenes);
+        Log.d(TAG, "SceneSwitchManager initialized with " + loadedScenes.size() + " scenes");
+    }
+
+    /**
+     * Load all scene files into memory upfront.
+     * This ensures ScenePicker has all scenes available for selection.
+     */
+    private void loadAllScenes() {
+        for (String sceneFile : sceneFiles) {
+            try {
+                Scene scene = sceneLoader.loadScene(sceneFile);
+                loadedScenes.add(scene);
+                Log.d(TAG, "Preloaded scene: " + scene.getSceneName());
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to preload scene: " + sceneFile, e);
+            }
         }
     }
 
@@ -116,38 +147,28 @@ public class SceneSwitchManager {
      * @param currentScene The currently active scene to transition FROM
      */
     public void cycleToNextScene(Scene currentScene) {
-        if (sceneFiles.length == 0) {
-            Log.w(TAG, "No scene files available to cycle through");
+        if (loadedScenes.isEmpty()) {
+            Log.w(TAG, "No scenes available to cycle through");
             return;
         }
 
         // Ensure currentScene is set to what's actually being displayed
         this.currentScene = currentScene;
 
-        // Update index to match the current scene being displayed
-        String sceneName = currentScene.getSceneName();
-        for (int i = 0; i < sceneFiles.length; i++) {
-            String fileName = sceneFiles[i];
-            String fileNameWithoutExtension = fileName.endsWith(".json") ?
-                fileName.substring(0, fileName.length() - 5) : fileName;
+        // Use ScenePicker to select the next scene based on time of day
+        Scene newScene = scenePicker.getNextScene();
 
-            if (fileNameWithoutExtension.equals(sceneName)) {
-                currentSceneIndex = i;
-                break;
-            }
+        if(newScene.getSceneName().equals(currentScene.getSceneName()))
+        {
+            return;
         }
 
-        // Move to next scene index, wrapping around
-        currentSceneIndex = (currentSceneIndex + 1) % sceneFiles.length;
-        String nextSceneFile = sceneFiles[currentSceneIndex];
+        // Reset the preloaded scene so textures can be re-initialized
+        newScene.resetForReuse();
 
-        Log.d(TAG, "Cycling to next scene: " + nextSceneFile + " (index " + currentSceneIndex + ")");
+        Log.d(TAG, "Cycling to next scene: " + newScene.getSceneName());
 
         try {
-            // Load the next scene WITHOUT initializing textures yet
-            Scene newScene = sceneLoader.loadScene(nextSceneFile);
-            Log.d(TAG, "Loaded new scene: " + newScene.getSceneName() + " (textures not yet initialized)");
-
             // Apply gyro scaling if callback is set and gyro is currently active
             if (gyroCallback != null) {
                 gyroCallback.applyGyroScalingToNewScene(newScene);
@@ -158,7 +179,7 @@ public class SceneSwitchManager {
             transitionManager.startTransition(this.currentScene, newScene, context);
 
         } catch (Exception e) {
-            Log.e(TAG, "Failed to load new scene for transition", e);
+            Log.e(TAG, "Failed to start transition to new scene", e);
         }
     }
 
