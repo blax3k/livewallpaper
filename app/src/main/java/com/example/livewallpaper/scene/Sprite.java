@@ -818,6 +818,7 @@ public class Sprite implements Parcelable {
     /**
      * Set the texture coordinates directly from a float array.
      * This is the primary way to update texture coordinates - all texture state derives from these values.
+     * This method updates BOTH the buffer AND the original coordinates to keep them in sync.
      *
      * @param texCoords an array of 8 floats representing the texture coordinates
      */
@@ -829,6 +830,12 @@ public class Sprite implements Parcelable {
         texCoordBuffer.clear();
         texCoordBuffer.put(texCoords);
         texCoordBuffer.position(0);
+
+        // IMPORTANT: Also update originalTexCoordinates to keep them in sync
+        // This ensures that when texture coordinates are recalculated (e.g., in fullscreen preview),
+        // they use the correct baseline instead of stale coordinates
+        this.originalTexCoordinates = texCoords.clone();
+
         Log.d(TAG, "Texture coordinates updated");
     }
 
