@@ -219,7 +219,8 @@ public class SceneSwitchManager {
     /**
      * Reload the available scene files from disk.
      * Call this when the scene list has changed (e.g., after reset or delete operations).
-     * This updates the internal sceneFiles array to reflect the current state.
+     * This updates the internal sceneFiles array to reflect the current state,
+     * reloads all scenes into memory, and updates the ScenePicker.
      *
      * @param sceneFileManager the SceneFileManager to load scene files from
      */
@@ -229,6 +230,13 @@ public class SceneSwitchManager {
         // Reset index to 0 since scene list changed
         currentSceneIndex = 0;
 
-        Log.d(TAG, "Reloaded " + sceneFiles.length + " scene files");
+        // Clear and reload all scenes into memory
+        loadedScenes.clear();
+        loadAllScenes();
+
+        // Update ScenePicker with the newly loaded scenes
+        this.scenePicker = new ScenePicker(this.loadedScenes);
+
+        Log.d(TAG, "Reloaded " + sceneFiles.length + " scene files and refreshed " + loadedScenes.size() + " scenes in memory");
     }
 }

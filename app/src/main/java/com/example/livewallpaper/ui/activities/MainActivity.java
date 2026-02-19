@@ -52,6 +52,15 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "View Scenes button not found in layout!");
             }
 
+            Button reloadScenesButton = findViewById(R.id.btn_reload_scenes);
+            if (reloadScenesButton != null) {
+                Log.d(TAG, "Reload Scenes button found, setting click listener");
+                reloadScenesButton.setOnClickListener(v -> reloadScenes());
+                Log.d(TAG, "Reload Scenes button click listener set");
+            } else {
+                Log.e(TAG, "Reload Scenes button not found in layout!");
+            }
+
             Switch scrollToggle = findViewById(R.id.toggle_scroll_motion);
             if (scrollToggle != null) {
                 Log.d(TAG, "Scroll toggle switch found, setting listener");
@@ -112,6 +121,17 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e(TAG, "Error navigating to scenes: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to open scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void reloadScenes() {
+        try {
+            GLWallpaperService.refreshSceneList(this);
+            Log.d(TAG, "Scene reload requested");
+            Toast.makeText(this, "Scenes reloaded", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.e(TAG, "Error reloading scenes: " + e.getMessage(), e);
+            Toast.makeText(this, "Failed to reload scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

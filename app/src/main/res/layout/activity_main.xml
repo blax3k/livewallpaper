@@ -24,7 +24,14 @@
             android:id="@+id/btn_view_scenes"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/view_scenes" />
+            android:text="@string/view_scenes"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btn_reload_scenes"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reload_scenes" />
     </LinearLayout>
 
     <!-- Middle/Bottom: Motion Controls -->
