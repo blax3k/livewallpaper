@@ -814,14 +814,15 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
         }
 
         // Check if scene switch was requested (from UI thread) and perform it here on GL thread
-        if (sceneSwitchRequested && sceneSwitchManager != null) {
+        // Only proceed if no transition is already in progress
+        if (sceneSwitchRequested && sceneSwitchManager != null && !sceneSwitchManager.isTransitioning()) {
             sceneSwitchRequested = false;
             sceneSwitchManager.cycleToNextScene(currentScene);
             lastSceneChangeTimeMs = System.currentTimeMillis();
         }
 
         // Update scene transition (handles texture preload, crossfade, and scene switching)
-        if (sceneSwitchManager != null) {
+        if (sceneSwitchManager != null && sceneSwitchManager.isTransitioning()) {
             currentScene = sceneSwitchManager.updateTransition();
         }
 
@@ -962,10 +963,17 @@ public class SceneManager implements GLSurfaceView.Renderer, GLWallpaperRenderer
      * Called when a double tap gesture is detected on the wallpaper.
      * Requests a scene switch on the GL thread.
      * Only applies when SceneManager is used as a wallpaper renderer.
+     * Ignores the request if a transition is already in progress.
      */
     @Override
     public void onDoubleTap(float x, float y) {
         if (!isWallpaperMode) {
+            return;
+        }
+
+        // Prevent interrupting an ongoing transition
+        if (sceneSwitchManager != null && sceneSwitchManager.isTransitioning()) {
+            Log.d(TAG, "Double tap ignored: transition already in progress");
             return;
         }
 

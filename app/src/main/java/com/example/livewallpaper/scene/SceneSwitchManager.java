@@ -139,6 +139,15 @@ public class SceneSwitchManager {
         this.gyroCallback = callback;
     }
 
+    /**
+     * Check if a scene transition is currently in progress.
+     * Used to prevent interrupting an ongoing transition.
+     *
+     * @return true if a transition is active, false otherwise
+     */
+    public boolean isTransitioning() {
+        return transitionManager.isTransitioning();
+    }
 
     /**
      * Cycle to the next scene in the sequence.
@@ -156,7 +165,7 @@ public class SceneSwitchManager {
         this.currentScene = currentScene;
 
         // Use ScenePicker to select the next scene based on time of day
-        Scene newScene = scenePicker.getNextScene();
+        Scene newScene = scenePicker.getNextScene(currentScene);
 
         if(newScene.getSceneName().equals(currentScene.getSceneName()))
         {

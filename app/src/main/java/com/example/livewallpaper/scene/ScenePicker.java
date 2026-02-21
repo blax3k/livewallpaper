@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 /**
@@ -40,7 +41,7 @@ public class ScenePicker {
      *
      * @return the next scene to display
      */
-    public Scene getNextScene() {
+    public Scene getNextScene(Scene currentScene) {
         if (scenes.isEmpty()) {
             throw new IllegalStateException("No scenes available");
         }
@@ -51,7 +52,7 @@ public class ScenePicker {
         // Filter scenes to those matching the current time of day
         List<Scene> viableScenes = new ArrayList<>();
         for (Scene scene : scenes) {
-            if (scene.getTimeOfDay() == currentTimeOfDay) {
+            if (scene.getTimeOfDay() == currentTimeOfDay && !Objects.equals(scene.getSceneName(), currentScene.getSceneName())) {
                 viableScenes.add(scene);
             }
         }
