@@ -18,4 +18,5 @@
     <string name="sprite_name_must_be_unique">Name must be unique</string>
     <string name="preview">Preview</string>
     <string name="close">Close</string>
+    <string name="expand_indicator">Expand or collapse group</string>
 </resources>

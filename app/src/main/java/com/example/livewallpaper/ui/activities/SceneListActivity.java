@@ -7,7 +7,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ListView;
+import android.widget.ExpandableListView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
@@ -17,11 +17,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
+import com.example.livewallpaper.scene.SceneData;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
-import com.example.livewallpaper.ui.adapters.SceneListAdapter;
+import com.example.livewallpaper.ui.adapters.SceneListExpandableAdapter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,8 +32,12 @@ public class SceneListActivity extends AppCompatActivity {
 
     private SceneFileManager sceneFileManager;
     private List<String> sceneFileNames;
-    private SceneListAdapter adapter;
-    private ListView scenesList;
+    private SceneListExpandableAdapter adapter;
+    private ExpandableListView scenesList;
+
+    // Data structures for grouping scenes by TimeOfDay
+    private List<SceneData.TimeOfDay> timeOfDayGroups;
+    private Map<SceneData.TimeOfDay, List<String>> scenesGroupedByTimeOfDay;
 
     // Activity result launcher for opening EditSceneActivity
     private final ActivityResultLauncher<Intent> editSceneActivityLauncher =
@@ -40,14 +46,15 @@ public class SceneListActivity extends AppCompatActivity {
                 // Scene was saved in EditSceneActivity, refresh the list and metadata
                 Log.d(TAG, "Scene was saved, refreshing scene list");
                 sceneFileNames = loadSceneFileNames();
-                adapter.clear();
-                adapter.addAll(sceneFileNames);
 
-                // Reload metadata cache since scenes may have changed
+                // Reload metadata and rebuild grouped data
                 var sceneMetadata = sceneFileManager.loadSceneMetadata();
-                adapter.setSceneMetadata(sceneMetadata);
+                buildGroupedSceneData(sceneFileNames, sceneMetadata);
 
-                adapter.notifyDataSetChanged();
+                // Update adapter with new grouped data
+                if (adapter != null) {
+                    adapter.updateData(timeOfDayGroups, scenesGroupedByTimeOfDay);
+                }
 
                 // Also refresh the wallpaper since scene was modified
                 GLWallpaperService.refreshSceneList(this);
@@ -70,44 +77,124 @@ public class SceneListActivity extends AppCompatActivity {
     }
 
     /**
-     * Load and display the scenes in the list view
+     * Load and display the scenes in the expandable list view grouped by TimeOfDay
      */
     private void loadAndDisplayScenes() {
         scenesList = findViewById(R.id.scenes_list);
         if (scenesList != null) {
             sceneFileNames = loadSceneFileNames();
-            adapter = new SceneListAdapter(this, sceneFileNames);
 
             // Load all scene metadata at once for efficient caching
             var sceneMetadata = sceneFileManager.loadSceneMetadata();
-            adapter.setSceneMetadata(sceneMetadata);
 
+            // Build the grouped data structure
+            buildGroupedSceneData(sceneFileNames, sceneMetadata);
+
+            // Create and set the expandable adapter
+            adapter = new SceneListExpandableAdapter(this, timeOfDayGroups, scenesGroupedByTimeOfDay, sceneMetadata);
             scenesList.setAdapter(adapter);
 
-            // Set up interaction listener for options menu and scene selection
-            adapter.setOnSceneInteractionListener(new SceneListAdapter.OnSceneInteractionListener() {
-                @Override
-                public void onSceneSelected(int position, String sceneFileName) {
+            // Set up click listener for child items (to edit scene)
+            scenesList.setOnChildClickListener((parent, v, groupPosition, childPosition, id) -> {
+                SceneData.TimeOfDay timeOfDay = timeOfDayGroups.get(groupPosition);
+                List<String> sceneList = scenesGroupedByTimeOfDay.get(timeOfDay);
+                if (sceneList != null && childPosition < sceneList.size()) {
+                    String sceneFileName = sceneList.get(childPosition);
+                    Log.d(TAG, "Scene selected for editing: " + sceneFileName);
                     openEditScene(sceneFileName);
                 }
+                return false;
+            });
 
-                @Override
-                public void onOptionsMenuRequested(int position, String sceneFileName, View anchorView) {
-                    showContextMenu(position, sceneFileName, anchorView);
+            // Set up long-press context menu for delete options
+            scenesList.setOnCreateContextMenuListener((menu, v, menuInfo) -> {
+                if (menuInfo instanceof ExpandableListView.ExpandableListContextMenuInfo) {
+                    ExpandableListView.ExpandableListContextMenuInfo info =
+                        (ExpandableListView.ExpandableListContextMenuInfo) menuInfo;
+
+                    // Only show menu for child items (scenes), not group headers
+                    if (ExpandableListView.getPackedPositionType(info.packedPosition) ==
+                        ExpandableListView.PACKED_POSITION_TYPE_CHILD) {
+
+                        int groupPosition = ExpandableListView.getPackedPositionGroup(info.packedPosition);
+                        int childPosition = ExpandableListView.getPackedPositionChild(info.packedPosition);
+
+                        SceneData.TimeOfDay timeOfDay = timeOfDayGroups.get(groupPosition);
+                        List<String> sceneList = scenesGroupedByTimeOfDay.get(timeOfDay);
+
+                        if (sceneList != null && childPosition < sceneList.size()) {
+                            String sceneFileName = sceneList.get(childPosition);
+                            menu.add(0, 1, 0, "Edit").setOnMenuItemClickListener(item -> {
+                                openEditScene(sceneFileName);
+                                return true;
+                            });
+                            menu.add(0, 2, 0, "Delete").setOnMenuItemClickListener(item -> {
+                                showDeleteConfirmationDialog(sceneFileName);
+                                return true;
+                            });
+                        }
+                    }
                 }
             });
 
-            // Set up click listener for list items (to edit)
-            scenesList.setOnItemClickListener((parent, view, position, id) -> {
-                String selectedScene = sceneFileNames.get(position);
-                Log.d(TAG, "Scene selected for editing: " + selectedScene);
-                openEditScene(selectedScene);
-            });
+            // Expand all groups by default
+            expandAllGroups();
 
-            Log.d(TAG, "Loaded " + sceneFileNames.size() + " scenes from persistent storage");
+            Log.d(TAG, "Loaded " + sceneFileNames.size() + " scenes grouped by TimeOfDay");
         } else {
-            Log.e(TAG, "Scenes ListView not found!");
+            Log.e(TAG, "Scenes ExpandableListView not found!");
             Toast.makeText(this, "Failed to load scenes view", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Build a data structure that groups scenes by TimeOfDay.
+     * Ensures all TimeOfDay categories are present, even if empty.
+     */
+    private void buildGroupedSceneData(List<String> sceneFileNames, Map<String, String> sceneMetadata) {
+        // Initialize the groups list with all TimeOfDay values
+        timeOfDayGroups = new ArrayList<>();
+        for (SceneData.TimeOfDay timeOfDay : SceneData.TimeOfDay.values()) {
+            timeOfDayGroups.add(timeOfDay);
+        }
+
+        // Initialize the map to hold scenes for each TimeOfDay
+        scenesGroupedByTimeOfDay = new HashMap<>();
+        for (SceneData.TimeOfDay timeOfDay : SceneData.TimeOfDay.values()) {
+            scenesGroupedByTimeOfDay.put(timeOfDay, new ArrayList<>());
+        }
+
+        // Group the scenes by their TimeOfDay
+        for (String fileName : sceneFileNames) {
+            String timeOfDayStr = sceneMetadata != null ? sceneMetadata.get(fileName) : null;
+
+            // Default to DAY if metadata is missing
+            SceneData.TimeOfDay timeOfDay = SceneData.TimeOfDay.DAY;
+            if (timeOfDayStr != null && !timeOfDayStr.isEmpty()) {
+                try {
+                    timeOfDay = SceneData.TimeOfDay.valueOf(timeOfDayStr);
+                } catch (IllegalArgumentException e) {
+                    Log.w(TAG, "Unknown TimeOfDay value: " + timeOfDayStr + ", defaulting to DAY");
+                }
+            }
+
+            scenesGroupedByTimeOfDay.get(timeOfDay).add(fileName);
+        }
+
+        // Sort scenes within each group for consistent display
+        for (List<String> sceneList : scenesGroupedByTimeOfDay.values()) {
+            java.util.Collections.sort(sceneList);
+        }
+    }
+
+    /**
+     * Expand all TimeOfDay groups by default to show all scenes.
+     */
+    private void expandAllGroups() {
+        if (adapter != null) {
+            for (int i = 0; i < adapter.getGroupCount(); i++) {
+                scenesList.expandGroup(i);
+            }
         }
     }
 
@@ -139,33 +226,16 @@ public class SceneListActivity extends AppCompatActivity {
         return fileNames;
     }
 
-    /**
-     * Show a context menu (PopupMenu) with the delete option.
-     */
-    private void showContextMenu(int position, String sceneFileName, View anchorView) {
-        PopupMenu popupMenu = new PopupMenu(this, anchorView);
-        popupMenu.getMenuInflater().inflate(R.menu.scene_context_menu, popupMenu.getMenu());
-
-        popupMenu.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.menu_delete_scene) {
-                showDeleteConfirmationDialog(position, sceneFileName);
-                return true;
-            }
-            return false;
-        });
-
-        popupMenu.show();
-    }
 
     /**
      * Show a confirmation dialog before deleting a scene.
      */
-    private void showDeleteConfirmationDialog(int position, String sceneFileName) {
+    private void showDeleteConfirmationDialog(String sceneFileName) {
         new AlertDialog.Builder(this)
             .setTitle("Delete Scene")
             .setMessage("Are you sure you want to delete '" + sceneFileName + "'?")
             .setPositiveButton("Yes", (dialog, which) -> {
-                deleteScene(position, sceneFileName);
+                deleteScene(sceneFileName);
             })
             .setNegativeButton("No", (dialog, which) -> {
                 dialog.dismiss();
@@ -176,11 +246,20 @@ public class SceneListActivity extends AppCompatActivity {
     /**
      * Delete a scene file from persistent storage and update the UI.
      */
-    private void deleteScene(int position, String sceneFileName) {
+    private void deleteScene(String sceneFileName) {
         if (sceneFileManager.deleteScene(sceneFileName)) {
-            // Remove from list and notify adapter
-            sceneFileNames.remove(position);
-            adapter.notifyDataSetChanged();
+            // Remove from file names list
+            sceneFileNames.remove(sceneFileName);
+
+            // Reload metadata and rebuild grouped data
+            var sceneMetadata = sceneFileManager.loadSceneMetadata();
+            buildGroupedSceneData(sceneFileNames, sceneMetadata);
+
+            // Update adapter with new grouped data
+            if (adapter != null) {
+                adapter.updateData(timeOfDayGroups, scenesGroupedByTimeOfDay);
+            }
+
             Toast.makeText(this, "Scene deleted: " + sceneFileName, Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Scene deleted successfully: " + sceneFileName);
 
@@ -237,9 +316,19 @@ public class SceneListActivity extends AppCompatActivity {
         try {
             sceneFileManager.resetToDefaultScenes();
             sceneFileNames = loadSceneFileNames();
-            adapter.clear();
-            adapter.addAll(sceneFileNames);
-            adapter.notifyDataSetChanged();
+
+            // Reload metadata and rebuild grouped data
+            var sceneMetadata = sceneFileManager.loadSceneMetadata();
+            buildGroupedSceneData(sceneFileNames, sceneMetadata);
+
+            // Update adapter with new grouped data
+            if (adapter != null) {
+                adapter.updateData(timeOfDayGroups, scenesGroupedByTimeOfDay);
+            }
+
+            // Re-expand all groups
+            expandAllGroups();
+
             Toast.makeText(this, "Scene list reset to defaults", Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Scene list successfully reset to defaults");
 
