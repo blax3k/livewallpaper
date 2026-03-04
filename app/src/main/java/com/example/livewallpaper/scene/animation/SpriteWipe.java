@@ -1,4 +1,4 @@
-package com.example.livewallpaper.scene;
+package com.example.livewallpaper.scene.animation;
 
 /**
  * Encapsulates all wipe animation logic for sprites.

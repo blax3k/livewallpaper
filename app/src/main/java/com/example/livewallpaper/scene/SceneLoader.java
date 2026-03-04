@@ -3,6 +3,10 @@ package com.example.livewallpaper.scene;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.livewallpaper.scene.models.Scene;
+import com.example.livewallpaper.scene.models.SceneData;
+import com.example.livewallpaper.scene.models.Sprite;
+import com.example.livewallpaper.scene.models.SpriteData;
 import com.google.gson.Gson;
 
 import java.io.File;

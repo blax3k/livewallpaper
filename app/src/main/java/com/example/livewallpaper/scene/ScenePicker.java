@@ -2,6 +2,9 @@ package com.example.livewallpaper.scene;
 
 import android.util.Log;
 
+import com.example.livewallpaper.scene.models.Scene;
+import com.example.livewallpaper.scene.models.SceneData;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;

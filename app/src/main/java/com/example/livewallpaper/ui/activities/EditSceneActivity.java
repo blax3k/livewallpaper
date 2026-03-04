@@ -27,8 +27,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.scene.SceneManager;
-import com.example.livewallpaper.scene.Sprite;
+import com.example.livewallpaper.scene.managers.SceneManager;
+import com.example.livewallpaper.scene.models.SceneData;
+import com.example.livewallpaper.scene.models.Sprite;
+import com.example.livewallpaper.scene.models.SpriteData;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
 import com.example.livewallpaper.ui.adapters.SpritesDropdownAdapter;
@@ -271,7 +273,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             String uniqueSpriteName = renderer.getCurrentScene().getUniqueName(imageName);
 
             // Create a new sprite with default properties (1.0x1.0, at origin, full parallax)
-            com.example.livewallpaper.scene.SpriteData spriteData = new com.example.livewallpaper.scene.SpriteData();
+            SpriteData spriteData = new SpriteData();
             spriteData.textureResource = imageName;
             spriteData.textureResourceId = resourceId;
             spriteData.name = uniqueSpriteName;
@@ -396,7 +398,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
         // Create sprite data from the current sprite
         // Only pass the texture coordinates - all other texture state will be derived from these
-        com.example.livewallpaper.scene.SpriteData spriteData = new com.example.livewallpaper.scene.SpriteData();
+        SpriteData spriteData = new SpriteData();
         spriteData.name = currentSprite.getName();
         spriteData.textureResource = currentSprite.getTextureResource();
         spriteData.textureResourceId = currentSprite.getTextureResourceId();
@@ -794,12 +796,12 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         builder.setTitle("Set Time of Day");
 
         // Get the current time of day value
-        com.example.livewallpaper.scene.SceneData.TimeOfDay currentTimeOfDay =
+        SceneData.TimeOfDay currentTimeOfDay =
             renderer.getCurrentScene().timeOfDay;
 
         // Create the time of day options
-        com.example.livewallpaper.scene.SceneData.TimeOfDay[] timeValues =
-            com.example.livewallpaper.scene.SceneData.TimeOfDay.values();
+        SceneData.TimeOfDay[] timeValues =
+            SceneData.TimeOfDay.values();
         String[] timeDisplayNames = new String[timeValues.length];
         int currentSelection = 0;
 
@@ -822,7 +824,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
         builder.setPositiveButton("Save", (dialog, which) -> {
             // Get the selected time of day
-            com.example.livewallpaper.scene.SceneData.TimeOfDay selectedTime =
+            SceneData.TimeOfDay selectedTime =
                 timeValues[selectedIndex[0]];
 
             // Update the scene's time of day
@@ -846,7 +848,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 int selectedItem = ((AlertDialog) dialogInterface).getListView().getCheckedItemPosition();
                 if (selectedItem >= 0) {
                     selectedIndex[0] = selectedItem;
-                    com.example.livewallpaper.scene.SceneData.TimeOfDay selectedTime =
+                    SceneData.TimeOfDay selectedTime =
                         timeValues[selectedIndex[0]];
                     renderer.getCurrentScene().timeOfDay = selectedTime;
                     Log.d(TAG, "Scene time of day changed to: " + selectedTime);

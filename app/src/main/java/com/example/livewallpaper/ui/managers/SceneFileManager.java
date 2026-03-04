@@ -8,12 +8,11 @@ import android.util.Log;
 import android.widget.Toast;
 import androidx.documentfile.provider.DocumentFile;
 
-import com.example.livewallpaper.scene.Scene;
-import com.example.livewallpaper.scene.SceneData;
-import com.example.livewallpaper.scene.SceneManager;
-import com.example.livewallpaper.scene.Sprite;
-import com.example.livewallpaper.scene.SpriteData;
-import com.example.livewallpaper.scene.TextureEditState;
+import com.example.livewallpaper.scene.models.Scene;
+import com.example.livewallpaper.scene.models.SceneData;
+import com.example.livewallpaper.scene.managers.SceneManager;
+import com.example.livewallpaper.scene.models.Sprite;
+import com.example.livewallpaper.scene.models.SpriteData;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 

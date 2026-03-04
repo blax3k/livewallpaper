@@ -1,9 +1,11 @@
-package com.example.livewallpaper.scene;
+package com.example.livewallpaper.scene.managers;
 
 import android.content.Context;
 import android.util.Log;
 
 import com.example.livewallpaper.gl.TextureManager;
+import com.example.livewallpaper.scene.models.Scene;
+import com.example.livewallpaper.scene.models.Sprite;
 
 import java.util.ArrayList;
 import java.util.List;

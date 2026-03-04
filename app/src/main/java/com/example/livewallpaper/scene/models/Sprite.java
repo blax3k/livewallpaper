@@ -1,8 +1,12 @@
-package com.example.livewallpaper.scene;
+package com.example.livewallpaper.scene.models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
+
+import com.example.livewallpaper.scene.TextureCoordinateCalculator;
+import com.example.livewallpaper.scene.TextureEditState;
+import com.example.livewallpaper.scene.animation.SpriteWipe;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

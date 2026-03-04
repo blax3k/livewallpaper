@@ -2,7 +2,7 @@ package com.example.livewallpaper.sensors;
 
 import android.util.Log;
 
-import com.example.livewallpaper.scene.Scene;
+import com.example.livewallpaper.scene.models.Scene;
 
 /**
  * Processes raw gyroscope rotation rates and converts them into stable offsets that can be
@@ -243,7 +243,7 @@ public class GyroSensorProcessor {
      * @return the updated spritesScaledForGyro state
      */
     public boolean updateAndApplyGyroUniforms(com.example.livewallpaper.gl.Handles handles,
-                                               com.example.livewallpaper.scene.Scene scene,
+                                               Scene scene,
                                                boolean spritesScaledForGyro) {
         if (MotionConfig.isGyroMotionEnabled()) {
             float gyroOffsetX = updateAndGetCurrentOffsetX();

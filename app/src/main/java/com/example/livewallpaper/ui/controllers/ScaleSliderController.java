@@ -7,8 +7,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.livewallpaper.scene.SceneManager;
-import com.example.livewallpaper.scene.Sprite;
+import com.example.livewallpaper.scene.managers.SceneManager;
+import com.example.livewallpaper.scene.models.Sprite;
 
 /**
  * Manages scale slider operations for sprite scaling.

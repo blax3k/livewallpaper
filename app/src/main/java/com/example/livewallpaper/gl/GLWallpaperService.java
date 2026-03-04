@@ -17,7 +17,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 
-import com.example.livewallpaper.scene.SceneManager;
+import com.example.livewallpaper.scene.managers.SceneManager;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
 
 /**

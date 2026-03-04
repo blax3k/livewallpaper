@@ -14,8 +14,8 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.scene.SceneManager;
-import com.example.livewallpaper.scene.Sprite;
+import com.example.livewallpaper.scene.managers.SceneManager;
+import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.ui.controllers.DimensionController;
 import com.example.livewallpaper.ui.controllers.ScaleSliderController;
 import com.example.livewallpaper.ui.controllers.SliderController;

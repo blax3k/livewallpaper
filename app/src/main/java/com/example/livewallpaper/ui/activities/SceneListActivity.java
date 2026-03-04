@@ -6,9 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.ExpandableListView;
-import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -17,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.scene.SceneData;
+import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.ui.managers.SceneFileManager;
 import com.example.livewallpaper.ui.adapters.SceneListExpandableAdapter;
 

@@ -18,8 +18,8 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.scene.Scene;
-import com.example.livewallpaper.scene.SceneManager;
+import com.example.livewallpaper.scene.models.Scene;
+import com.example.livewallpaper.scene.managers.SceneManager;
 
 public class FullscreenPreviewActivity extends AppCompatActivity implements SensorEventListener {
     private static final String TAG = "FullscreenPreviewActivity";

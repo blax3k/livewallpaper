@@ -4,7 +4,7 @@ import android.util.Log;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.example.livewallpaper.scene.Sprite;
+import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.scene.TextureEditState;
 
 /**

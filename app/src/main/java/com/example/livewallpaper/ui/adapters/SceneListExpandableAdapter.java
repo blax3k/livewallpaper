@@ -8,7 +8,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.scene.SceneData;
+import com.example.livewallpaper.scene.models.SceneData;
 
 import java.util.List;
 import java.util.Map;

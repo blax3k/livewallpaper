@@ -1,4 +1,4 @@
-package com.example.livewallpaper.scene;
+package com.example.livewallpaper.scene.managers;
 
 import android.content.Context;
 import android.opengl.GLES20;
@@ -14,6 +14,12 @@ import com.example.livewallpaper.gl.PhoneGuideRenderer;
 import com.example.livewallpaper.gl.ShaderProgram;
 import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.TextureManager;
+import com.example.livewallpaper.scene.models.PhoneGuide;
+import com.example.livewallpaper.scene.models.Scene;
+import com.example.livewallpaper.scene.SceneLoader;
+import com.example.livewallpaper.scene.models.Sprite;
+import com.example.livewallpaper.scene.models.SpriteData;
+import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.sensors.ScrollOffsetProcessor;

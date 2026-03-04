@@ -1,4 +1,4 @@
-package com.example.livewallpaper.scene;
+package com.example.livewallpaper.scene.models;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

@@ -1,4 +1,4 @@
-package com.example.livewallpaper.scene;
+package com.example.livewallpaper.scene.models;
 
 /**
  * Data class representing a scene configuration loaded from JSON.

@@ -1,4 +1,4 @@
-package com.example.livewallpaper.scene;
+package com.example.livewallpaper.scene.models;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;

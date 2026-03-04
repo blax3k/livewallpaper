@@ -1,7 +1,7 @@
 package com.example.livewallpaper.gl;
 
 import android.opengl.GLES20;
-import com.example.livewallpaper.scene.PhoneGuide;
+import com.example.livewallpaper.scene.models.PhoneGuide;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;

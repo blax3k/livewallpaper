@@ -3,8 +3,8 @@ package com.example.livewallpaper.ui.controllers;
 import android.util.Log;
 import android.widget.EditText;
 
-import com.example.livewallpaper.scene.SceneManager;
-import com.example.livewallpaper.scene.Sprite;
+import com.example.livewallpaper.scene.managers.SceneManager;
+import com.example.livewallpaper.scene.models.Sprite;
 
 /**
  * Manages width and height edit fields with proportional update logic.
