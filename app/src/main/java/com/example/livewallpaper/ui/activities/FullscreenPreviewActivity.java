@@ -19,7 +19,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.models.Scene;
-import com.example.livewallpaper.scene.managers.SceneManager;
+import com.example.livewallpaper.scene.managers.EditSceneManager;
 
 public class FullscreenPreviewActivity extends AppCompatActivity implements SensorEventListener {
     private static final String TAG = "FullscreenPreviewActivity";
@@ -27,7 +27,7 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
     public static final String EXTRA_SCENE_DATA = "scene_data";
 
     private GLSurfaceView glSurfaceView;
-    private SceneManager renderer;
+    private EditSceneManager renderer;
     private SensorManager sensorManager;
     private Sensor gyroscopeSensor;
 
@@ -169,7 +169,7 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
                 Log.d(TAG, "EGL context version set to 2");
 
                 // Create a new renderer with the preloaded scene
-                renderer = new SceneManager(this, scene);
+                renderer = new EditSceneManager(this, scene);
                 glSurfaceView.setRenderer(renderer);
                 Log.d(TAG, "Renderer set");
 
@@ -204,7 +204,7 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
                 Log.d(TAG, "EGL context version set to 2");
 
                 // Create a new renderer with the file name (legacy behavior)
-                renderer = new SceneManager(this, sceneFileName);
+                renderer = new EditSceneManager(this, sceneFileName);
                 glSurfaceView.setRenderer(renderer);
                 Log.d(TAG, "Renderer set");
 

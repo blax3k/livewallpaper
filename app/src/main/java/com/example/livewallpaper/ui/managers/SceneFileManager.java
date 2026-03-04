@@ -10,7 +10,7 @@ import androidx.documentfile.provider.DocumentFile;
 
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.SceneData;
-import com.example.livewallpaper.scene.managers.SceneManager;
+import com.example.livewallpaper.scene.managers.BaseSceneManager;
 import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.scene.models.SpriteData;
 import com.google.gson.Gson;
@@ -40,10 +40,10 @@ public class SceneFileManager {
     private static final String PREFS_KEY_SCENES_URI = "scenes_directory_uri";
 
     private final Context context;
-    private final SceneManager renderer;
+    private final BaseSceneManager renderer;
     private final Uri scenesDirectoryUri;
 
-    public SceneFileManager(Context context, SceneManager renderer) {
+    public SceneFileManager(Context context, BaseSceneManager renderer) {
         this.context = context;
         this.renderer = renderer;
         this.scenesDirectoryUri = loadScenesDirectoryUri();

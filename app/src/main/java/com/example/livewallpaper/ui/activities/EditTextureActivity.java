@@ -23,7 +23,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.models.Scene;
-import com.example.livewallpaper.scene.managers.SceneManager;
+import com.example.livewallpaper.scene.managers.EditSceneManager;
 import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.scene.models.SpriteData;
 import com.example.livewallpaper.scene.TextureCoordinateCalculator;
@@ -47,7 +47,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
     public static final String RESULT_TEXTURE_RESOURCE_ID = "result_texture_resource_id";
 
     private SquareGLSurfaceView glSurfaceView;
-    private SceneManager renderer;
+    private EditSceneManager renderer;
     private SensorManager sensorManager;
     private Sensor gyroscopeSensor;
     private SpriteData spriteData;
@@ -127,7 +127,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             Log.d(TAG, "Setting up GLSurfaceView renderer with sprite: " + spriteData.name);
 
             // Create renderer with the sprite data (creates a minimal scene with just this sprite)
-            renderer = new SceneManager(this, spriteData);
+            renderer = new EditSceneManager(this, spriteData);
             glSurfaceView.setRenderer(renderer);
 
             glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
