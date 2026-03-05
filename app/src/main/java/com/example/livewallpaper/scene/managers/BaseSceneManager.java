@@ -215,20 +215,18 @@ public abstract class BaseSceneManager {
             }
 
             // Initialize the scene with TextureManager
-            if (currentScene != null) {
-                Log.d(TAG, "Scene loaded, initializing with " + currentScene.getSprites().size() + " sprites");
-                currentScene.initialize(context, textureManager);
-
-                // Disable edge highlights by default (they will be enabled when a sprite is selected)
-                for (Sprite sprite : currentScene.getSprites()) {
-                    sprite.setShowEdgeHighlight(false);
-                }
-
-                Log.d(TAG, "Successfully loaded and initialized scene: " + currentScene.getSceneName());
-            } else {
+            if (currentScene == null) {
                 Log.e(TAG, "Failed to load scene");
                 currentScene = new Scene("Error");
+                return;
             }
+
+            Log.d(TAG, "Scene loaded, initializing with " + currentScene.getSprites().size() + " sprites");
+            currentScene.initialize(context, textureManager);
+            // Disable edge highlights by default (they will be enabled when a sprite is selected)
+            currentScene.setEdgeHighlighted(false);
+
+            Log.d(TAG, "Successfully loaded and initialized scene: " + currentScene.getSceneName());
         } catch (Exception e) {
             Log.e(TAG, "Error loading scene: " + e.getMessage(), e);
             // Create an empty scene on error

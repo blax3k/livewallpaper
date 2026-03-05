@@ -99,59 +99,6 @@ public class TextureManager {
     }
 
     /**
-     * Get or load a texture by resource ID. Cached textures are returned immediately,
-     * new textures are loaded and cached.
-     *
-     * @param context Android context for loading resources
-     * @param resourceId drawable resource ID
-     * @return GL texture ID (0 if failed)
-     */
-    public int getTexture(Context context, int resourceId) {
-        // Query GPU limits on first use
-        if (!gpuLimitsQueried) {
-            queryGPULimits();
-        }
-
-        // Check cache first
-        if (textureCache.containsKey(resourceId)) {
-            Log.d(TAG, "Texture for resourceId=" + resourceId + " found in cache, returning texId=" + textureCache.get(resourceId));
-            Integer cached = textureCache.get(resourceId);
-            if (cached != null) {
-                Log.d(TAG, "Texture for resourceId=" + resourceId + " found in cache, returning texId=" + cached);
-                return cached;
-            }
-        }
-
-        // Allocate texture ID (from pool or generate new)
-        int textureId = allocateTextureId();
-        if (textureId == 0) {
-            Log.e(TAG, "Failed to allocate texture ID for resourceId=" + resourceId);
-            return 0;
-        }
-
-        // Load and process bitmap
-        Bitmap textureBitmap = decodeBitmap(context, resourceId);
-        if (textureBitmap == null) {
-            freeTextureId(textureId);
-            return 0;
-        }
-
-        // Upload to GPU
-        if (!uploadTextureToGPU(textureId, textureBitmap, resourceId)) {
-            freeTextureId(textureId);
-            textureBitmap.recycle();
-            return 0;
-        }
-
-        textureBitmap.recycle();
-
-        // Cache and return
-        textureCache.put(resourceId, textureId);
-        Log.d(TAG, "Texture uploaded to GPU for resourceId=" + resourceId + ", assigned texId=" + textureId + " (pool size: " + freedTextureIds.size() + ")");
-        return textureId;
-    }
-
-    /**
      * Load a texture asynchronously. Bitmap decoding happens on a background thread,
      * while GPU upload happens on the GL thread via processPendingUploads().
      *

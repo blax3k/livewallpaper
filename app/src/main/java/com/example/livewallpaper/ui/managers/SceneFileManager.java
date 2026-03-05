@@ -66,56 +66,6 @@ public class SceneFileManager {
     }
 
     /**
-     * Save the scenes directory URI to SharedPreferences and take persistent permissions.
-     *
-     * @param uri the Uri to the scenes directory
-     */
-    private void saveScenesDirectoryUri(Uri uri) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        prefs.edit().putString(PREFS_KEY_SCENES_URI, uri.toString()).apply();
-
-        // Take persistent read/write permissions
-        try {
-            context.getContentResolver().takePersistableUriPermission(uri,
-                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION |
-                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            Log.d(TAG, "Took persistent URI permissions for: " + uri);
-        } catch (SecurityException e) {
-            Log.w(TAG, "Failed to take persistent URI permissions", e);
-        }
-    }
-
-    /**
-     * Get the current scenes directory URI.
-     *
-     * @return the Uri to the scenes directory, or null if not configured
-     */
-    public Uri getScenesDirectoryUri() {
-        return scenesDirectoryUri;
-    }
-
-    /**
-     * Check if a scenes directory has been configured.
-     *
-     * @return true if a URI is set, false otherwise
-     */
-    public boolean hasConfiguredScenesDirectory() {
-        return scenesDirectoryUri != null;
-    }
-
-    /**
-     * Get the path to the persistent scenes directory for loading scene data.
-     * Returns the fallback directory if no custom directory is configured.
-     *
-     * @return the absolute path to the scenes directory, or null if it cannot be determined
-     */
-    public String getPersistentScenesPath() {
-        // If a custom directory is configured, we can't easily get a File path from the URI
-        // So we return the fallback directory path which is always available
-        return getFallbackScenesDirectory().getAbsolutePath();
-    }
-
-    /**
      * Load all scene files and cache their metadata (filename and timeOfDay).
      * This is more efficient than loading individual files on-demand.
      *
@@ -360,7 +310,6 @@ public class SceneFileManager {
      *
      * @return the absolute path to the persistent scenes directory
      * @deprecated Use {@link #getFallbackScenesDirectoryPath()} for fallback mode
-     *             or {@link #getScenesDirectoryUri()} for URI-based access
      */
     @Deprecated
     public String getPersistentScenesDirectoryPath() {

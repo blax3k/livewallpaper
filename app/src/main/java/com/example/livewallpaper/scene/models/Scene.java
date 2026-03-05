@@ -290,6 +290,12 @@ public class Scene implements Parcelable {
         this.isGyroScaled = false;
         Log.d(TAG, "Gyro scaling disabled for scene '" + sceneName + "', all sprites reset");
     }
+
+    public void setEdgeHighlighted(boolean highlighted) {
+        for (Sprite sprite : sprites) {
+            sprite.setShowEdgeHighlight(highlighted);
+        }
+    }
     /**
      * Destroy all sprites in this scene and release resources.
      */
