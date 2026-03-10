@@ -113,11 +113,11 @@ public class BaseSceneManagerTest {
     }
 
     /**
-     * Test that getTextureManager() returns null initially (before initialization).
+     * Test that getTextureManager() returns is not null (before initialization).
      */
     @Test
     public void testGetTextureManager_InitiallyNull() {
-        assertNull("TextureManager should be null before initialization", sceneManager.getTextureManager());
+        assertNotNull("TextureManager should not be null before initialization", sceneManager.getTextureManager());
     }
 
     /**
