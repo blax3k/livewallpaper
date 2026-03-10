@@ -27,8 +27,6 @@ public class SceneSwitchManager {
     // Dynamically loaded list of available scene files
     private String[] sceneFiles;
 
-    // Current index in the sceneFiles array
-    private int currentSceneIndex = 0;
 
     // Reference to the current scene (updated externally)
     private Scene currentScene;
@@ -120,7 +118,6 @@ public class SceneSwitchManager {
                 fileName.substring(0, fileName.length() - 5) : fileName;
 
             if (fileNameWithoutExtension.equals(sceneName)) {
-                currentSceneIndex = i;
                 Log.d(TAG, "Initialized scene manager at index " + i + " (" + fileName + ")");
                 break;
             }
@@ -166,8 +163,6 @@ public class SceneSwitchManager {
 
         // Ensure currentScene is set to what's actually being displayed
         this.currentScene = currentScene;
-
-        // Use ScenePicker to select the next scene based on time of day
         Scene newScene = scenePicker.getNextScene(currentScene);
 
         if(newScene.getSceneName().equals(currentScene.getSceneName()))
@@ -238,9 +233,6 @@ public class SceneSwitchManager {
      */
     public void reloadAvailableScenes(SceneFileManager sceneFileManager) {
         this.sceneFiles = sceneFileManager.loadAvailableSceneFiles();
-
-        // Reset index to 0 since scene list changed
-        currentSceneIndex = 0;
 
         // Clear and reload all scenes into memory
         loadedScenes.clear();

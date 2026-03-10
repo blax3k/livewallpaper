@@ -105,22 +105,24 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
             return;
         }
 
-        // Process any pending async texture uploads that are ready (must be on GL thread)
-        TextureManager textureManager = sceneSwitchManager != null ? sceneSwitchManager.getTextureManager() : null;
         if (textureManager != null) {
             textureManager.processPendingUploads();
         }
 
+        if(sceneSwitchManager == null)
+        {
+            return;
+        }
         // Check if scene switch was requested (from UI thread) and perform it here on GL thread
         // Only proceed if no transition is already in progress
-        if (sceneSwitchRequested && sceneSwitchManager != null && !sceneSwitchManager.isTransitioning()) {
+        if (sceneSwitchRequested && !sceneSwitchManager.isTransitioning()) {
             sceneSwitchRequested = false;
             sceneSwitchManager.cycleToNextScene(currentScene);
             lastSceneChangeTimeMs = System.currentTimeMillis();
         }
 
         // Update scene transition (handles texture preload, crossfade, and scene switching)
-        if (sceneSwitchManager != null && sceneSwitchManager.isTransitioning()) {
+        if ( sceneSwitchManager.isTransitioning()) {
             currentScene = sceneSwitchManager.updateTransition();
         }
 
@@ -128,7 +130,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         if (!MotionConfig.isScrollMotionEnabled()) {
             // If we're in a transition, smoothly transition to the next scene's xFocus
             // Otherwise, use the current scene's xFocus
-            Scene transitioningScene = sceneSwitchManager != null ? sceneSwitchManager.getTransitioningScene() : null;
+            Scene transitioningScene =  sceneSwitchManager.getTransitioningScene();
             if (transitioningScene != null) {
                 scrollOffsetProcessor.setScrollTargetFromXFocus(transitioningScene.getXFocus());
             } else {

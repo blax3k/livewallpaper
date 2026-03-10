@@ -18,12 +18,6 @@ public class TextureEditState {
     private float textureOffsetU = 0.0f;
     private float textureOffsetV = 0.0f;
 
-    public TextureEditState() {
-        this.textureScale = 1.0f;
-        this.textureOffsetU = 0.0f;
-        this.textureOffsetV = 0.0f;
-    }
-
     public TextureEditState(float scale, float offsetU, float offsetV) {
         this.textureScale = Math.max(0.1f, scale); // Clamp to minimum of 0.1x
         this.textureOffsetU = offsetU;
@@ -65,15 +59,6 @@ public class TextureEditState {
         return textureOffsetU;
     }
 
-    /**
-     * Set the texture V (vertical) offset to an absolute value.
-     *
-     * @param offsetV the absolute V offset value
-     */
-    public void setTextureOffsetV(float offsetV) {
-        this.textureOffsetV = offsetV;
-        Log.d(TAG, "Texture offset V set to: " + offsetV);
-    }
 
     /**
      * Get the current texture V offset.

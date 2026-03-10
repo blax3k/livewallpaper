@@ -442,14 +442,6 @@ public class Sprite implements Parcelable {
         updateVertexBuffer();
     }
 
-
-    /**
-     * Check if this sprite is already scaled for gyro motion.
-     */
-    public boolean isGyroScaled() {
-        return isGyroScaled;
-    }
-
     /**
      * Set whether this sprite has been scaled for gyro motion.
      * Used during transitions to preserve gyro scaling state.
@@ -705,32 +697,6 @@ public class Sprite implements Parcelable {
     }
 
     /**
-     * Get the current texture scale and offset state.
-     * Returns the exact values that were applied, not extracted from the buffer.
-     *
-     * @return a TextureEditState representing the current texture scale and offset
-     */
-    public TextureEditState getCurrentTextureEditState() {
-        return new TextureEditState(
-                currentTextureEditState.getTextureScale(),
-                currentTextureEditState.getTextureOffsetU(),
-                currentTextureEditState.getTextureOffsetV()
-        );
-    }
-
-    /**
-     * Set the current texture scale and offset state.
-     * Used during transitions to preserve texture editing state from one scene to another.
-     *
-     * @param editState the new texture edit state to apply
-     */
-    public void setCurrentTextureEditState(TextureEditState editState) {
-        if (editState != null) {
-            this.currentTextureEditState = editState;
-        }
-    }
-
-    /**
      * Accessors for renderer to use the geometry buffers.
      */
     public FloatBuffer getVertexBuffer() {
@@ -798,13 +764,6 @@ public class Sprite implements Parcelable {
     public void setPositionAtZero(boolean positionAtZero) {
         this.positionAtZero = positionAtZero;
         updateVertexBuffer();
-    }
-
-    /**
-     * Check if this sprite is rendering at position (0, 0).
-     */
-    public boolean isPositionAtZero() {
-        return positionAtZero;
     }
 
     /**

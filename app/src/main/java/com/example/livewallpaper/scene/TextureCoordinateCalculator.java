@@ -142,8 +142,6 @@ public class TextureCoordinateCalculator {
         // Step 3: Calculate uniform scale to fit texture within sprite bounds
         // This is used for reference but the actual window calculation happens in Step 4
         data.uniformScale = calculateUniformScale(
-                data.textureAspectRatio,
-                data.spriteAspectRatio,
                 width, height,
                 data.textureWidthInWorld,
                 data.textureHeightInWorld
@@ -261,8 +259,6 @@ public class TextureCoordinateCalculator {
      * This ensures the entire texture is visible without distortion.
      */
     public static float calculateUniformScale(
-            float textureAspectRatio,
-            float spriteAspectRatio,
             float width,
             float height,
             float textureWidthInWorld,
@@ -275,14 +271,6 @@ public class TextureCoordinateCalculator {
         // Use the smaller scale to ensure texture fits entirely within sprite bounds
         // This may leave empty space if sprite aspect ratio differs from texture aspect ratio
         return Math.min(scaleByWidth, scaleByHeight);
-    }
-
-    /**
-     * Calculate the window size (amount of texture visible) accounting for zoom.
-     */
-    public static float calculateWindowSize(float textureScale, float uniformScale) {
-        float baseWindowSize = 1.0f / textureScale;
-        return baseWindowSize * uniformScale;
     }
 
     /**
@@ -513,39 +501,6 @@ public class TextureCoordinateCalculator {
         }
 
         return new float[] { newOffsetU, newOffsetV };
-    }
-
-    /**
-     * Offset texture coordinates and clamp to valid bounds (legacy version without texture coordinates).
-     * For backwards compatibility when texture aspect ratio is not available.
-     *
-     * @param currentOffsetU current U offset
-     * @param currentOffsetV current V offset
-     * @param deltaU delta to apply to U
-     * @param deltaV delta to apply to V
-     * @param width current sprite width
-     * @param height current sprite height
-     * @param originalWidth original sprite width
-     * @param originalHeight original sprite height
-     * @param textureScale current texture scale
-     * @param textureScaleFactor texture scale factor in world space
-     * @return array of [clampedOffsetU, clampedOffsetV]
-     */
-    public static float[] clampTextureOffset(
-            float currentOffsetU,
-            float currentOffsetV,
-            float deltaU,
-            float deltaV,
-            float width,
-            float height,
-            float originalWidth,
-            float originalHeight,
-            float textureScale,
-            float textureScaleFactor) {
-        // Call the overloaded version with null texture coordinates
-        // This will assume a square texture (1:1 aspect ratio)
-        return clampTextureOffset(currentOffsetU, currentOffsetV, deltaU, deltaV, width, height,
-                originalWidth, originalHeight, textureScale, textureScaleFactor, null);
     }
 
     /**
