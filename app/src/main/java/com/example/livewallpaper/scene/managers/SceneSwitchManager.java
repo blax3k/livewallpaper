@@ -22,7 +22,6 @@ public class SceneSwitchManager {
 
     private final Context context;
     private final SceneLoader sceneLoader;
-    private final TextureManager textureManager;
     private final SceneTransitionManager transitionManager;
     // Dynamically loaded list of available scene files
     private String[] sceneFiles;
@@ -48,8 +47,7 @@ public class SceneSwitchManager {
     public SceneSwitchManager(Context context, SceneFileManager sceneFileManager) {
         this.context = context;
         this.sceneLoader = new SceneLoader(context);
-        this.textureManager = new TextureManager();
-        this.transitionManager = new SceneTransitionManager(textureManager);
+        this.transitionManager = new SceneTransitionManager();
         this.sceneFiles = sceneFileManager.loadAvailableSceneFiles();
         this.loadedScenes = new ArrayList<>();
 
@@ -124,13 +122,6 @@ public class SceneSwitchManager {
         }
     }
 
-    /**
-     * Get the texture manager owned by this scene manager.
-     * Used by the renderer to initialize scenes and handle texture loading.
-     */
-    public TextureManager getTextureManager() {
-        return textureManager;
-    }
 
     /**
      * Set the gyro scaling callback for applying transformations to new scenes
@@ -197,12 +188,12 @@ public class SceneSwitchManager {
      *
      * @return the scene that should be rendered this frame
      */
-    public Scene updateTransition() {
+    public Scene updateTransition(TextureManager textureManager) {
         if (!transitionManager.isTransitioning()) {
             return currentScene;
         }
 
-        Scene sceneToRender = transitionManager.updateTransition();
+        Scene sceneToRender = transitionManager.updateTransition(textureManager);
 
         // If transition just finished, update our reference
         if (!transitionManager.isTransitioning() && sceneToRender != currentScene) {

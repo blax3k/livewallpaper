@@ -50,6 +50,7 @@ public abstract class BaseSceneManager {
 
     public BaseSceneManager(Context context, String sceneFileName) {
         this.context = context;
+        this.textureManager = new TextureManager();
         this.sceneFileName = sceneFileName;
         this.preloadedScene = null;
         this.gyroProcessor = new GyroSensorProcessor();
@@ -64,6 +65,7 @@ public abstract class BaseSceneManager {
      */
     protected BaseSceneManager(Context context, SpriteData spriteData) {
         this.context = context;
+        this.textureManager = new TextureManager();
         this.sceneFileName = null;
         this.gyroProcessor = new GyroSensorProcessor();
 
@@ -90,6 +92,7 @@ public abstract class BaseSceneManager {
      */
     protected BaseSceneManager(Context context, Scene scene) {
         this.context = context;
+        this.textureManager = new TextureManager();
         this.sceneFileName = null;
         this.preloadedScene = scene;
         this.currentScene = scene;
@@ -124,9 +127,7 @@ public abstract class BaseSceneManager {
         Log.d(TAG, "SpriteRenderer created");
 
         // Ensure GPU limits are queried on GL thread BEFORE loading any textures
-        if (textureManager != null) {
-            textureManager.ensureGPULimitsQueried();
-        }
+        textureManager.ensureGPULimitsQueried();
     }
 
     /**
@@ -159,7 +160,7 @@ public abstract class BaseSceneManager {
         }
 
         // Initialize the scene with texture manager if available
-        if (currentScene != null && textureManager != null) {
+        if (currentScene != null) {
             currentScene.initialize(context, textureManager);
         }
     }

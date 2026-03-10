@@ -54,9 +54,6 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
     public void onSurfaceCreated() {
         Log.d(TAG, "onSurfaceCreated called");
 
-        // Get the texture manager from scene switch manager (must happen before initializeGLResources)
-        textureManager = sceneSwitchManager != null ? sceneSwitchManager.getTextureManager() : null;
-
         // Initialize common GL resources (shader, handles, sprite renderer)
         initializeGLResources();
 
@@ -123,7 +120,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
         // Update scene transition (handles texture preload, crossfade, and scene switching)
         if ( sceneSwitchManager.isTransitioning()) {
-            currentScene = sceneSwitchManager.updateTransition();
+            currentScene = sceneSwitchManager.updateTransition(textureManager);
         }
 
         // Apply xFocus offset when scroll motion is disabled
@@ -155,7 +152,6 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
             shaderProgram.delete();
         }
 
-        TextureManager textureManager = sceneSwitchManager != null ? sceneSwitchManager.getTextureManager() : null;
         if (textureManager != null) {
             textureManager.destroyAll();
         }

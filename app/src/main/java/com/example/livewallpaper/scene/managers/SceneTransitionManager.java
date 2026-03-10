@@ -33,14 +33,12 @@ public class SceneTransitionManager {
     private Scene oldScene;
     private Scene newScene;
     private long fadeStartTimeMs = 0;
-    private TextureManager textureManager;
     private Context context;
 
     // Sprites added to oldScene during transition (need to be removed when done)
     private final List<Sprite> addedSprites = new ArrayList<>();
 
-    public SceneTransitionManager(TextureManager textureManager) {
-        this.textureManager = textureManager;
+    public SceneTransitionManager() {
     }
 
     public boolean isTransitioning() {
@@ -71,7 +69,7 @@ public class SceneTransitionManager {
      * Update the transition. Call every frame.
      * Returns the scene to render.
      */
-    public Scene updateTransition() {
+    public Scene updateTransition(TextureManager textureManager) {
         if (state == TransitionState.IDLE) {
             return null;
         }
@@ -79,7 +77,7 @@ public class SceneTransitionManager {
         switch (state) {
             case WAITING_FOR_TEXTURES:
                 // Initialize textures for the new scene on the GL thread
-                if (textureManager != null && context != null) {
+                if (context != null) {
                     newScene.initialize(context, textureManager);
                     Log.d(TAG, "Textures initialized for new scene: " + newScene.getSceneName());
                 }
@@ -91,7 +89,7 @@ public class SceneTransitionManager {
                 oldScene.updateWipeProgress(progress);
 
                 if (progress >= 1.0f) {
-                    return finishTransition();
+                    return finishTransition(textureManager);
                 }
             default:
                 return oldScene;
@@ -148,7 +146,7 @@ public class SceneTransitionManager {
         return Math.min(1.0f, (float) elapsed / FADE_DURATION_MS);
     }
 
-    private Scene finishTransition() {
+    private Scene finishTransition(TextureManager textureManager) {
         // Reset wipe state on all sprites in the new scene
         for (Sprite sprite : newScene.getSprites()) {
             sprite.resetWipe();
@@ -161,12 +159,11 @@ public class SceneTransitionManager {
         addedSprites.clear();
 
         // Clean up textures from old scene that aren't used in new scene
-        if (textureManager != null) {
-            Set<Integer> oldSceneTextureIds = oldScene.getUsedTextureResourceIds();
-            Set<Integer> newSceneTextureIds = newScene.getUsedTextureResourceIds();
-            textureManager.unloadUnusedTextures(oldSceneTextureIds, newSceneTextureIds);
-            Log.d(TAG, "Cleaned up unused textures from old scene");
-        }
+        Set<Integer> oldSceneTextureIds = oldScene.getUsedTextureResourceIds();
+        Set<Integer> newSceneTextureIds = newScene.getUsedTextureResourceIds();
+        textureManager.unloadUnusedTextures(oldSceneTextureIds, newSceneTextureIds);
+        Log.d(TAG, "Cleaned up unused textures from old scene");
+
 
         // Sort new scene to maintain consistent draw order
         newScene.sortSpritesByParallax();
