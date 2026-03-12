@@ -21,7 +21,7 @@ public class LoggingApplication extends Application {
 
     private void initializeLogging() {
         // Plant a debug tree for console logging
-        Timber.plant(new Timber.DebugTree());
+        Timber.plant();
 
         // Plant file logging tree for all builds
         Timber.plant(new FileLoggingTree());

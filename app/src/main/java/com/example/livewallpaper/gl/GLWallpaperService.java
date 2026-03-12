@@ -13,7 +13,7 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.service.wallpaper.WallpaperService;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -53,12 +53,12 @@ public class GLWallpaperService extends WallpaperService {
             try {
                 SceneFileManager sceneFileManager = new SceneFileManager(context, null);
                 currentRenderer.refreshSceneList(sceneFileManager);
-                Log.d(TAG, "Scene list refreshed in wallpaper");
+                TimberLog.d(TAG, "Scene list refreshed in wallpaper");
             } catch (Exception e) {
-                Log.e(TAG, "Error refreshing scene list in wallpaper: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error refreshing scene list in wallpaper: " + e.getMessage(), e);
             }
         } else {
-            Log.d(TAG, "Wallpaper not currently running, scene list will be loaded when wallpaper starts");
+            TimberLog.d(TAG, "Wallpaper not currently running, scene list will be loaded when wallpaper starts");
         }
     }
 
@@ -107,7 +107,7 @@ public class GLWallpaperService extends WallpaperService {
         private final GestureDetector.SimpleOnGestureListener gestureListener = new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                Log.d(TAG, "Double tap detected at x=" + e.getX() + ", y=" + e.getY());
+                TimberLog.d(TAG, "Double tap detected at x=" + e.getX() + ", y=" + e.getY());
                 if (renderer != null) {
                     renderer.onDoubleTap(e.getX(), e.getY());
                 }
@@ -133,13 +133,13 @@ public class GLWallpaperService extends WallpaperService {
                 if (sensorManager != null) {
                     gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
                     if (gyroscopeSensor == null) {
-                        Log.w(TAG, "Gyroscope sensor not available on this device");
+                        TimberLog.w(TAG, "Gyroscope sensor not available on this device");
                     }
                 }
 
-                Log.d(TAG, "Engine created");
+                TimberLog.d(TAG, "Engine created");
             } catch (Exception e) {
-                Log.e(TAG, "Error in onCreate: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error in onCreate: " + e.getMessage(), e);
                 throw e;
             }
         }
@@ -185,7 +185,7 @@ public class GLWallpaperService extends WallpaperService {
             if (renderer != null) {
                 renderer.onSurfaceChanged(width, height);
             } else {
-                Log.e(TAG, "Renderer is null in surfaceChanged");
+                TimberLog.e(TAG, "Renderer is null in surfaceChanged");
             }
         }
 
@@ -220,18 +220,18 @@ public class GLWallpaperService extends WallpaperService {
                 // Get the default EGL display
                 eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
                 if (eglDisplay == EGL14.EGL_NO_DISPLAY) {
-                    Log.e(TAG, "Failed to get EGL display");
+                    TimberLog.e(TAG, "Failed to get EGL display");
                     return false;
                 }
 
                 // Initialize EGL
                 int[] version = new int[2];
                 if (!EGL14.eglInitialize(eglDisplay, version, 0, version, 1)) {
-                    Log.e(TAG, "Failed to initialize EGL");
+                    TimberLog.e(TAG, "Failed to initialize EGL");
                     return false;
                 }
 
-                Log.d(TAG, "EGL version: " + version[0] + "." + version[1]);
+                TimberLog.d(TAG, "EGL version: " + version[0] + "." + version[1]);
 
                 // Configure EGL
                 int[] attribList = {
@@ -246,13 +246,13 @@ public class GLWallpaperService extends WallpaperService {
                 EGLConfig[] configs = new EGLConfig[1];
                 int[] numConfigs = new int[1];
                 if (!EGL14.eglChooseConfig(eglDisplay, attribList, 0, configs, 0, configs.length, numConfigs, 0)) {
-                    Log.e(TAG, "Failed to choose EGL config");
+                    TimberLog.e(TAG, "Failed to choose EGL config");
                     return false;
                 }
 
                 eglConfig = configs[0];
                 if (eglConfig == null) {
-                    Log.e(TAG, "No EGL config available");
+                    TimberLog.e(TAG, "No EGL config available");
                     return false;
                 }
 
@@ -263,7 +263,7 @@ public class GLWallpaperService extends WallpaperService {
                 };
                 eglContext = EGL14.eglCreateContext(eglDisplay, eglConfig, EGL14.EGL_NO_CONTEXT, attribListContext, 0);
                 if (eglContext == null || eglContext == EGL14.EGL_NO_CONTEXT) {
-                    Log.e(TAG, "Failed to create EGL context");
+                    TimberLog.e(TAG, "Failed to create EGL context");
                     return false;
                 }
 
@@ -271,13 +271,13 @@ public class GLWallpaperService extends WallpaperService {
                 int[] surfaceAttribs = { EGL14.EGL_NONE };
                 eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, holder.getSurface(), surfaceAttribs, 0);
                 if (eglSurface == null || eglSurface == EGL14.EGL_NO_SURFACE) {
-                    Log.e(TAG, "Failed to create EGL surface");
+                    TimberLog.e(TAG, "Failed to create EGL surface");
                     return false;
                 }
 
                 // Make the context current
                 if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
-                    Log.e(TAG, "Failed to make EGL context current");
+                    TimberLog.e(TAG, "Failed to make EGL context current");
                     return false;
                 }
 
@@ -286,10 +286,10 @@ public class GLWallpaperService extends WallpaperService {
 
                 eglContextInitialized = true;
                 renderer.onSurfaceCreated();
-                Log.d(TAG, "EGL initialized successfully (first time)");
+                TimberLog.d(TAG, "EGL initialized successfully (first time)");
                 return true;
             } catch (Exception e) {
-                Log.e(TAG, "initEGL failed", e);
+                TimberLog.e(TAG, "initEGL failed", e);
                 return false;
             }
         }
@@ -304,13 +304,13 @@ public class GLWallpaperService extends WallpaperService {
                 int[] surfaceAttribs = { EGL14.EGL_NONE };
                 eglSurface = EGL14.eglCreateWindowSurface(eglDisplay, eglConfig, holder.getSurface(), surfaceAttribs, 0);
                 if (eglSurface == null || eglSurface == EGL14.EGL_NO_SURFACE) {
-                    Log.e(TAG, "Failed to create EGL surface on resume");
+                    TimberLog.e(TAG, "Failed to create EGL surface on resume");
                     return false;
                 }
 
                 // Make the context current with the new surface
                 if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
-                    Log.e(TAG, "Failed to make EGL context current on resume");
+                    TimberLog.e(TAG, "Failed to make EGL context current on resume");
                     return false;
                 }
 
@@ -322,10 +322,10 @@ public class GLWallpaperService extends WallpaperService {
                     renderer.onRendererSuspendResume();
                 }
 
-                Log.d(TAG, "EGL resumed successfully (context preserved)");
+                TimberLog.d(TAG, "EGL resumed successfully (context preserved)");
                 return true;
             } catch (Exception e) {
-                Log.e(TAG, "resumeEGL failed", e);
+                TimberLog.e(TAG, "resumeEGL failed", e);
                 return false;
             }
         }
@@ -351,9 +351,9 @@ public class GLWallpaperService extends WallpaperService {
                     }
                 }
 
-                Log.d(TAG, "EGL paused (surface destroyed, context preserved)");
+                TimberLog.d(TAG, "EGL paused (surface destroyed, context preserved)");
             } catch (Exception e) {
-                Log.e(TAG, "Error pausing EGL", e);
+                TimberLog.e(TAG, "Error pausing EGL", e);
             }
         }
 
@@ -379,9 +379,9 @@ public class GLWallpaperService extends WallpaperService {
                     EGL14.eglTerminate(eglDisplay);
                 }
 
-                Log.d(TAG, "EGL fully destroyed");
+                TimberLog.d(TAG, "EGL fully destroyed");
             } catch (Exception e) {
-                Log.e(TAG, "Error destroying EGL", e);
+                TimberLog.e(TAG, "Error destroying EGL", e);
             } finally {
                 eglDisplay = null;
                 eglContext = null;
@@ -405,7 +405,7 @@ public class GLWallpaperService extends WallpaperService {
             if (!sensorRegistered && sensorManager != null && gyroscopeSensor != null) {
                 sensorManager.registerListener(sensorEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_UI);
                 sensorRegistered = true;
-                Log.d(TAG, "Gyroscope sensor registered");
+                TimberLog.d(TAG, "Gyroscope sensor registered");
             }
 
             running = true;
@@ -426,14 +426,14 @@ public class GLWallpaperService extends WallpaperService {
                         // Swap buffers (vsync handled by eglSwapInterval)
                         EGL14.eglSwapBuffers(eglDisplay, eglSurface);
                     } catch (Exception e) {
-                        Log.e(TAG, "Rendering error", e);
+                        TimberLog.e(TAG, "Rendering error", e);
                     }
                 }
 
                 pauseEGL();
             });
             renderThread.start();
-            Log.d(TAG, "Rendering started");
+            TimberLog.d(TAG, "Rendering started");
         }
 
         private void stopRendering() {
@@ -446,7 +446,7 @@ public class GLWallpaperService extends WallpaperService {
             if (sensorRegistered && sensorManager != null) {
                 sensorManager.unregisterListener(sensorEventListener);
                 sensorRegistered = false;
-                Log.d(TAG, "Gyroscope sensor unregistered");
+                TimberLog.d(TAG, "Gyroscope sensor unregistered");
             }
 
             running = false;
@@ -459,7 +459,7 @@ public class GLWallpaperService extends WallpaperService {
                 }
                 renderThread = null;
             }
-            Log.d(TAG, "Rendering stopped");
+            TimberLog.d(TAG, "Rendering stopped");
         }
     }
 }

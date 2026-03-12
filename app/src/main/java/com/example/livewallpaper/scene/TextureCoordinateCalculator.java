@@ -1,6 +1,6 @@
 package com.example.livewallpaper.scene;
 
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
 import java.nio.FloatBuffer;
 
@@ -62,17 +62,17 @@ public class TextureCoordinateCalculator {
             float textureScaleFactor) {
 
         if (originalTexCoordinates == null || texCoordBuffer == null) {
-            Log.d(TAG, "TEXDEBUG_UPDATE: Skipping - null coordinates or buffer");
+            TimberLog.d(TAG, "TEXDEBUG_UPDATE: Skipping - null coordinates or buffer");
             return;
         }
 
-        Log.d(TAG, "TEXDEBUG_UPDATE: Called with width=" + width + ", height=" + height +
+        TimberLog.d(TAG, "TEXDEBUG_UPDATE: Called with width=" + width + ", height=" + height +
                 ", textureScale=" + textureScale + ", offsets=[" + textureOffsets[0] + "," + textureOffsets[1] + "]");
 
         // Log stack trace to identify caller
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         if (stackTrace.length > 4) {
-            Log.d(TAG, "TEXDEBUG_CALLER: " + stackTrace[3].getClassName() + "." + stackTrace[3].getMethodName() + ":" + stackTrace[3].getLineNumber());
+            TimberLog.d(TAG, "TEXDEBUG_CALLER: " + stackTrace[3].getClassName() + "." + stackTrace[3].getMethodName() + ":" + stackTrace[3].getLineNumber());
         }
 
         // Calculate all intermediate values
@@ -89,8 +89,8 @@ public class TextureCoordinateCalculator {
         float[] texCoords = buildTextureCoordinateArray(data);
         applyTextureCoordinatesToBuffer(texCoordBuffer, texCoords);
 
-        Log.d(TAG, "TEXDEBUG_UPDATE_COMPLETE: Final texture coordinates applied");
-        Log.d(TAG, "Texture coordinates updated - scale: " + textureScale +
+        TimberLog.d(TAG, "TEXDEBUG_UPDATE_COMPLETE: Final texture coordinates applied");
+        TimberLog.d(TAG, "Texture coordinates updated - scale: " + textureScale +
                 ", offsetU: " + textureOffsets[0] + ", offsetV: " + textureOffsets[1]);
     }
 
@@ -114,13 +114,13 @@ public class TextureCoordinateCalculator {
         TextureCoordinateData data = new TextureCoordinateData();
 
         // Log input parameters for debugging
-        Log.d(TAG, "TEXDEBUG_INPUT: width=" + width + ", height=" + height +
+        TimberLog.d(TAG, "TEXDEBUG_INPUT: width=" + width + ", height=" + height +
                 ", originalWidth=" + originalWidth + ", originalHeight=" + originalHeight);
-        Log.d(TAG, "TEXDEBUG_INPUT: textureScale=" + textureScale +
+        TimberLog.d(TAG, "TEXDEBUG_INPUT: textureScale=" + textureScale +
                 ", textureOffsetU=" + textureOffsetU + ", textureOffsetV=" + textureOffsetV);
-        Log.d(TAG, "TEXDEBUG_INPUT: textureScaleFactor=" + textureScaleFactor);
+        TimberLog.d(TAG, "TEXDEBUG_INPUT: textureScaleFactor=" + textureScaleFactor);
         if (originalTexCoordinates != null && originalTexCoordinates.length >= 8) {
-            Log.d(TAG, "TEXDEBUG_INPUT: originalTexCoords=[" +
+            TimberLog.d(TAG, "TEXDEBUG_INPUT: originalTexCoords=[" +
                     originalTexCoordinates[0] + "," + originalTexCoordinates[1] + "," +
                     originalTexCoordinates[2] + "," + originalTexCoordinates[3] + "," +
                     originalTexCoordinates[4] + "," + originalTexCoordinates[5] + "," +
@@ -158,7 +158,7 @@ public class TextureCoordinateCalculator {
         float widthGrowthFactor = width / originalWidth;
         float heightGrowthFactor = height / originalHeight;
 
-        Log.d(TAG, "TEXDEBUG_GROWTH: widthGrowthFactor=" + widthGrowthFactor +
+        TimberLog.d(TAG, "TEXDEBUG_GROWTH: widthGrowthFactor=" + widthGrowthFactor +
                 ", heightGrowthFactor=" + heightGrowthFactor);
 
         // Calculate window size for each dimension independently
@@ -168,14 +168,14 @@ public class TextureCoordinateCalculator {
         // V dimension: accounts for height growth
         data.windowSizeV = baseWindowSize * heightGrowthFactor;
 
-        Log.d(TAG, "TEXDEBUG_PRE_CLAMP: windowSizeU=" + data.windowSizeU +
+        TimberLog.d(TAG, "TEXDEBUG_PRE_CLAMP: windowSizeU=" + data.windowSizeU +
                 ", windowSizeV=" + data.windowSizeV);
 
         // Clamp window size to max 1.0 (can't see more than the full texture)
         data.windowSizeU = Math.min(1.0f, data.windowSizeU);
         data.windowSizeV = Math.min(1.0f, data.windowSizeV);
 
-        Log.d(TAG, "TEXDEBUG_POST_CLAMP: windowSizeU=" + data.windowSizeU +
+        TimberLog.d(TAG, "TEXDEBUG_POST_CLAMP: windowSizeU=" + data.windowSizeU +
                 ", windowSizeV=" + data.windowSizeV +
                 ", uClamped=" + (data.windowSizeU >= 1.0f) +
                 ", vClamped=" + (data.windowSizeV >= 1.0f));
@@ -191,14 +191,14 @@ public class TextureCoordinateCalculator {
             // U is at maximum, sprite is wider than texture aspect ratio
             // Adjust V to maintain texture aspect ratio (clip top/bottom)
             data.windowSizeV = 1.0f / data.spriteAspectRatio * data.textureAspectRatio;
-            Log.d(TAG, "TEXDEBUG_ASPECT_ADJUST: U clamped, adjusted windowSizeV to " + data.windowSizeV +
+            TimberLog.d(TAG, "TEXDEBUG_ASPECT_ADJUST: U clamped, adjusted windowSizeV to " + data.windowSizeV +
                   " (sprite wider than texture, spriteAR=" + data.spriteAspectRatio +
                   ", textureAR=" + data.textureAspectRatio + ")");
         } else if (vIsClamped && data.spriteAspectRatio < data.textureAspectRatio) {
             // V is at maximum, sprite is taller than texture aspect ratio
             // Adjust U to maintain texture aspect ratio (clip left/right)
             data.windowSizeU = 1.0f * data.spriteAspectRatio / data.textureAspectRatio;
-            Log.d(TAG, "TEXDEBUG_ASPECT_ADJUST: V clamped, adjusted windowSizeU to " + data.windowSizeU +
+            TimberLog.d(TAG, "TEXDEBUG_ASPECT_ADJUST: V clamped, adjusted windowSizeU to " + data.windowSizeU +
                   " (sprite taller than texture, spriteAR=" + data.spriteAspectRatio +
                   ", textureAR=" + data.textureAspectRatio + ")");
         }
@@ -300,12 +300,12 @@ public class TextureCoordinateCalculator {
             float overshoot = -data.uMin;
             data.uMin = 0f;
             data.uMax = data.uMax + overshoot;
-            Log.d(TAG, "TEXDEBUG_CLAMP: U negative overshoot=" + overshoot);
+            TimberLog.d(TAG, "TEXDEBUG_CLAMP: U negative overshoot=" + overshoot);
         } else if (data.uMax > 1f) {
             float overshoot = data.uMax - 1f;
             data.uMax = 1f;
             data.uMin = data.uMin - overshoot;
-            Log.d(TAG, "TEXDEBUG_CLAMP: U positive overshoot=" + overshoot);
+            TimberLog.d(TAG, "TEXDEBUG_CLAMP: U positive overshoot=" + overshoot);
         }
 
         // Clamp V bounds
@@ -313,12 +313,12 @@ public class TextureCoordinateCalculator {
             float overshoot = -data.vMin;
             data.vMin = 0f;
             data.vMax = data.vMax + overshoot;
-            Log.d(TAG, "TEXDEBUG_CLAMP: V negative overshoot=" + overshoot);
+            TimberLog.d(TAG, "TEXDEBUG_CLAMP: V negative overshoot=" + overshoot);
         } else if (data.vMax > 1f) {
             float overshoot = data.vMax - 1f;
             data.vMax = 1f;
             data.vMin = data.vMin - overshoot;
-            Log.d(TAG, "TEXDEBUG_CLAMP: V positive overshoot=" + overshoot);
+            TimberLog.d(TAG, "TEXDEBUG_CLAMP: V positive overshoot=" + overshoot);
         }
 
         // Final clamp to ensure we stay in [0, 1]
@@ -341,7 +341,7 @@ public class TextureCoordinateCalculator {
                 data.uMax, data.vMin   // bottom right
         };
 
-        Log.d(TAG, "TEXDEBUG_FINAL_COORDS: topLeft=(" + data.uMin + "," + data.vMax + "), " +
+        TimberLog.d(TAG, "TEXDEBUG_FINAL_COORDS: topLeft=(" + data.uMin + "," + data.vMax + "), " +
                 "bottomLeft=(" + data.uMin + "," + data.vMin + "), topRight=(" + data.uMax + "," + data.vMax + "), " +
                 "bottomRight=(" + data.uMax + "," + data.vMin + ")");
 
@@ -359,24 +359,24 @@ public class TextureCoordinateCalculator {
 
     // Debug logging methods
     private static void logWindowSizeDebug(TextureCoordinateData data) {
-        Log.d(TAG, "TEXDEBUG_WINDOW_SIZE: textureAspectRatio=" + data.textureAspectRatio +
+        TimberLog.d(TAG, "TEXDEBUG_WINDOW_SIZE: textureAspectRatio=" + data.textureAspectRatio +
                 ", spriteAspectRatio=" + data.spriteAspectRatio + ", uniformScale=" + data.uniformScale);
-        Log.d(TAG, "TEXDEBUG_WINDOW_SIZE: windowSizeU=" + data.windowSizeU + ", windowSizeV=" + data.windowSizeV);
-        Log.d(TAG, "TEXDEBUG_WINDOW_SIZE: windowAspectRatio=" + (data.windowSizeU / data.windowSizeV));
+        TimberLog.d(TAG, "TEXDEBUG_WINDOW_SIZE: windowSizeU=" + data.windowSizeU + ", windowSizeV=" + data.windowSizeV);
+        TimberLog.d(TAG, "TEXDEBUG_WINDOW_SIZE: windowAspectRatio=" + (data.windowSizeU / data.windowSizeV));
     }
 
     private static void logInitialWindowDebug(TextureCoordinateData data) {
-        Log.d(TAG, "TEXDEBUG_WINDOW_INITIAL: uMin=" + data.uMin + ", uMax=" + data.uMax +
+        TimberLog.d(TAG, "TEXDEBUG_WINDOW_INITIAL: uMin=" + data.uMin + ", uMax=" + data.uMax +
                 ", vMin=" + data.vMin + ", vMax=" + data.vMax);
     }
 
     private static void logAfterOffsetDebug(TextureCoordinateData data) {
-        Log.d(TAG, "TEXDEBUG_WINDOW_AFTER_OFFSET: uMin=" + data.uMin + ", uMax=" + data.uMax +
+        TimberLog.d(TAG, "TEXDEBUG_WINDOW_AFTER_OFFSET: uMin=" + data.uMin + ", uMax=" + data.uMax +
                 ", vMin=" + data.vMin + ", vMax=" + data.vMax);
     }
 
     private static void logFinalWindowDebug(TextureCoordinateData data) {
-        Log.d(TAG, "TEXDEBUG_WINDOW_FINAL: uMin=" + data.uMin + ", uMax=" + data.uMax +
+        TimberLog.d(TAG, "TEXDEBUG_WINDOW_FINAL: uMin=" + data.uMin + ", uMax=" + data.uMax +
                 ", vMin=" + data.vMin + ", vMax=" + data.vMax);
     }
 

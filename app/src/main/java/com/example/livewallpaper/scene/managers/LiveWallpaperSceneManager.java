@@ -3,9 +3,10 @@ package com.example.livewallpaper.scene.managers;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
 import com.example.livewallpaper.gl.GLWallpaperRenderer;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
@@ -36,9 +37,9 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         // Load the initial scene
         try {
             this.currentScene = sceneSwitchManager.loadInitialScene();
-            Log.d(TAG, "Loaded initial scene: " + currentScene.getSceneName());
+            TimberLog.d(TAG, "Loaded initial scene: " + currentScene.getSceneName());
         } catch (Exception e) {
-            Log.e(TAG, "Failed to load initial scene, using empty scene", e);
+            TimberLog.e(TAG, "Failed to load initial scene, using empty scene", e);
             this.currentScene = new Scene("DefaultScene");
         }
 
@@ -48,7 +49,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     @Override
     public void onSurfaceCreated() {
-        Log.d(TAG, "onSurfaceCreated called");
+        TimberLog.d(TAG, "onSurfaceCreated called");
 
         // Initialize common GL resources (shader, handles, sprite renderer)
         initializeGLResources();
@@ -68,12 +69,12 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         // Reset the scene change timer
         lastSceneChangeTimeMs = System.currentTimeMillis();
 
-        Log.d(TAG, "Surface created and scene initialized for wallpaper");
+        TimberLog.d(TAG, "Surface created and scene initialized for wallpaper");
     }
 
     @Override
     public void onSurfaceChanged(int width, int height) {
-        Log.d(TAG, "onSurfaceChanged: " + width + "x" + height);
+        TimberLog.d(TAG, "onSurfaceChanged: " + width + "x" + height);
 
         GLES20.glViewport(0, 0, width, height);
         float aspectRatio = (float) width / (float) height;
@@ -85,7 +86,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         // left, right, bottom, top using world-space extents
         Matrix.orthoM(projectionMatrix, 0, -halfWorldW, halfWorldW, halfWorldH, -halfWorldH, -1f, 1f);
 
-        Log.d(TAG, "Surface changed for wallpaper: " + width + "x" + height);
+        TimberLog.d(TAG, "Surface changed for wallpaper: " + width + "x" + height);
     }
 
     /**
@@ -94,7 +95,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
     @Override
     public void onDrawFrame() {
         if (currentScene == null) {
-            Log.w(TAG, "onDrawFrame() called but scene is null");
+            TimberLog.w(TAG, "onDrawFrame() called but scene is null");
             return;
         }
 
@@ -137,7 +138,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy called");
+        TimberLog.d(TAG, "onDestroy called");
 
         // Destroy all sprites
         if (currentScene != null) {
@@ -151,7 +152,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         if (textureManager != null) {
             textureManager.destroyAll();
         }
-        Log.d(TAG, "Renderer destroyed for wallpaper");
+        TimberLog.d(TAG, "Renderer destroyed for wallpaper");
     }
 
     @Override
@@ -166,7 +167,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     @Override
     public void onRendererResume(long resumeTimeNs) {
-        Log.d(TAG, "onRendererResume called");
+        TimberLog.d(TAG, "onRendererResume called");
 
         // Resume gyro tracking from current position
         gyroProcessor.resume();
@@ -175,7 +176,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     @Override
     public void onRendererPause() {
-        Log.d(TAG, "onRendererPause called");
+        TimberLog.d(TAG, "onRendererPause called");
 
         // Pause gyro tracking (stop processing sensor data)
         gyroProcessor.pause();
@@ -184,17 +185,17 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     @Override
     public void onRendererSuspend() {
-        Log.d(TAG, "onRendererSuspend called");
+        TimberLog.d(TAG, "onRendererSuspend called");
 
         // Pause gyro tracking during suspension
         gyroProcessor.pause();
         scrollOffsetProcessor.onRendererPause();
-        Log.d(TAG, "Renderer suspended - gyro tracking paused");
+        TimberLog.d(TAG, "Renderer suspended - gyro tracking paused");
     }
 
     @Override
     public void onRendererSuspendResume() {
-        Log.d(TAG, "onRendererSuspendResume called");
+        TimberLog.d(TAG, "onRendererSuspendResume called");
 
         // Resume gyro tracking after suspension
         gyroProcessor.resume();
@@ -205,19 +206,19 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         if (currentTimeMs - lastSceneChangeTimeMs >= SCENE_CYCLE_INTERVAL_MS && sceneSwitchManager != null) {
             sceneSwitchManager.cycleToNextScene(currentScene);
             lastSceneChangeTimeMs = currentTimeMs;
-            Log.d(TAG, "Auto-cycling to next scene (5 minutes elapsed)");
+            TimberLog.d(TAG, "Auto-cycling to next scene (5 minutes elapsed)");
         }
 
-        Log.d(TAG, "Renderer resumed after suspension - gyro tracking resumed");
+        TimberLog.d(TAG, "Renderer resumed after suspension - gyro tracking resumed");
     }
 
     @Override
     public void onDoubleTap(float x, float y) {
-        Log.d(TAG, "onDoubleTap received at screen coordinates (" + x + ", " + y + ")");
+        TimberLog.d(TAG, "onDoubleTap received at screen coordinates (" + x + ", " + y + ")");
 
         // Prevent interrupting an ongoing transition
         if (sceneSwitchManager != null && sceneSwitchManager.isTransitioning()) {
-            Log.d(TAG, "Double tap ignored: transition already in progress");
+            TimberLog.d(TAG, "Double tap ignored: transition already in progress");
             return;
         }
 
@@ -234,7 +235,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
     public void refreshSceneList(SceneFileManager sceneFileManager) {
         if (sceneSwitchManager != null) {
             sceneSwitchManager.reloadAvailableScenes(sceneFileManager);
-            Log.d(TAG, "Scene list refreshed in renderer");
+            TimberLog.d(TAG, "Scene list refreshed in renderer");
         }
     }
 }

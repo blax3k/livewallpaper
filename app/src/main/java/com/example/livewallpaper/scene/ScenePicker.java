@@ -1,7 +1,8 @@
 package com.example.livewallpaper.scene;
 
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.SceneData;
 
@@ -50,7 +51,7 @@ public class ScenePicker {
         }
 
         SceneData.TimeOfDay currentTimeOfDay = getCurrentTimeOfDay();
-        Log.d(TAG, "Current time of day: " + currentTimeOfDay);
+        TimberLog.d(TAG, "Current time of day: " + currentTimeOfDay);
 
         // Filter scenes to those matching the current time of day
         List<Scene> viableScenes = new ArrayList<>();
@@ -63,12 +64,12 @@ public class ScenePicker {
         // If we have viable scenes for this time period, pick one randomly
         if (!viableScenes.isEmpty()) {
             Scene selected = viableScenes.get(random.nextInt(viableScenes.size()));
-            Log.d(TAG, "Selected scene for " + currentTimeOfDay + ": " + selected.getSceneName());
+            TimberLog.d(TAG, "Selected scene for " + currentTimeOfDay + ": " + selected.getSceneName());
             return selected;
         }
 
         // Fallback: if no scenes match, pick a random scene from all scenes
-        Log.w(TAG, "No scenes found for " + currentTimeOfDay + ", selecting random scene");
+        TimberLog.w(TAG, "No scenes found for " + currentTimeOfDay + ", selecting random scene");
         return scenes.get(random.nextInt(scenes.size()));
     }
 

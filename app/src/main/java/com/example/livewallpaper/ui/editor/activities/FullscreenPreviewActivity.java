@@ -8,7 +8,7 @@ import android.hardware.SensorManager;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.example.livewallpaper.R;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.managers.EditSceneManager;
 
@@ -34,51 +35,51 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "FullscreenPreviewActivity onCreate called");
+        TimberLog.d(TAG, "FullscreenPreviewActivity onCreate called");
 
         android.view.Window window = getWindow();
 
         // Step 1: Tell the window to allow drawing behind system bars
         WindowCompat.setDecorFitsSystemWindows(window, false);
-        Log.d(TAG, "WindowCompat.setDecorFitsSystemWindows(false) called");
+        TimberLog.d(TAG, "WindowCompat.setDecorFitsSystemWindows(false) called");
 
         // Step 2: Set status bar and navigation bar colors to transparent
         window.setStatusBarColor(Color.TRANSPARENT);
         window.setNavigationBarColor(Color.TRANSPARENT);
-        Log.d(TAG, "Status bar and navigation bar colors set to TRANSPARENT");
+        TimberLog.d(TAG, "Status bar and navigation bar colors set to TRANSPARENT");
 
         // Step 3: Hide the system bars with immersive mode
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, window.getDecorView());
         if (controller != null) {
             controller.hide(WindowInsetsCompat.Type.systemBars());
             controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-            Log.d(TAG, "System bars hidden with transient behavior");
+            TimberLog.d(TAG, "System bars hidden with transient behavior");
         }
 
         // Step 4: Allow drawing into the display cutout area (the notch)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             window.getAttributes().layoutInDisplayCutoutMode =
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-            Log.d(TAG, "LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES set - content will extend into cutout");
+            TimberLog.d(TAG, "LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES set - content will extend into cutout");
         }
 
         setContentView(R.layout.activity_fullscreen_preview);
-        Log.d(TAG, "Content view set");
+        TimberLog.d(TAG, "Content view set");
 
         // Check for preloaded scene data first (preferred for EditSceneActivity transitions)
         Scene preloadedScene = getIntent().getParcelableExtra(EXTRA_SCENE_DATA);
         if (preloadedScene != null) {
-            Log.d(TAG, "Preloaded scene data found: " + preloadedScene.getSceneName());
+            TimberLog.d(TAG, "Preloaded scene data found: " + preloadedScene.getSceneName());
             setupSceneWithPreloadedData(preloadedScene);
         } else {
             // Fall back to loading from file (legacy behavior)
             String sceneFileName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
             if (sceneFileName == null) {
-                Log.e(TAG, "No scene file name or preloaded scene provided!");
+                TimberLog.e(TAG, "No scene file name or preloaded scene provided!");
                 finish();
                 return;
             }
-            Log.d(TAG, "Loading scene from file: " + sceneFileName);
+            TimberLog.d(TAG, "Loading scene from file: " + sceneFileName);
             setupSceneFromFile(sceneFileName);
         }
     }
@@ -134,20 +135,20 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
         View glView = findViewById(R.id.fullscreen_preview_gl_view);
         if (glView != null) {
             glView.post(() -> {
-                Log.d(TAG, "=== GLView Dimensions ===");
-                Log.d(TAG, "GLView Width: " + glView.getWidth());
-                Log.d(TAG, "GLView Height: " + glView.getHeight());
-                Log.d(TAG, "GLView X: " + glView.getX());
-                Log.d(TAG, "GLView Y: " + glView.getY());
-                Log.d(TAG, "GLView Left: " + glView.getLeft());
-                Log.d(TAG, "GLView Top: " + glView.getTop());
-                Log.d(TAG, "GLView Right: " + glView.getRight());
-                Log.d(TAG, "GLView Bottom: " + glView.getBottom());
+                TimberLog.d(TAG, "=== GLView Dimensions ===");
+                TimberLog.d(TAG, "GLView Width: " + glView.getWidth());
+                TimberLog.d(TAG, "GLView Height: " + glView.getHeight());
+                TimberLog.d(TAG, "GLView X: " + glView.getX());
+                TimberLog.d(TAG, "GLView Y: " + glView.getY());
+                TimberLog.d(TAG, "GLView Left: " + glView.getLeft());
+                TimberLog.d(TAG, "GLView Top: " + glView.getTop());
+                TimberLog.d(TAG, "GLView Right: " + glView.getRight());
+                TimberLog.d(TAG, "GLView Bottom: " + glView.getBottom());
 
                 View rootView2 = getWindow().getDecorView();
-                Log.d(TAG, "=== Root View Dimensions ===");
-                Log.d(TAG, "Root Width: " + rootView2.getWidth());
-                Log.d(TAG, "Root Height: " + rootView2.getHeight());
+                TimberLog.d(TAG, "=== Root View Dimensions ===");
+                TimberLog.d(TAG, "Root Width: " + rootView2.getWidth());
+                TimberLog.d(TAG, "Root Height: " + rootView2.getHeight());
             });
         }
     }
@@ -160,29 +161,29 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
      */
     private void setupGLSurfaceView(Scene scene) {
         glSurfaceView = findViewById(R.id.fullscreen_preview_gl_view);
-        Log.d(TAG, "GLSurfaceView reference obtained: " + (glSurfaceView != null ? "SUCCESS" : "NULL"));
+        TimberLog.d(TAG, "GLSurfaceView reference obtained: " + (glSurfaceView != null ? "SUCCESS" : "NULL"));
 
         if (glSurfaceView != null) {
             try {
-                Log.d(TAG, "Configuring GLSurfaceView...");
+                TimberLog.d(TAG, "Configuring GLSurfaceView...");
                 glSurfaceView.setEGLContextClientVersion(2);
-                Log.d(TAG, "EGL context version set to 2");
+                TimberLog.d(TAG, "EGL context version set to 2");
 
                 // Create a new renderer with the preloaded scene
                 renderer = new EditSceneManager(this, scene);
                 glSurfaceView.setRenderer(renderer);
-                Log.d(TAG, "Renderer set");
+                TimberLog.d(TAG, "Renderer set");
 
                 glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-                Log.d(TAG, "Render mode set to CONTINUOUSLY");
+                TimberLog.d(TAG, "Render mode set to CONTINUOUSLY");
 
-                Log.d(TAG, "Fullscreen preview GLSurfaceView configured successfully");
+                TimberLog.d(TAG, "Fullscreen preview GLSurfaceView configured successfully");
             } catch (Exception e) {
-                Log.e(TAG, "Error setting up fullscreen preview GLSurfaceView: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error setting up fullscreen preview GLSurfaceView: " + e.getMessage(), e);
                 finish();
             }
         } else {
-            Log.e(TAG, "Fullscreen preview GLSurfaceView not found!");
+            TimberLog.e(TAG, "Fullscreen preview GLSurfaceView not found!");
             finish();
         }
     }
@@ -195,29 +196,29 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
      */
     private void setupGLSurfaceView(String sceneFileName) {
         glSurfaceView = findViewById(R.id.fullscreen_preview_gl_view);
-        Log.d(TAG, "GLSurfaceView reference obtained: " + (glSurfaceView != null ? "SUCCESS" : "NULL"));
+        TimberLog.d(TAG, "GLSurfaceView reference obtained: " + (glSurfaceView != null ? "SUCCESS" : "NULL"));
 
         if (glSurfaceView != null) {
             try {
-                Log.d(TAG, "Configuring GLSurfaceView...");
+                TimberLog.d(TAG, "Configuring GLSurfaceView...");
                 glSurfaceView.setEGLContextClientVersion(2);
-                Log.d(TAG, "EGL context version set to 2");
+                TimberLog.d(TAG, "EGL context version set to 2");
 
                 // Create a new renderer with the file name (legacy behavior)
                 renderer = new EditSceneManager(this, sceneFileName);
                 glSurfaceView.setRenderer(renderer);
-                Log.d(TAG, "Renderer set");
+                TimberLog.d(TAG, "Renderer set");
 
                 glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-                Log.d(TAG, "Render mode set to CONTINUOUSLY");
+                TimberLog.d(TAG, "Render mode set to CONTINUOUSLY");
 
-                Log.d(TAG, "Fullscreen preview GLSurfaceView configured successfully");
+                TimberLog.d(TAG, "Fullscreen preview GLSurfaceView configured successfully");
             } catch (Exception e) {
-                Log.e(TAG, "Error setting up fullscreen preview GLSurfaceView: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error setting up fullscreen preview GLSurfaceView: " + e.getMessage(), e);
                 finish();
             }
         } else {
-            Log.e(TAG, "Fullscreen preview GLSurfaceView not found!");
+            TimberLog.e(TAG, "Fullscreen preview GLSurfaceView not found!");
             finish();
         }
     }
@@ -226,7 +227,7 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
         ImageButton closeButton = findViewById(R.id.fullscreen_close_button);
         if (closeButton != null) {
             closeButton.setOnClickListener(v -> {
-                Log.d(TAG, "Close button clicked, exiting fullscreen preview");
+                TimberLog.d(TAG, "Close button clicked, exiting fullscreen preview");
                 finish();
             });
         }
@@ -261,19 +262,19 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG, "onResume called");
+        TimberLog.d(TAG, "onResume called");
 
         if (glSurfaceView != null) {
             glSurfaceView.onResume();
-            Log.d(TAG, "GLSurfaceView resumed");
+            TimberLog.d(TAG, "GLSurfaceView resumed");
         }
         if (renderer != null) {
             renderer.resume();
-            Log.d(TAG, "Renderer resumed");
+            TimberLog.d(TAG, "Renderer resumed");
         }
         if (sensorManager != null && gyroscopeSensor != null) {
             sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
-            Log.d(TAG, "Gyroscope listener registered");
+            TimberLog.d(TAG, "Gyroscope listener registered");
         }
     }
 

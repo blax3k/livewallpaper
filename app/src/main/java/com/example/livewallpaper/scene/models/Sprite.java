@@ -2,8 +2,9 @@ package com.example.livewallpaper.scene.models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.TextureCoordinateCalculator;
 import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.scene.animation.SpriteWipe;
@@ -512,7 +513,7 @@ public class Sprite implements Parcelable {
     public void setTextureEditingBaseline(float baselineWidth, float baselineHeight) {
         this.textureEditingBaselineWidth = baselineWidth;
         this.textureEditingBaselineHeight = baselineHeight;
-        Log.d(TAG, "Texture editing baseline set to: " + baselineWidth + " x " + baselineHeight);
+        TimberLog.d(TAG, "Texture editing baseline set to: " + baselineWidth + " x " + baselineHeight);
     }
 
     public String getName() {
@@ -527,7 +528,7 @@ public class Sprite implements Parcelable {
      */
     public void setName(String name) {
         this.name = name;
-        Log.d(TAG, "Sprite name changed to: " + name);
+        TimberLog.d(TAG, "Sprite name changed to: " + name);
     }
 
     public String getTextureResource() {
@@ -775,7 +776,7 @@ public class Sprite implements Parcelable {
         vertexBuffer = null;
         texCoordBuffer = null;
         parallaxMultiplierBuffer = null;
-        Log.d(TAG, "Sprite destroyed (CPU resources released)");
+        TimberLog.d(TAG, "Sprite destroyed (CPU resources released)");
     }
 
     /**
@@ -787,7 +788,7 @@ public class Sprite implements Parcelable {
      */
     public void setTextureCoordinates(float[] texCoords) {
         if (texCoords == null || texCoords.length != 8 || texCoordBuffer == null) {
-            Log.d(TAG, "Cannot set texture coordinates - invalid input");
+            TimberLog.d(TAG, "Cannot set texture coordinates - invalid input");
             return;
         }
         texCoordBuffer.clear();
@@ -799,7 +800,7 @@ public class Sprite implements Parcelable {
         // they use the correct baseline instead of stale coordinates
         this.originalTexCoordinates = texCoords.clone();
 
-        Log.d(TAG, "Texture coordinates updated");
+        TimberLog.d(TAG, "Texture coordinates updated");
     }
 
     // ==================== Parcelable Implementation ====================

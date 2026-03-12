@@ -4,10 +4,11 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.widget.Toast;
 import androidx.documentfile.provider.DocumentFile;
 
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.scene.managers.BaseSceneManager;
@@ -59,7 +60,7 @@ public class SceneFileManager {
         String uriString = prefs.getString(PREFS_KEY_SCENES_URI, null);
         if (uriString != null) {
             Uri uri = Uri.parse(uriString);
-            Log.d(TAG, "Loaded scenes directory URI: " + uri);
+            TimberLog.d(TAG, "Loaded scenes directory URI: " + uri);
             return uri;
         }
         return null;
@@ -87,16 +88,16 @@ public class SceneFileManager {
                         ? sceneData.timeOfDay.toString()
                         : "DAY"; // Default to DAY if not found
                     sceneMetadata.put(sceneFile.getName(), timeOfDayStr);
-                    Log.d(TAG, "Loaded metadata for " + sceneFile.getName() + ": " + timeOfDayStr);
+                    TimberLog.d(TAG, "Loaded metadata for " + sceneFile.getName() + ": " + timeOfDayStr);
                 } catch (IOException e) {
-                    Log.w(TAG, "Error loading metadata for scene " + sceneFile.getName() + ": " + e.getMessage());
+                    TimberLog.w(TAG, "Error loading metadata for scene " + sceneFile.getName() + ": " + e.getMessage());
                     // Put a default value if loading fails
                     sceneMetadata.put(sceneFile.getName(), "DAY");
                 }
             }
         }
 
-        Log.d(TAG, "Loaded metadata for " + sceneMetadata.size() + " scenes");
+        TimberLog.d(TAG, "Loaded metadata for " + sceneMetadata.size() + " scenes");
         return sceneMetadata;
     }
     public String[] loadAvailableSceneFiles() {
@@ -110,15 +111,15 @@ public class SceneFileManager {
             String[] fileNames = listJsonFilesFromUri(scenesDirectoryUri);
 
             if (fileNames.length == 0) {
-                Log.w(TAG, "No scene files found in configured directory: " + scenesDirectoryUri);
+                TimberLog.w(TAG, "No scene files found in configured directory: " + scenesDirectoryUri);
                 // Fall back to app bundle if URI directory is empty
                 return loadFromFallbackDirectory();
             }
 
-            Log.d(TAG, "Found " + fileNames.length + " scene files in configured directory");
+            TimberLog.d(TAG, "Found " + fileNames.length + " scene files in configured directory");
             return fileNames;
         } catch (Exception e) {
-            Log.e(TAG, "Error loading scene files from URI: " + e.getMessage(), e);
+            TimberLog.e(TAG, "Error loading scene files from URI: " + e.getMessage(), e);
             // Fall back to app bundle on error
             return loadFromFallbackDirectory();
         }
@@ -137,7 +138,7 @@ public class SceneFileManager {
         File[] files = fallbackDir.listFiles((dir, name) -> name.endsWith(".json"));
 
         if (files == null || files.length == 0) {
-            Log.w(TAG, "No scene files found in fallback directory: " + fallbackDir.getAbsolutePath());
+            TimberLog.w(TAG, "No scene files found in fallback directory: " + fallbackDir.getAbsolutePath());
             return new String[0];
         }
 
@@ -163,7 +164,7 @@ public class SceneFileManager {
             // Use DocumentFile API to list files
             DocumentFile dir = DocumentFile.fromTreeUri(context, treeUri);
             if (dir == null || !dir.isDirectory()) {
-                Log.e(TAG, "Invalid directory URI or not a directory");
+                TimberLog.e(TAG, "Invalid directory URI or not a directory");
                 return new String[0];
             }
 
@@ -176,7 +177,7 @@ public class SceneFileManager {
             // Sort alphabetically
             fileNames.sort(String::compareTo);
         } catch (Exception e) {
-            Log.e(TAG, "Error listing files from URI", e);
+            TimberLog.e(TAG, "Error listing files from URI", e);
         }
 
         return fileNames.toArray(new String[0]);
@@ -202,9 +203,9 @@ public class SceneFileManager {
         if (!externalFilesDir.exists()) {
             boolean created = externalFilesDir.mkdirs();
             if (created) {
-                Log.d(TAG, "Created fallback scenes directory: " + externalFilesDir.getAbsolutePath());
+                TimberLog.d(TAG, "Created fallback scenes directory: " + externalFilesDir.getAbsolutePath());
             } else {
-                Log.w(TAG, "Failed to create fallback scenes directory");
+                TimberLog.w(TAG, "Failed to create fallback scenes directory");
             }
         }
 
@@ -224,12 +225,12 @@ public class SceneFileManager {
             return;
         }
 
-        Log.d(TAG, "Fallback scenes folder is empty, copying from app bundle...");
+        TimberLog.d(TAG, "Fallback scenes folder is empty, copying from app bundle...");
 
         try {
             String[] bundleScenes = context.getAssets().list(SCENES_FOLDER);
             if (bundleScenes == null || bundleScenes.length == 0) {
-                Log.e(TAG, "No scene files found in app bundle");
+                TimberLog.e(TAG, "No scene files found in app bundle");
                 return;
             }
 
@@ -239,9 +240,9 @@ public class SceneFileManager {
                 }
             }
 
-            Log.d(TAG, "Successfully copied " + bundleScenes.length + " scene files from app bundle");
+            TimberLog.d(TAG, "Successfully copied " + bundleScenes.length + " scene files from app bundle");
         } catch (IOException e) {
-            Log.e(TAG, "Failed to copy scene files from app bundle", e);
+            TimberLog.e(TAG, "Failed to copy scene files from app bundle", e);
         }
     }
 
@@ -260,7 +261,7 @@ public class SceneFileManager {
             if (targetFile.exists()) {
                 boolean deleted = targetFile.delete();
                 if (!deleted) {
-                    Log.w(TAG, "Failed to delete existing file before copying: " + sceneName);
+                    TimberLog.w(TAG, "Failed to delete existing file before copying: " + sceneName);
                 }
             }
 
@@ -272,7 +273,7 @@ public class SceneFileManager {
                 }
             }
 
-            Log.d(TAG, "Copied scene file from bundle: " + sceneName);
+            TimberLog.d(TAG, "Copied scene file from bundle: " + sceneName);
         }
     }
 
@@ -286,7 +287,7 @@ public class SceneFileManager {
     public String getSceneFilePath(String sceneName) {
         if (scenesDirectoryUri != null) {
             // When using URI, the path is not directly accessible
-            Log.d(TAG, "Using URI-based access for: " + sceneName);
+            TimberLog.d(TAG, "Using URI-based access for: " + sceneName);
             return null;
         }
         // Fallback to file system path
@@ -332,21 +333,21 @@ public class SceneFileManager {
                 File sceneFile = new File(getFallbackScenesDirectory(), sceneName);
 
                 if (!sceneFile.exists()) {
-                    Log.w(TAG, "Scene file does not exist: " + sceneName);
+                    TimberLog.w(TAG, "Scene file does not exist: " + sceneName);
                     return false;
                 }
 
                 boolean deleted = sceneFile.delete();
                 if (deleted) {
-                    Log.d(TAG, "Successfully deleted scene file: " + sceneName);
+                    TimberLog.d(TAG, "Successfully deleted scene file: " + sceneName);
                 } else {
-                    Log.e(TAG, "Failed to delete scene file: " + sceneName);
+                    TimberLog.e(TAG, "Failed to delete scene file: " + sceneName);
                 }
 
                 return deleted;
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error deleting scene file: " + sceneName, e);
+            TimberLog.e(TAG, "Error deleting scene file: " + sceneName, e);
             return false;
         }
     }
@@ -361,7 +362,7 @@ public class SceneFileManager {
         try {
             DocumentFile dir = DocumentFile.fromTreeUri(context, scenesDirectoryUri);
             if (dir == null || !dir.isDirectory()) {
-                Log.e(TAG, "Invalid directory URI");
+                TimberLog.e(TAG, "Invalid directory URI");
                 return false;
             }
 
@@ -369,18 +370,18 @@ public class SceneFileManager {
                 if (file.isFile() && sceneName.equals(file.getName())) {
                     boolean deleted = file.delete();
                     if (deleted) {
-                        Log.d(TAG, "Successfully deleted scene file from URI: " + sceneName);
+                        TimberLog.d(TAG, "Successfully deleted scene file from URI: " + sceneName);
                     } else {
-                        Log.e(TAG, "Failed to delete scene file from URI: " + sceneName);
+                        TimberLog.e(TAG, "Failed to delete scene file from URI: " + sceneName);
                     }
                     return deleted;
                 }
             }
 
-            Log.w(TAG, "Scene file not found in URI directory: " + sceneName);
+            TimberLog.w(TAG, "Scene file not found in URI directory: " + sceneName);
             return false;
         } catch (Exception e) {
-            Log.e(TAG, "Error deleting scene file from URI: " + sceneName, e);
+            TimberLog.e(TAG, "Error deleting scene file from URI: " + sceneName, e);
             return false;
         }
     }
@@ -399,7 +400,7 @@ public class SceneFileManager {
                 resetScenesInFallback();
             }
         } catch (IOException e) {
-            Log.e(TAG, "Error resetting scenes to default", e);
+            TimberLog.e(TAG, "Error resetting scenes to default", e);
             throw new RuntimeException("Failed to reset scenes", e);
         }
     }
@@ -410,7 +411,7 @@ public class SceneFileManager {
     private void resetScenesInUri() throws IOException {
         DocumentFile dir = DocumentFile.fromTreeUri(context, scenesDirectoryUri);
         if (dir == null || !dir.isDirectory()) {
-            Log.e(TAG, "Invalid directory URI");
+            TimberLog.e(TAG, "Invalid directory URI");
             return;
         }
 
@@ -418,7 +419,7 @@ public class SceneFileManager {
         for (DocumentFile file : dir.listFiles()) {
             if (file.isFile() && file.getName() != null && file.getName().endsWith(".json")) {
                 if (file.delete()) {
-                    Log.d(TAG, "Deleted scene file during reset: " + file.getName());
+                    TimberLog.d(TAG, "Deleted scene file during reset: " + file.getName());
                 }
             }
         }
@@ -431,7 +432,7 @@ public class SceneFileManager {
                     copySceneFromBundleToUri(sceneName);
                 }
             }
-            Log.d(TAG, "Successfully reset scene list in URI to " + bundleScenes.length + " default scenes");
+            TimberLog.d(TAG, "Successfully reset scene list in URI to " + bundleScenes.length + " default scenes");
         }
     }
 
@@ -446,7 +447,7 @@ public class SceneFileManager {
         if (files != null) {
             for (File file : files) {
                 if (file.isFile() && file.delete()) {
-                    Log.d(TAG, "Deleted scene file during reset: " + file.getName());
+                    TimberLog.d(TAG, "Deleted scene file during reset: " + file.getName());
                 }
             }
         }
@@ -459,7 +460,7 @@ public class SceneFileManager {
                     copySceneFromBundleToDir(sceneName, fallbackDir);
                 }
             }
-            Log.d(TAG, "Successfully reset scene list to " + bundleScenes.length + " default scenes");
+            TimberLog.d(TAG, "Successfully reset scene list to " + bundleScenes.length + " default scenes");
         }
     }
 
@@ -473,7 +474,7 @@ public class SceneFileManager {
         try (InputStream inputStream = context.getAssets().open(SCENES_FOLDER + "/" + sceneName)) {
             DocumentFile dir = DocumentFile.fromTreeUri(context, scenesDirectoryUri);
             if (dir == null || !dir.isDirectory()) {
-                Log.e(TAG, "Invalid directory URI for copying scene");
+                TimberLog.e(TAG, "Invalid directory URI for copying scene");
                 return;
             }
 
@@ -499,11 +500,11 @@ public class SceneFileManager {
                         while ((bytesRead = inputStream.read(buffer)) != -1) {
                             outputStream.write(buffer, 0, bytesRead);
                         }
-                        Log.d(TAG, "Copied scene file from bundle to URI: " + sceneName);
+                        TimberLog.d(TAG, "Copied scene file from bundle to URI: " + sceneName);
                     }
                 }
             } else {
-                Log.e(TAG, "Failed to create file in URI directory: " + sceneName);
+                TimberLog.e(TAG, "Failed to create file in URI directory: " + sceneName);
             }
         }
     }
@@ -557,7 +558,7 @@ public class SceneFileManager {
                     onSuccess.run();
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error saving scene: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error saving scene: " + e.getMessage(), e);
                 Toast.makeText(context, "Error saving scene: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -600,7 +601,7 @@ public class SceneFileManager {
                     onSuccess.run();
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error saving scene: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error saving scene: " + e.getMessage(), e);
                 Toast.makeText(context, "Error saving scene: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -648,7 +649,7 @@ public class SceneFileManager {
 
             // Texture coordinates are now the ONLY texture state stored
             // Scale/offset are derived from these coordinates if needed for UI display
-            Log.d(TAG, "Saving texture coordinates for sprite: " + sprite.getName());
+            TimberLog.d(TAG, "Saving texture coordinates for sprite: " + sprite.getName());
 
             spriteDatas.add(spriteData);
         }
@@ -670,7 +671,7 @@ public class SceneFileManager {
             writer.write(sceneJson);
         }
 
-        Log.d(TAG, "Scene saved to fallback storage: " + sceneFile.getAbsolutePath());
+        TimberLog.d(TAG, "Scene saved to fallback storage: " + sceneFile.getAbsolutePath());
     }
 
     /**
@@ -710,7 +711,7 @@ public class SceneFileManager {
 
             // Texture coordinates are now the ONLY texture state stored
             // Scale/offset are derived from these coordinates if needed for UI display
-            Log.d(TAG, "Saving texture coordinates for sprite: " + sprite.getName());
+            TimberLog.d(TAG, "Saving texture coordinates for sprite: " + sprite.getName());
 
             spriteDatas.add(spriteData);
         }
@@ -756,6 +757,6 @@ public class SceneFileManager {
             outputStream.write(sceneJson.getBytes());
         }
 
-        Log.d(TAG, "Scene saved to URI directory: " + fileName);
+        TimberLog.d(TAG, "Scene saved to URI directory: " + fileName);
     }
 }

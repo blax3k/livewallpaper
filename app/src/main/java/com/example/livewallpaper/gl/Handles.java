@@ -1,7 +1,9 @@
 package com.example.livewallpaper.gl;
 
 import android.opengl.GLES20;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
+
+import com.example.livewallpaper.logging.TimberLog;
 
 public class Handles {
     private static final String TAG = "Handles";
@@ -23,47 +25,47 @@ public class Handles {
     public Handles(int program)
     {
         positionHandle = GLES20.glGetAttribLocation(program, "vPosition");
-        Log.d(TAG, "positionHandle: " + positionHandle);
+        TimberLog.d(TAG, "positionHandle: " + positionHandle);
 
         texCoordHandle = GLES20.glGetAttribLocation(program, "vTexCoord");
-        Log.d(TAG, "texCoordHandle: " + texCoordHandle);
+        TimberLog.d(TAG, "texCoordHandle: " + texCoordHandle);
 
         samplerHandle = GLES20.glGetUniformLocation(program, "samplerTexture");
-        Log.d(TAG, "samplerHandle: " + samplerHandle);
+        TimberLog.d(TAG, "samplerHandle: " + samplerHandle);
 
         projectionMatrixHandle = GLES20.glGetUniformLocation(program, "projectionMatrix");
-        Log.d(TAG, "projectionMatrixHandle: " + projectionMatrixHandle);
+        TimberLog.d(TAG, "projectionMatrixHandle: " + projectionMatrixHandle);
 
         scrollOffsetHandle = GLES20.glGetUniformLocation(program, "scrollOffset");
-        Log.d(TAG, "scrollOffsetHandle: " + scrollOffsetHandle);
+        TimberLog.d(TAG, "scrollOffsetHandle: " + scrollOffsetHandle);
 
         parallaxMultiplierHandle = GLES20.glGetAttribLocation(program, "parallaxMultiplier");
-        Log.d(TAG, "parallaxMultiplierHandle: " + parallaxMultiplierHandle);
+        TimberLog.d(TAG, "parallaxMultiplierHandle: " + parallaxMultiplierHandle);
 
         gyroOffsetXHandle = GLES20.glGetUniformLocation(program, "gyroOffsetX");
-        Log.d(TAG, "gyroOffsetXHandle: " + gyroOffsetXHandle);
+        TimberLog.d(TAG, "gyroOffsetXHandle: " + gyroOffsetXHandle);
 
         gyroOffsetYHandle = GLES20.glGetUniformLocation(program, "gyroOffsetY");
-        Log.d(TAG, "gyroOffsetYHandle: " + gyroOffsetYHandle);
+        TimberLog.d(TAG, "gyroOffsetYHandle: " + gyroOffsetYHandle);
 
         wipeProgressHandle = GLES20.glGetUniformLocation(program, "wipeProgress");
-        Log.d(TAG, "wipeProgressHandle: " + wipeProgressHandle);
+        TimberLog.d(TAG, "wipeProgressHandle: " + wipeProgressHandle);
 
         wipeDirectionHandle = GLES20.glGetUniformLocation(program, "wipeDirection");
-        Log.d(TAG, "wipeDirectionHandle: " + wipeDirectionHandle);
+        TimberLog.d(TAG, "wipeDirectionHandle: " + wipeDirectionHandle);
 
         overrideColorHandle = GLES20.glGetUniformLocation(program, "overrideColor");
-        Log.d(TAG, "overrideColorHandle: " + overrideColorHandle);
+        TimberLog.d(TAG, "overrideColorHandle: " + overrideColorHandle);
 
         useColorOverrideHandle = GLES20.glGetUniformLocation(program, "useColorOverride");
-        Log.d(TAG, "useColorOverrideHandle: " + useColorOverrideHandle);
+        TimberLog.d(TAG, "useColorOverrideHandle: " + useColorOverrideHandle);
 
         normalizedPositionHandle = GLES20.glGetAttribLocation(program, "vNormalizedPosition");
-        Log.d(TAG, "normalizedPositionHandle: " + normalizedPositionHandle);
+        TimberLog.d(TAG, "normalizedPositionHandle: " + normalizedPositionHandle);
 
         // Check for any -1 values which indicate errors
         if (positionHandle == -1 || texCoordHandle == -1 || samplerHandle == -1) {
-            Log.e(TAG, "ERROR: Failed to get critical shader handles!");
+            TimberLog.e(TAG, "ERROR: Failed to get critical shader handles!");
         }
     }
 }

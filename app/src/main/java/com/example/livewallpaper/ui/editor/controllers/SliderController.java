@@ -2,10 +2,12 @@ package com.example.livewallpaper.ui.editor.controllers;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.livewallpaper.logging.TimberLog;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -87,7 +89,7 @@ public class SliderController {
                     newValue = Math.max(config.minValue, Math.min(config.maxValue, newValue));
                     config.onValueChanged.accept(newValue);
                     config.valueDisplay.setText(String.format("%.2f", newValue));
-                    Log.d(TAG, config.label + " updated to: " + newValue);
+                    TimberLog.d(TAG, config.label + " updated to: " + newValue);
 
                     // Call edit complete callback if provided
                     if (config.onEditComplete != null) {
@@ -142,10 +144,10 @@ public class SliderController {
                     config.onEditComplete.run();
                 }
 
-                Log.d(TAG, config.label + " manually edited to: " + newValue);
+                TimberLog.d(TAG, config.label + " manually edited to: " + newValue);
             } catch (NumberFormatException e) {
                 Toast.makeText(context, "Invalid number", Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "Invalid number entered for " + config.label + ": " + e.getMessage());
+                TimberLog.e(TAG, "Invalid number entered for " + config.label + ": " + e.getMessage());
             }
         });
 

@@ -1,6 +1,8 @@
 package com.example.livewallpaper.scene;
 
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
+
+import com.example.livewallpaper.logging.TimberLog;
 
 /**
  * Manages the state of texture editing parameters (scale and offsets).
@@ -32,7 +34,7 @@ public class TextureEditState {
      */
     public void setTextureScale(float scale) {
         this.textureScale = Math.max(0.1f, scale);
-        Log.d(TAG, "Texture scale set to: " + this.textureScale);
+        TimberLog.d(TAG, "Texture scale set to: " + this.textureScale);
     }
 
     /**
@@ -49,7 +51,7 @@ public class TextureEditState {
      */
     public void setTextureOffsetU(float offsetU) {
         this.textureOffsetU = offsetU;
-        Log.d(TAG, "Texture offset U set to: " + offsetU);
+        TimberLog.d(TAG, "Texture offset U set to: " + offsetU);
     }
 
     /**
@@ -93,7 +95,7 @@ public class TextureEditState {
         );
         this.textureOffsetU = clamped[0];
         this.textureOffsetV = clamped[1];
-        Log.d(TAG, "Texture offset adjusted - U: " + this.textureOffsetU + ", V: " + this.textureOffsetV);
+        TimberLog.d(TAG, "Texture offset adjusted - U: " + this.textureOffsetU + ", V: " + this.textureOffsetV);
     }
 
     /**

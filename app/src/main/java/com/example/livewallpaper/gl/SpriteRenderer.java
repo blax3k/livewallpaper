@@ -1,7 +1,7 @@
 package com.example.livewallpaper.gl;
 
 import android.opengl.GLES20;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Sprite;
 
 /**
@@ -34,7 +34,7 @@ public class SpriteRenderer {
     public void drawSprite(Sprite sprite) {
         int textureId = sprite.getTextureId();
         if (textureId == 0) {
-            Log.w(TAG, "Attempted to draw sprite with textureId=0. This sprite will not render.");
+            TimberLog.w(TAG, "Attempted to draw sprite with textureId=0. This sprite will not render.");
             return;
         }
 

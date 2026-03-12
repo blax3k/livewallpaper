@@ -10,7 +10,7 @@ import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -27,6 +27,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 
 import com.example.livewallpaper.R;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.managers.EditSceneManager;
 import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.scene.models.Sprite;
@@ -70,10 +71,10 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "EditSceneActivity onCreate called");
+        TimberLog.d(TAG, "EditSceneActivity onCreate called");
 
         setContentView(R.layout.activity_edit_scene);
-        Log.d(TAG, "Edit scene layout inflated successfully");
+        TimberLog.d(TAG, "Edit scene layout inflated successfully");
 
         // Initialize view references
         spritesSpinner = findViewById(R.id.sprites_spinner);
@@ -100,9 +101,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         if (sensorManager != null) {
             gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
             if (gyroscopeSensor != null) {
-                Log.d(TAG, "Gyroscope sensor found");
+                TimberLog.d(TAG, "Gyroscope sensor found");
             } else {
-                Log.w(TAG, "Gyroscope sensor not available on this device");
+                TimberLog.w(TAG, "Gyroscope sensor not available on this device");
             }
         }
 
@@ -115,13 +116,13 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         // Get the scene file name from the intent
         String sceneFileName = getIntent().getStringExtra(EXTRA_SCENE_FILE_NAME);
         if (sceneFileName != null) {
-            Log.d(TAG, "Scene file name: " + sceneFileName);
+            TimberLog.d(TAG, "Scene file name: " + sceneFileName);
             displaySceneInfo(sceneFileName);
             setupGLSurfaceView(sceneFileName, propertiesTable, scaleSlider, scaleValue,
                     widthEdit, heightEdit, parallaxMultiplierSlider, parallaxMultiplierValue,
                     focusPointSlider, focusPointValue);
         } else {
-            Log.e(TAG, "No scene file name provided!");
+            TimberLog.e(TAG, "No scene file name provided!");
             Toast.makeText(this, "Error: No scene selected", Toast.LENGTH_SHORT).show();
         }
     }
@@ -162,7 +163,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
                 // Set up the sprite name change listener to refresh the spinner when sprite name changes
                 spriteDetailsBuilder.setOnSpriteNameChangeListener((sprite, newName) -> {
-                    Log.d(TAG, "Sprite name changed, refreshing sprites list");
+                    TimberLog.d(TAG, "Sprite name changed, refreshing sprites list");
                     refreshSpritesListAndSelect(renderer.getAllSprites().indexOf(sprite));
                 });
 
@@ -171,16 +172,16 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 // Set up focus point slider
                 setupFocusPointSlider(focusPointSlider, focusPointValue);
 
-                Log.d(TAG, "GLSurfaceView configured successfully");
+                TimberLog.d(TAG, "GLSurfaceView configured successfully");
 
                 // Populate sprite list after a short delay to allow scene to load
                 new Handler(Looper.getMainLooper()).postDelayed(this::populateSpritesListView, 500);
             } catch (Exception e) {
-                Log.e(TAG, "Error setting up GLSurfaceView: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error setting up GLSurfaceView: " + e.getMessage(), e);
                 Toast.makeText(this, "Error setting up preview: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         } else {
-            Log.e(TAG, "GLSurfaceView not found!");
+            TimberLog.e(TAG, "GLSurfaceView not found!");
             Toast.makeText(this, "Error: GLSurfaceView not found", Toast.LENGTH_SHORT).show();
         }
     }
@@ -226,9 +227,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                     public void onNothingSelected(AdapterView<?> parent) {}
                 });
 
-                Log.d(TAG, "Sprites spinner populated with " + spriteNames.size() + " items (plus add sprite button)");
+                TimberLog.d(TAG, "Sprites spinner populated with " + spriteNames.size() + " items (plus add sprite button)");
             } catch (Exception e) {
-                Log.e(TAG, "Error populating sprites spinner: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error populating sprites spinner: " + e.getMessage(), e);
                 Toast.makeText(this, "Error loading sprite list: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
@@ -243,7 +244,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
         if (spriteDetailsContainer != null) {
             spriteDetailsContainer.setVisibility(View.VISIBLE);
-            Log.d(TAG, "Showing details for sprite: " + sprite.getName());
+            TimberLog.d(TAG, "Showing details for sprite: " + sprite.getName());
         }
     }
 
@@ -290,16 +291,16 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             // Add to the scene
             renderer.addSpriteToScene(newSprite);
 
-            Log.d(TAG, "Added new sprite: " + imageName);
+            TimberLog.d(TAG, "Added new sprite: " + imageName);
 
             // Sort sprites by parallax multiplier since the new sprite might not be in order
             renderer.getCurrentScene().sortSpritesByParallax();
-            Log.d(TAG, "Sprites sorted by parallax multiplier");
+            TimberLog.d(TAG, "Sprites sorted by parallax multiplier");
 
             // Select the new sprite and update UI to reflect it
             renderer.setSelectedSprite(newSprite);
             showSpriteDetails(newSprite);
-            Log.d(TAG, "New sprite selected and details displayed");
+            TimberLog.d(TAG, "New sprite selected and details displayed");
 
             // Refresh the spinner to show the new sprite and update selection
             // Find the index of the new sprite in the scene
@@ -313,11 +314,11 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             }
 
             refreshSpritesListAndSelect(newSpriteIndex);
-            Log.d(TAG, "Sprite list refreshed and new sprite selected at index: " + newSpriteIndex);
+            TimberLog.d(TAG, "Sprite list refreshed and new sprite selected at index: " + newSpriteIndex);
 
             Toast.makeText(this, "Sprite '" + imageName + "' added", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Log.e(TAG, "Error adding new sprite: " + e.getMessage(), e);
+            TimberLog.e(TAG, "Error adding new sprite: " + e.getMessage(), e);
             Toast.makeText(this, "Error adding sprite: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -375,15 +376,15 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                     public void onNothingSelected(AdapterView<?> parent) {}
                 });
 
-                Log.d(TAG, "Sprites spinner refreshed with " + spriteNames.size() + " items");
+                TimberLog.d(TAG, "Sprites spinner refreshed with " + spriteNames.size() + " items");
 
                 // Select the sprite at the specified index
                 if (spriteIndex >= 0 && spriteIndex < allSprites.size()) {
                     spritesSpinner.setSelection(spriteIndex);
-                    Log.d(TAG, "Sprite selected at index: " + spriteIndex);
+                    TimberLog.d(TAG, "Sprite selected at index: " + spriteIndex);
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error refreshing sprites spinner: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error refreshing sprites spinner: " + e.getMessage(), e);
                 Toast.makeText(this, "Error refreshing sprite list: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
@@ -438,7 +439,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         }
         if (sensorManager != null && gyroscopeSensor != null) {
             sensorManager.unregisterListener(this, gyroscopeSensor);
-            Log.d(TAG, "Gyroscope listener unregistered");
+            TimberLog.d(TAG, "Gyroscope listener unregistered");
         }
     }
 
@@ -453,7 +454,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         }
         if (sensorManager != null && gyroscopeSensor != null) {
             sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_GAME);
-            Log.d(TAG, "Gyroscope listener registered");
+            TimberLog.d(TAG, "Gyroscope listener registered");
         }
     }
 
@@ -565,9 +566,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                         "Sprite \"" + currentSprite.getName() + "\" deleted",
                         Toast.LENGTH_SHORT).show();
 
-                Log.d(TAG, "Sprite deleted: " + currentSprite.getName());
+                TimberLog.d(TAG, "Sprite deleted: " + currentSprite.getName());
             } catch (Exception e) {
-                Log.e(TAG, "Error deleting sprite: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error deleting sprite: " + e.getMessage(), e);
                 Toast.makeText(EditSceneActivity.this,
                         "Error deleting sprite: " + e.getMessage(),
                         Toast.LENGTH_SHORT).show();
@@ -585,7 +586,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         if (requestCode == 100 && resultCode == RESULT_OK && data != null) {
             Sprite currentSprite = renderer.getSelectedSprite();
             if (currentSprite == null) {
-                Log.e(TAG, "No sprite selected when activity result returned");
+                TimberLog.e(TAG, "No sprite selected when activity result returned");
                 return;
             }
 
@@ -597,7 +598,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 String textureResource = data.getStringExtra(EditTextureActivity.RESULT_TEXTURE_RESOURCE);
                 int textureResourceId = data.getIntExtra(EditTextureActivity.RESULT_TEXTURE_RESOURCE_ID, currentSprite.getTextureResourceId());
 
-                Log.d(TAG, "Received texture edits from EditTextureActivity - texCoordinates updated");
+                TimberLog.d(TAG, "Received texture edits from EditTextureActivity - texCoordinates updated");
 
                 // Update sprite current dimensions
                 renderer.updateSpriteDimensions(currentSprite, width, height);
@@ -606,22 +607,22 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 // This ensures the updated dimensions are saved to JSON correctly
                 currentSprite.setWidthAndUpdateOriginal(width);
                 currentSprite.setHeightAndUpdateOriginal(height);
-                Log.d(TAG, "Updated sprite original dimensions to: " + width + " x " + height);
+                TimberLog.d(TAG, "Updated sprite original dimensions to: " + width + " x " + height);
 
                 // Update texture resource information if provided
                 if (textureResource != null) {
                     currentSprite.setTextureResource(textureResource);
                     currentSprite.setTextureResourceId(textureResourceId);
-                    Log.d(TAG, "Updated sprite texture resource to: " + textureResource + " (resourceId=" + textureResourceId + ")");
+                    TimberLog.d(TAG, "Updated sprite texture resource to: " + textureResource + " (resourceId=" + textureResourceId + ")");
                 }
 
                 // Update texture coordinates - this is the ONLY texture state that matters
                 if (texCoordinates != null && texCoordinates.length == 8) {
                     currentSprite.setTextureCoordinates(texCoordinates);
-                    Log.d(TAG, "Updated sprite texture coordinates");
+                    TimberLog.d(TAG, "Updated sprite texture coordinates");
                 }
 
-                Log.d(TAG, "Applied texture edits from EditTextureActivity to sprite: " + spriteName);
+                TimberLog.d(TAG, "Applied texture edits from EditTextureActivity to sprite: " + spriteName);
 
                 spriteDetailsBuilder.updateDimensionDisplays(width, height);
                 spriteDetailsBuilder.updateScaleDisplay(currentSprite);
@@ -629,7 +630,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 Toast.makeText(this, "Texture changes applied to sprite", Toast.LENGTH_SHORT).show();
 
             } catch (Exception e) {
-                Log.e(TAG, "Error applying texture changes: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error applying texture changes: " + e.getMessage(), e);
                 Toast.makeText(this, "Error applying changes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
@@ -829,7 +830,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
             // Update the scene's time of day
             renderer.getCurrentScene().timeOfDay = selectedTime;
-            Log.d(TAG, "Scene time of day changed to: " + selectedTime);
+            TimberLog.d(TAG, "Scene time of day changed to: " + selectedTime);
 
             Toast.makeText(EditSceneActivity.this,
                 "Time of day set to " + selectedTime,
@@ -851,7 +852,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                     SceneData.TimeOfDay selectedTime =
                         timeValues[selectedIndex[0]];
                     renderer.getCurrentScene().timeOfDay = selectedTime;
-                    Log.d(TAG, "Scene time of day changed to: " + selectedTime);
+                    TimberLog.d(TAG, "Scene time of day changed to: " + selectedTime);
                     Toast.makeText(EditSceneActivity.this,
                         "Time of day set to " + selectedTime,
                         Toast.LENGTH_SHORT).show();
@@ -868,7 +869,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
      */
     private void setupFocusPointSlider(SeekBar focusPointSlider, TextView focusPointValue) {
         if (focusPointSlider == null || focusPointValue == null || renderer == null) {
-            Log.w(TAG, "Focus point slider not properly initialized");
+            TimberLog.w(TAG, "Focus point slider not properly initialized");
             return;
         }
 
@@ -879,9 +880,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 int sliderPosition = (int) (currentFocusPoint * 100);
                 focusPointSlider.setProgress(sliderPosition);
                 updateFocusPointDisplay(focusPointValue, currentFocusPoint);
-                Log.d(TAG, "Focus point slider initialized with value: " + currentFocusPoint);
+                TimberLog.d(TAG, "Focus point slider initialized with value: " + currentFocusPoint);
             } catch (Exception e) {
-                Log.e(TAG, "Error initializing focus point slider: " + e.getMessage(), e);
+                TimberLog.e(TAG, "Error initializing focus point slider: " + e.getMessage(), e);
             }
         }, 1000);
 
@@ -895,7 +896,7 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
                     // Update scene's focus point
                     renderer.getCurrentScene().setXFocus(newFocusPoint);
-                    Log.d(TAG, "Focus point changed to: " + newFocusPoint);
+                    TimberLog.d(TAG, "Focus point changed to: " + newFocusPoint);
 
                     // Update display value
                     updateFocusPointDisplay(focusPointValue, newFocusPoint);

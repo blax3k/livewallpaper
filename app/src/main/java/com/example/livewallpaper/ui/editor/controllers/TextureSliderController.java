@@ -1,9 +1,10 @@
 package com.example.livewallpaper.ui.editor.controllers;
 
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.scene.TextureEditState;
 
@@ -87,7 +88,7 @@ public class TextureSliderController {
                     updateWidthDisplay(width);
                     updateTextureScaleDisplay(textureEditState.getTextureScale());
                     notifyChange();
-                    Log.d(TAG, "Width changed to: " + width);
+                    TimberLog.d(TAG, "Width changed to: " + width);
                 }
             }
 
@@ -107,7 +108,7 @@ public class TextureSliderController {
                     updateHeightDisplay(height);
                     updateTextureScaleDisplay(textureEditState.getTextureScale());
                     notifyChange();
-                    Log.d(TAG, "Height changed to: " + height);
+                    TimberLog.d(TAG, "Height changed to: " + height);
                 }
             }
 
@@ -127,7 +128,7 @@ public class TextureSliderController {
                     textureEditState.setTextureScale(scale);
                     updateTextureScaleDisplay(scale);
                     notifyChange();
-                    Log.d(TAG, "Texture scale changed to: " + scale);
+                    TimberLog.d(TAG, "Texture scale changed to: " + scale);
                 }
             }
 

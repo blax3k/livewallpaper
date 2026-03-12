@@ -2,9 +2,10 @@ package com.example.livewallpaper.scene.models;
 import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
 import com.example.livewallpaper.gl.TextureManager;
+import com.example.livewallpaper.logging.TimberLog;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,7 +88,7 @@ public class Scene implements Parcelable {
      */
     public void keepOnlySprite(String spriteName) {
         sprites.removeIf(sprite -> !sprite.getName().equals(spriteName));
-        Log.d(TAG, "Filtered scene to keep only sprite: " + spriteName + ". Remaining sprites: " + sprites.size());
+        TimberLog.d(TAG, "Filtered scene to keep only sprite: " + spriteName + ". Remaining sprites: " + sprites.size());
     }
 
     /**
@@ -112,10 +113,10 @@ public class Scene implements Parcelable {
      */
     public void sortSpritesByParallax() {
         // Log before sorting
-        Log.d(TAG, "=== BEFORE SORT ===");
+        TimberLog.d(TAG, "=== BEFORE SORT ===");
         for (int i = 0; i < sprites.size(); i++) {
             Sprite s = sprites.get(i);
-            Log.d(TAG, "  [" + i + "] " + s.getName() + " | parallax=" + s.getParallaxMultiplier() +
+            TimberLog.d(TAG, "  [" + i + "] " + s.getName() + " | parallax=" + s.getParallaxMultiplier() +
                   " | wipingOut=" + s.isWipingOut() + " | wipingIn=" + s.isWipingIn());
         }
 
@@ -135,10 +136,10 @@ public class Scene implements Parcelable {
         });
 
         // Log after sorting
-        Log.d(TAG, "=== AFTER SORT ===");
+        TimberLog.d(TAG, "=== AFTER SORT ===");
         for (int i = 0; i < sprites.size(); i++) {
             Sprite s = sprites.get(i);
-            Log.d(TAG, "  [" + i + "] " + s.getName() + " | parallax=" + s.getParallaxMultiplier() +
+            TimberLog.d(TAG, "  [" + i + "] " + s.getName() + " | parallax=" + s.getParallaxMultiplier() +
                   " | wipingOut=" + s.isWipingOut() + " | wipingIn=" + s.isWipingIn());
         }
     }
@@ -152,10 +153,10 @@ public class Scene implements Parcelable {
      */
     public void initialize(Context context, TextureManager textureManager) {
         if (isInitialized) {
-            Log.d(TAG, "Scene '" + sceneName + "' already initialized");
+            TimberLog.d(TAG, "Scene '" + sceneName + "' already initialized");
             return;
         }
-        Log.d(TAG, "Initializing scene '" + sceneName + "' with " + sprites.size() + " sprites");
+        TimberLog.d(TAG, "Initializing scene '" + sceneName + "' with " + sprites.size() + " sprites");
 
         // Load textures and apply gyro scaling in a single pass
         for (Sprite sprite : sprites) {
@@ -163,7 +164,7 @@ public class Scene implements Parcelable {
         }
 
         isInitialized = true;
-        Log.d(TAG, "Scene '" + sceneName + "' initialized successfully");
+        TimberLog.d(TAG, "Scene '" + sceneName + "' initialized successfully");
     }
 
     /**
@@ -174,13 +175,13 @@ public class Scene implements Parcelable {
      * @param textureManager the texture manager for loading textures
      */
     public void reloadTextures(Context context, TextureManager textureManager) {
-        Log.d(TAG, "Reloading textures for scene '" + sceneName + "' with " + sprites.size() + " sprites");
+        TimberLog.d(TAG, "Reloading textures for scene '" + sceneName + "' with " + sprites.size() + " sprites");
 
         for (Sprite sprite : sprites) {
             loadSpriteTexture(context, textureManager, sprite);
         }
 
-        Log.d(TAG, "Textures reloaded for scene '" + sceneName + "'");
+        TimberLog.d(TAG, "Textures reloaded for scene '" + sceneName + "'");
     }
 
     /**
@@ -189,7 +190,7 @@ public class Scene implements Parcelable {
      * This should be called before using a scene from the preloaded pool.
      */
     public void resetForReuse() {
-        Log.d(TAG, "Resetting scene '" + sceneName + "' for reuse");
+        TimberLog.d(TAG, "Resetting scene '" + sceneName + "' for reuse");
         isInitialized = false;
         for (Sprite sprite : sprites) {
             sprite.setTextureId(0);
@@ -210,9 +211,9 @@ public class Scene implements Parcelable {
 
         textureManager.getTextureAsync(context, resourceId, (resId, texId) -> {
             sprite.setTextureId(texId);
-            Log.d(TAG, "Sprite textureResourceId=" + resourceId + " loaded with texId=" + texId);
+            TimberLog.d(TAG, "Sprite textureResourceId=" + resourceId + " loaded with texId=" + texId);
             if (texId == 0) {
-                Log.w(TAG, "WARNING: Failed to load texture for resourceId=" + resourceId + ". This sprite may not render.");
+                TimberLog.w(TAG, "WARNING: Failed to load texture for resourceId=" + resourceId + ". This sprite may not render.");
             }
         });
     }
@@ -233,7 +234,7 @@ public class Scene implements Parcelable {
      */
     public void applyGyroScaling() {
         if (!isGyroScaled) {
-            Log.d(TAG, "Gyro scaling not enabled for scene '" + sceneName + "'");
+            TimberLog.d(TAG, "Gyro scaling not enabled for scene '" + sceneName + "'");
             return;
         }
 
@@ -257,14 +258,14 @@ public class Scene implements Parcelable {
             float scaledY = originalY * spriteGyroScaleFactor;
             sprite.setPosition(scaledX, scaledY);
 
-            Log.d(TAG, "Applied gyro scaling to sprite '" + sprite.getName() +
+            TimberLog.d(TAG, "Applied gyro scaling to sprite '" + sprite.getName() +
                     "' with parallaxMultiplier=" + parallaxMultiplier +
                     ", spriteGyroScaleFactor=" + spriteGyroScaleFactor +
                     ", newSize=" + sprite.getWidth() + "x" + sprite.getHeight() +
                     ", newPosition=(" + scaledX + ", " + scaledY + ")");
         }
 
-        Log.d(TAG, "Scene '" + sceneName + "' gyro scaling applied to all sprites");
+        TimberLog.d(TAG, "Scene '" + sceneName + "' gyro scaling applied to all sprites");
     }
 
     /**
@@ -288,7 +289,7 @@ public class Scene implements Parcelable {
             sprite.resetPosition();
         }
         this.isGyroScaled = false;
-        Log.d(TAG, "Gyro scaling disabled for scene '" + sceneName + "', all sprites reset");
+        TimberLog.d(TAG, "Gyro scaling disabled for scene '" + sceneName + "', all sprites reset");
     }
 
     public void setEdgeHighlighted(boolean highlighted) {
@@ -305,7 +306,7 @@ public class Scene implements Parcelable {
         }
         sprites.clear();
         isInitialized = false;
-        Log.d(TAG, "Scene '" + sceneName + "' destroyed");
+        TimberLog.d(TAG, "Scene '" + sceneName + "' destroyed");
     }
 
     /**
@@ -349,7 +350,7 @@ public class Scene implements Parcelable {
             String candidateName = finalBaseName + counter;
             boolean candidateExists = sprites.stream().anyMatch(s -> s.getName().equals(candidateName));
             if (!candidateExists) {
-                Log.d(TAG, "Generated unique name for sprite: " + finalBaseName + " -> " + candidateName);
+                TimberLog.d(TAG, "Generated unique name for sprite: " + finalBaseName + " -> " + candidateName);
                 return candidateName;
             }
             counter++;

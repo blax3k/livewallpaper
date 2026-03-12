@@ -1,9 +1,11 @@
 package com.example.livewallpaper.ui.editor.controllers;
 
 import android.content.Context;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
 import androidx.appcompat.app.AlertDialog;
+
+import com.example.livewallpaper.logging.TimberLog;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ public class DrawableImagePickerDialog {
         List<String> drawableNames = getAvailableDrawables(context);
 
         if (drawableNames.isEmpty()) {
-            Log.w(TAG, "No drawable resources found");
+            TimberLog.w(TAG, "No drawable resources found");
             return;
         }
 
@@ -40,7 +42,7 @@ public class DrawableImagePickerDialog {
             if (resourceId != 0) {
                 onImageSelected.onImageSelected(selectedImageName, resourceId);
             } else {
-                Log.e(TAG, "Failed to resolve drawable: " + selectedImageName);
+                TimberLog.e(TAG, "Failed to resolve drawable: " + selectedImageName);
             }
         });
 
@@ -69,10 +71,10 @@ public class DrawableImagePickerDialog {
                 }
             }
         } catch (ClassNotFoundException e) {
-            Log.e(TAG, "R.drawable class not found", e);
+            TimberLog.e(TAG, "R.drawable class not found", e);
         }
 
-        Log.d(TAG, "Found " + drawables.size() + " drawable resources");
+        TimberLog.d(TAG, "Found " + drawables.size() + " drawable resources");
         return drawables;
     }
 
@@ -89,7 +91,7 @@ public class DrawableImagePickerDialog {
             java.lang.reflect.Field field = drawablesClass.getField(resourceName);
             return field.getInt(null);
         } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-            Log.e(TAG, "Failed to get drawable resource ID for: " + resourceName, e);
+            TimberLog.e(TAG, "Failed to get drawable resource ID for: " + resourceName, e);
             return 0;
         }
     }

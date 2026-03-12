@@ -1,7 +1,7 @@
 package com.example.livewallpaper.scene.managers;
 
 import android.content.Context;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
 import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.scene.models.Scene;
@@ -53,7 +53,7 @@ public class SceneTransitionManager {
      */
     public void startTransition(Scene oldScene, Scene newScene, Context context) {
         if (isTransitioning()) {
-            Log.w(TAG, "Transition already in progress, ignoring new transition request");
+            TimberLog.w(TAG, "Transition already in progress, ignoring new transition request");
             return;
         }
 
@@ -62,7 +62,7 @@ public class SceneTransitionManager {
         this.context = context;
         this.state = TransitionState.WAITING_FOR_TEXTURES;
 
-        Log.d(TAG, "Started transition: " + oldScene.getSceneName() + " -> " + newScene.getSceneName());
+        TimberLog.d(TAG, "Started transition: " + oldScene.getSceneName() + " -> " + newScene.getSceneName());
     }
 
     /**
@@ -79,7 +79,7 @@ public class SceneTransitionManager {
                 // Initialize textures for the new scene on the GL thread
                 if (context != null) {
                     newScene.initialize(context, textureManager);
-                    Log.d(TAG, "Textures initialized for new scene: " + newScene.getSceneName());
+                    TimberLog.d(TAG, "Textures initialized for new scene: " + newScene.getSceneName());
                 }
                 // Now that textures are ready, begin the fade
                 beginFade();
@@ -105,15 +105,15 @@ public class SceneTransitionManager {
         fadeStartTimeMs = System.currentTimeMillis();
         addedSprites.clear();
 
-        Log.d(TAG, "=== BEGIN FADE - MARKING ALL SPRITES ===");
-        Log.d(TAG, "New sprites fade-in starts immediately (head start: " + (FADE_DURATION_MS / 2) + "ms)");
+        TimberLog.d(TAG, "=== BEGIN FADE - MARKING ALL SPRITES ===");
+        TimberLog.d(TAG, "New sprites fade-in starts immediately (head start: " + (FADE_DURATION_MS / 2) + "ms)");
 
         // Mark ALL old scene sprites as wiping out
-        Log.d(TAG, "--- Wiping out all old scene sprites (" + oldScene.getSprites().size() + ") ---");
+        TimberLog.d(TAG, "--- Wiping out all old scene sprites (" + oldScene.getSprites().size() + ") ---");
         for (Sprite oldSprite : oldScene.getSprites()) {
             oldSprite.setWipingOut(true);
             oldSprite.setWipeProgress(-0.5f);
-            Log.d(TAG, "[WIPE OUT] " + oldSprite.getName() +
+            TimberLog.d(TAG, "[WIPE OUT] " + oldSprite.getName() +
                   " | textureId=" + oldSprite.getTextureId() +
                   " | pos=(" + String.format("%.2f", oldSprite.getPositionX()) + ", " +
                   String.format("%.2f", oldSprite.getPositionY()) + ")");
@@ -121,14 +121,14 @@ public class SceneTransitionManager {
 
         // Mark ALL new scene sprites as wiping in and add them to old scene for rendering
         // Give them a head start by setting their wipe progress to negative (representing time already elapsed)
-        Log.d(TAG, "--- Wiping in all new scene sprites (" + newScene.getSprites().size() + ") ---");
+        TimberLog.d(TAG, "--- Wiping in all new scene sprites (" + newScene.getSprites().size() + ") ---");
         for (Sprite newSprite : newScene.getSprites()) {
             newSprite.setWipingIn(true);
             // Head start: new sprites start at -0.5 progress, so they're already halfway done when old sprites start
             newSprite.setWipeProgress(0.0f);
             oldScene.addSprite(newSprite);
             addedSprites.add(newSprite);
-            Log.d(TAG, "[WIPE IN] " + newSprite.getName() +
+            TimberLog.d(TAG, "[WIPE IN] " + newSprite.getName() +
                   " | textureId=" + newSprite.getTextureId() +
                   " | pos=(" + String.format("%.2f", newSprite.getPositionX()) + ", " +
                   String.format("%.2f", newSprite.getPositionY()) + ") | head-start applied");
@@ -137,8 +137,8 @@ public class SceneTransitionManager {
         // Sort to maintain proper draw order
         oldScene.sortSpritesByParallax();
 
-        Log.d(TAG, "=== FADE SETUP COMPLETE ===");
-        Log.d(TAG, "Total: " + oldScene.getSprites().size() + " sprites in transition");
+        TimberLog.d(TAG, "=== FADE SETUP COMPLETE ===");
+        TimberLog.d(TAG, "Total: " + oldScene.getSprites().size() + " sprites in transition");
     }
 
     private float calculateProgress() {
@@ -162,7 +162,7 @@ public class SceneTransitionManager {
         Set<Integer> oldSceneTextureIds = oldScene.getUsedTextureResourceIds();
         Set<Integer> newSceneTextureIds = newScene.getUsedTextureResourceIds();
         textureManager.unloadUnusedTextures(oldSceneTextureIds, newSceneTextureIds);
-        Log.d(TAG, "Cleaned up unused textures from old scene");
+        TimberLog.d(TAG, "Cleaned up unused textures from old scene");
 
 
         // Sort new scene to maintain consistent draw order
@@ -170,7 +170,7 @@ public class SceneTransitionManager {
 
         state = TransitionState.IDLE;
 
-        Log.d(TAG, "Transition finished");
+        TimberLog.d(TAG, "Transition finished");
         return newScene;
     }
 

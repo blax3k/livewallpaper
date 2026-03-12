@@ -1,8 +1,9 @@
 package com.example.livewallpaper.ui.editor.controllers;
 
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.widget.EditText;
 
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.managers.BaseSceneManager;
 import com.example.livewallpaper.scene.models.Sprite;
 
@@ -46,9 +47,9 @@ public class DimensionController {
                     float newWidth = Float.parseFloat(widthEdit.getText().toString());
                     renderer.updateSpriteWidth(sprite, newWidth, originalAspectRatio);
                     updateDisplays(sprite.getOriginalWidth(), sprite.getOriginalHeight());
-                    Log.d(TAG, "Width updated from EditText: " + newWidth);
+                    TimberLog.d(TAG, "Width updated from EditText: " + newWidth);
                 } catch (NumberFormatException e) {
-                    Log.e(TAG, "Invalid width input");
+                    TimberLog.e(TAG, "Invalid width input");
                     updateDisplays(sprite.getOriginalWidth(), sprite.getOriginalHeight());
                 }
             }
@@ -61,9 +62,9 @@ public class DimensionController {
                     float newHeight = Float.parseFloat(heightEdit.getText().toString());
                     renderer.updateSpriteHeight(sprite, newHeight, originalAspectRatio);
                     updateDisplays(sprite.getOriginalWidth(), sprite.getOriginalHeight());
-                    Log.d(TAG, "Height updated from EditText: " + newHeight);
+                    TimberLog.d(TAG, "Height updated from EditText: " + newHeight);
                 } catch (NumberFormatException e) {
-                    Log.e(TAG, "Invalid height input");
+                    TimberLog.e(TAG, "Invalid height input");
                     updateDisplays(sprite.getOriginalWidth(), sprite.getOriginalHeight());
                 }
             }

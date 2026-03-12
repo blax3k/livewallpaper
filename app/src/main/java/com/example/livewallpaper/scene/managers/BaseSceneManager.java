@@ -4,12 +4,13 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
 import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.gl.ShaderProgram;
 import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.TextureManager;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.SceneLoader;
 import com.example.livewallpaper.scene.models.Sprite;
@@ -77,7 +78,7 @@ public abstract class BaseSceneManager {
         // Set the sprite as selected so texture editing can access it
         this.selectedSprite = sprite;
 
-        Log.d(TAG, "SceneManager created for texture editing with sprite: " + spriteData.name);
+        TimberLog.d(TAG, "SceneManager created for texture editing with sprite: " + spriteData.name);
     }
 
     /**
@@ -96,7 +97,7 @@ public abstract class BaseSceneManager {
         this.currentScene = scene;
         this.gyroProcessor = new GyroSensorProcessor();
 
-        Log.d(TAG, "SceneManager created with preloaded scene: " + scene.getSceneName());
+        TimberLog.d(TAG, "SceneManager created with preloaded scene: " + scene.getSceneName());
     }
 
     /**
@@ -113,16 +114,16 @@ public abstract class BaseSceneManager {
         // Create shader program
         shaderProgram = new ShaderProgram(ShaderProgram.getVertexShaderCode(), ShaderProgram.getFragmentShaderCode());
         shaderProgram.use();
-        Log.d(TAG, "Shader program created and in use");
+        TimberLog.d(TAG, "Shader program created and in use");
 
         // Create handles from shader program
         int prog = shaderProgram.getProgram();
         handles = new Handles(prog);
-        Log.d(TAG, "Handles created");
+        TimberLog.d(TAG, "Handles created");
 
         // Create sprite renderer
         spriteRenderer = new SpriteRenderer(handles);
-        Log.d(TAG, "SpriteRenderer created");
+        TimberLog.d(TAG, "SpriteRenderer created");
 
         // Ensure GPU limits are queried on GL thread BEFORE loading any textures
         textureManager.ensureGPULimitsQueried();
@@ -138,7 +139,7 @@ public abstract class BaseSceneManager {
         if (currentScene == null) {
             loadScene();
         } else {
-            Log.d(TAG, "Scene already loaded, reloading textures only");
+            TimberLog.d(TAG, "Scene already loaded, reloading textures only");
             currentScene.reloadTextures(context, textureManager);
             // Disable edge highlights after surface recreation and reset selected sprite
             // EXCEPT: don't reset if this is a preloaded scene for texture editing (selectedSprite was already set)
@@ -197,37 +198,37 @@ public abstract class BaseSceneManager {
         try {
             // If a preloaded scene was provided, use it directly
             if (preloadedScene != null) {
-                Log.d(TAG, "Using preloaded scene: " + preloadedScene.getSceneName());
+                TimberLog.d(TAG, "Using preloaded scene: " + preloadedScene.getSceneName());
                 currentScene = preloadedScene;
             } else {
                 // Otherwise load from file
-                Log.d(TAG, "Loading scene from file: " + sceneFileName);
+                TimberLog.d(TAG, "Loading scene from file: " + sceneFileName);
                 SceneLoader sceneLoader = new SceneLoader(context);
 
                 // Set the persistent scenes path so it loads from persistent storage first
                 SceneFileManager sceneFileManager = new SceneFileManager(context, null);
                 String persistentPath = sceneFileManager.getPersistentScenesDirectoryPath();
                 sceneLoader.setPersistentScenesPath(persistentPath);
-                Log.d(TAG, "SceneLoader configured to load from persistent path: " + persistentPath);
+                TimberLog.d(TAG, "SceneLoader configured to load from persistent path: " + persistentPath);
 
                 currentScene = sceneLoader.loadScene(sceneFileName);
             }
 
             // Initialize the scene with TextureManager
             if (currentScene == null) {
-                Log.e(TAG, "Failed to load scene");
+                TimberLog.e(TAG, "Failed to load scene");
                 currentScene = new Scene("Error");
                 return;
             }
 
-            Log.d(TAG, "Scene loaded, initializing with " + currentScene.getSprites().size() + " sprites");
+            TimberLog.d(TAG, "Scene loaded, initializing with " + currentScene.getSprites().size() + " sprites");
             currentScene.initialize(context, textureManager);
             // Disable edge highlights by default (they will be enabled when a sprite is selected)
             currentScene.setEdgeHighlighted(false);
 
-            Log.d(TAG, "Successfully loaded and initialized scene: " + currentScene.getSceneName());
+            TimberLog.d(TAG, "Successfully loaded and initialized scene: " + currentScene.getSceneName());
         } catch (Exception e) {
-            Log.e(TAG, "Error loading scene: " + e.getMessage(), e);
+            TimberLog.e(TAG, "Error loading scene: " + e.getMessage(), e);
             // Create an empty scene on error
             currentScene = new Scene("Error");
         }
@@ -335,7 +336,7 @@ public abstract class BaseSceneManager {
 
         // Update the scroll offset processor with immediate value
         scrollOffsetProcessor.setScrollOffsetImmediate(scrollOffset);
-        Log.d(TAG, "Scroll offset updated immediately from xFocus: " + xFocus +
+        TimberLog.d(TAG, "Scroll offset updated immediately from xFocus: " + xFocus +
               " (scroll scale: " + SCROLL_SCALE + ", offset: " + scrollOffset + ")");
     }
 
@@ -451,7 +452,7 @@ public abstract class BaseSceneManager {
             sprite.setWidthAndUpdateOriginal(newWidth);
             sprite.setHeightAndUpdateOriginal(newHeight);
 
-            Log.d("BaseSceneManager", "Updated sprite dimensions to: " + newWidth + " x " + newHeight);
+            TimberLog.d("BaseSceneManager", "Updated sprite dimensions to: " + newWidth + " x " + newHeight);
         }
     }
 
@@ -473,7 +474,7 @@ public abstract class BaseSceneManager {
      */
     public void addSpriteToScene(Sprite sprite) {
         if (currentScene == null) {
-            Log.w(TAG, "Cannot add sprite: scene not loaded");
+            TimberLog.w(TAG, "Cannot add sprite: scene not loaded");
             return;
         }
 
@@ -481,12 +482,12 @@ public abstract class BaseSceneManager {
 
         // Load the texture on the GL thread
         if (textureManager != null) {
-            Log.d(TAG, "Adding sprite to scene: " + sprite.getName());
+            TimberLog.d(TAG, "Adding sprite to scene: " + sprite.getName());
             // Schedule texture loading on next GL frame
             new Handler(Looper.getMainLooper()).post(() -> {
                 if (currentScene != null && textureManager != null) {
                     currentScene.loadSpriteTexture(context, textureManager, sprite);
-                    Log.d(TAG, "Texture loaded for sprite: " + sprite.getName());
+                    TimberLog.d(TAG, "Texture loaded for sprite: " + sprite.getName());
                 }
             });
         }
@@ -494,7 +495,7 @@ public abstract class BaseSceneManager {
 
     public void deleteSpriteFromScene(Sprite sprite) {
         if (currentScene == null || sprite == null) {
-            Log.w(TAG, "Cannot delete sprite: scene or sprite is null");
+            TimberLog.w(TAG, "Cannot delete sprite: scene or sprite is null");
             return;
         }
         //TODO: we need to figure out a way to make sprite names unique
@@ -507,7 +508,7 @@ public abstract class BaseSceneManager {
             selectedSpriteName = null;
         }
 
-        Log.d(TAG, "Deleted sprite: " + spriteName);
+        TimberLog.d(TAG, "Deleted sprite: " + spriteName);
     }
 
     protected void highlightSelectedSprite() {
@@ -516,7 +517,7 @@ public abstract class BaseSceneManager {
             if (sprite.getName().equals(selectedSpriteName)) {
                 sprite.setShowEdgeHighlight(true);
                 selectedSprite = sprite;
-                Log.d(TAG, "Restored highlight on GL thread for sprite: " + selectedSpriteName);
+                TimberLog.d(TAG, "Restored highlight on GL thread for sprite: " + selectedSpriteName);
             }
         }
     }

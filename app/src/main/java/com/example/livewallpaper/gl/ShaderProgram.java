@@ -1,7 +1,7 @@
 package com.example.livewallpaper.gl;
 
 import android.opengl.GLES20;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
 /**
  * Lightweight helper to compile/link a GL ES 2.0 shader program and provide helper accessors.
@@ -16,7 +16,7 @@ public class ShaderProgram {
 
         program = GLES20.glCreateProgram();
         if (program == 0) {
-            Log.e(TAG, "Failed to create GL program");
+            TimberLog.e(TAG, "Failed to create GL program");
             return;
         }
 
@@ -29,7 +29,7 @@ public class ShaderProgram {
         GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
         if (linkStatus[0] == 0) {
             String info = GLES20.glGetProgramInfoLog(program);
-            Log.e(TAG, "Error linking program: " + info);
+            TimberLog.e(TAG, "Error linking program: " + info);
             GLES20.glDeleteProgram(program);
             program = 0;
         }
@@ -42,7 +42,7 @@ public class ShaderProgram {
     private int compileShader(int type, String source) {
         int shader = GLES20.glCreateShader(type);
         if (shader == 0) {
-            Log.e(TAG, "Failed to create shader");
+            TimberLog.e(TAG, "Failed to create shader");
             return 0;
         }
         GLES20.glShaderSource(shader, source);
@@ -52,7 +52,7 @@ public class ShaderProgram {
         GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
         if (compileStatus[0] == 0) {
             String info = GLES20.glGetShaderInfoLog(shader);
-            Log.e(TAG, "Error compiling shader: " + info);
+            TimberLog.e(TAG, "Error compiling shader: " + info);
             GLES20.glDeleteShader(shader);
             return 0;
         }

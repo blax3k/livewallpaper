@@ -1,7 +1,8 @@
 package com.example.livewallpaper.sensors;
 
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 
 /**
@@ -85,7 +86,7 @@ public class GyroSensorProcessor {
             computeTargetOffsets();
             clampTargetOffsets();
         } catch (Exception e) {
-            Log.e(TAG, "Error processing gyro: " + e.getMessage(), e);
+            TimberLog.e(TAG, "Error processing gyro: " + e.getMessage(), e);
         }
     }
 
@@ -196,7 +197,7 @@ public class GyroSensorProcessor {
      */
     public void pause() {
         isPaused = true;
-        Log.d(TAG, "Gyro tracking paused");
+        TimberLog.d(TAG, "Gyro tracking paused");
     }
 
     /**
@@ -205,7 +206,7 @@ public class GyroSensorProcessor {
     public void resume() {
         isPaused = false;
         lastUpdateTimeNs = 0L; // Reset timing so next sensor event doesn't create a large delta
-        Log.d(TAG, "Gyro tracking resumed");
+        TimberLog.d(TAG, "Gyro tracking resumed");
     }
 
     /**
@@ -281,7 +282,7 @@ public class GyroSensorProcessor {
         if (MotionConfig.isGyroMotionEnabled()) {
             newScene.enableGyroScaling();
             newScene.applyGyroScaling();
-            android.util.Log.d("GyroSensorProcessor", "New scene initialized with gyro scaling applied");
+            TimberLog.d(TAG, "New scene initialized with gyro scaling applied");
         }
     }
 }

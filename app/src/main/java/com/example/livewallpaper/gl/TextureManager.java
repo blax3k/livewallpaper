@@ -5,7 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
+
+import com.example.livewallpaper.logging.TimberLog;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,7 +79,7 @@ public class TextureManager {
         GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, maxSize, 0);
         maxTextureSize = maxSize[0];
 
-        Log.d(TAG, "GPU max texture size queried (on GL thread): " + maxTextureSize + " pixels");
+        TimberLog.d(TAG, "GPU max texture size queried (on GL thread): " + maxTextureSize + " pixels");
         gpuLimitsQueried = true;
     }
 
@@ -94,7 +96,7 @@ public class TextureManager {
         GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, maxSize, 0);
         maxTextureSize = maxSize[0];
 
-        Log.d(TAG, "GPU max texture size queried: " + maxTextureSize + " pixels");
+        TimberLog.d(TAG, "GPU max texture size queried: " + maxTextureSize + " pixels");
         gpuLimitsQueried = true;
     }
 
@@ -113,7 +115,7 @@ public class TextureManager {
         if (textureCache.containsKey(resourceId)) {
             Integer cached = textureCache.get(resourceId);
             if (cached != null) {
-                Log.d(TAG, "Async texture for resourceId=" + resourceId + " found in cache, invoking callback with texId=" + cached);
+                TimberLog.d(TAG, "Async texture for resourceId=" + resourceId + " found in cache, invoking callback with texId=" + cached);
                 if (callback != null) {
                     callback.onTextureLoaded(resourceId, cached);
                 }
@@ -123,7 +125,7 @@ public class TextureManager {
 
         // Check if already being loaded - if so, just register callback
         if (pendingBitmaps.containsKey(resourceId)) {
-            Log.d(TAG, "Async texture for resourceId=" + resourceId + " already being loaded, registered callback");
+            TimberLog.d(TAG, "Async texture for resourceId=" + resourceId + " already being loaded, registered callback");
             if (callback != null) {
                 textureCallbacks.put(resourceId, callback);
             }
@@ -138,13 +140,13 @@ public class TextureManager {
         // Decode on background thread
         backgroundExecutor.execute(() -> {
             try {
-                Log.d(TAG, "Starting async decode for resourceId=" + resourceId + " on background thread");
+                TimberLog.d(TAG, "Starting async decode for resourceId=" + resourceId + " on background thread");
                 Bitmap bitmap = decodeBitmap(context, resourceId);
                 if (bitmap != null) {
                     pendingBitmaps.put(resourceId, bitmap);
-                    Log.d(TAG, "Async decode complete for resourceId=" + resourceId + ", queued for GPU upload");
+                    TimberLog.d(TAG, "Async decode complete for resourceId=" + resourceId + ", queued for GPU upload");
                 } else {
-                    Log.e(TAG, "Failed to decode bitmap for resourceId=" + resourceId);
+                    TimberLog.e(TAG, "Failed to decode bitmap for resourceId=" + resourceId);
                     // Still invoke callback with failure
                     TextureLoadCallback cb = textureCallbacks.remove(resourceId);
                     if (cb != null) {
@@ -152,7 +154,7 @@ public class TextureManager {
                     }
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Exception during async decode for resourceId=" + resourceId, e);
+                TimberLog.e(TAG, "Exception during async decode for resourceId=" + resourceId, e);
                 TextureLoadCallback cb = textureCallbacks.remove(resourceId);
                 if (cb != null) {
                     cb.onTextureLoaded(resourceId, 0);
@@ -180,7 +182,7 @@ public class TextureManager {
             if (uploadTextureToGPU(pending.textureId, pending.bitmap, pending.resourceId)) {
                 // Upload successful
                 textureCache.put(pending.resourceId, pending.textureId);
-                Log.d(TAG, "Async texture uploaded to GPU for resourceId=" + pending.resourceId + ", texId=" + pending.textureId);
+                TimberLog.d(TAG, "Async texture uploaded to GPU for resourceId=" + pending.resourceId + ", texId=" + pending.textureId);
 
                 // Invoke callback
                 TextureLoadCallback callback = textureCallbacks.remove(pending.resourceId);
@@ -189,7 +191,7 @@ public class TextureManager {
                 }
             } else {
                 // Upload failed
-                Log.e(TAG, "Failed to upload texture for resourceId=" + pending.resourceId);
+                TimberLog.e(TAG, "Failed to upload texture for resourceId=" + pending.resourceId);
                 freeTextureId(pending.textureId);
 
                 // Invoke callback with failure
@@ -212,7 +214,7 @@ public class TextureManager {
                     // Queue for upload
                     pendingUploads.offer(new PendingTextureUpload(resourceId, textureId, bitmap));
                     pendingBitmaps.remove(resourceId);
-                    Log.d(TAG, "Queued async texture for upload: resourceId=" + resourceId + ", texId=" + textureId);
+                    TimberLog.d(TAG, "Queued async texture for upload: resourceId=" + resourceId + ", texId=" + textureId);
                 }
             }
         }
@@ -228,7 +230,7 @@ public class TextureManager {
         if (!freedTextureIds.isEmpty()) {
             Integer reusedId = freedTextureIds.poll();
             if (reusedId != null) {
-                Log.d(TAG, "Reusing freed texture ID: " + reusedId + " (remaining in pool: " + freedTextureIds.size() + ")");
+                TimberLog.d(TAG, "Reusing freed texture ID: " + reusedId + " (remaining in pool: " + freedTextureIds.size() + ")");
                 return reusedId;
             }
         }
@@ -237,10 +239,10 @@ public class TextureManager {
         int[] textureIds = new int[1];
         GLES20.glGenTextures(1, textureIds, 0);
         if (textureIds[0] == 0) {
-            Log.e(TAG, "Failed to generate new texture ID");
+            TimberLog.e(TAG, "Failed to generate new texture ID");
             return 0;
         }
-        Log.d(TAG, "Generated new texture ID: " + textureIds[0]);
+        TimberLog.d(TAG, "Generated new texture ID: " + textureIds[0]);
         return textureIds[0];
     }
 
@@ -251,7 +253,7 @@ public class TextureManager {
      */
     private void freeTextureId(int textureId) {
         freedTextureIds.offer(textureId);
-        Log.d(TAG, "Freed texture ID: " + textureId + " (pool size: " + freedTextureIds.size() + ")");
+        TimberLog.d(TAG, "Freed texture ID: " + textureId + " (pool size: " + freedTextureIds.size() + ")");
     }
 
     /**
@@ -281,7 +283,7 @@ public class TextureManager {
             int originalWidth = options.outWidth;
             int originalHeight = options.outHeight;
 
-            Log.d(TAG, "Raw resource dimensions for resourceId=" + resourceId + ": " + originalWidth + "x" + originalHeight);
+            TimberLog.d(TAG, "Raw resource dimensions for resourceId=" + resourceId + ": " + originalWidth + "x" + originalHeight);
 
             // Calculate optimal sample size
             int inSampleSize = calculateInSampleSize(originalWidth, originalHeight, resourceId);
@@ -295,23 +297,23 @@ public class TextureManager {
             Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
 
             if (bitmap == null) {
-                Log.e(TAG, "Failed to decode resource " + resourceId);
+                TimberLog.e(TAG, "Failed to decode resource " + resourceId);
                 return null;
             }
 
-            Log.d(TAG, "Successfully decoded resource " + resourceId + ", bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight() + ", format: " + bitmap.getConfig() + ", inSampleSize: " + inSampleSize);
+            TimberLog.d(TAG, "Successfully decoded resource " + resourceId + ", bitmap size: " + bitmap.getWidth() + "x" + bitmap.getHeight() + ", format: " + bitmap.getConfig() + ", inSampleSize: " + inSampleSize);
 
             // Convert to ARGB_8888 if necessary
             return ensureARGB8888Format(bitmap);
         } catch (Exception e) {
-            Log.e(TAG, "Exception decoding resource " + resourceId, e);
+            TimberLog.e(TAG, "Exception decoding resource " + resourceId, e);
             return null;
         } finally {
             if (is != null) {
                 try {
                     is.close();
                 } catch (java.io.IOException e) {
-                    Log.e(TAG, "Error closing resource stream", e);
+                    TimberLog.e(TAG, "Error closing resource stream", e);
                 }
             }
         }
@@ -343,12 +345,12 @@ public class TextureManager {
                    (halfWidth / inSampleSize) >= maxTextureSize) {
                 inSampleSize *= 2;
             }
-            Log.d(TAG, "Large texture detected for resourceId=" + resourceId +
+            TimberLog.d(TAG, "Large texture detected for resourceId=" + resourceId +
                   ": original=" + width + "x" + height +
                   ", max allowed=" + maxTextureSize +
                   ", scaling with inSampleSize=" + inSampleSize);
         } else if (height > maxTextureSize || width > maxTextureSize) {
-            Log.d(TAG, "One dimension exceeds max texture size for resourceId=" + resourceId +
+            TimberLog.d(TAG, "One dimension exceeds max texture size for resourceId=" + resourceId +
                   ": original=" + width + "x" + height +
                   ", max allowed=" + maxTextureSize +
                   " - allowing full resolution (will be uploaded with potential downsizing by GPU driver)");
@@ -366,7 +368,7 @@ public class TextureManager {
      */
     private Bitmap ensureARGB8888Format(Bitmap bitmap) {
         if (bitmap.getConfig() != Bitmap.Config.ARGB_8888) {
-            Log.d(TAG, "Converting bitmap from " + bitmap.getConfig() + " to ARGB_8888");
+            TimberLog.d(TAG, "Converting bitmap from " + bitmap.getConfig() + " to ARGB_8888");
             Bitmap converted = bitmap.copy(Bitmap.Config.ARGB_8888, false);
             bitmap.recycle();
             return converted;
@@ -386,20 +388,20 @@ public class TextureManager {
     private boolean uploadTextureToGPU(int textureId, Bitmap bitmap, int resourceId) {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
         setTextureParameters();
-        Log.d(TAG, "Uploaded texture parameters for resourceId=" + resourceId);
+        TimberLog.d(TAG, "Uploaded texture parameters for resourceId=" + resourceId);
 
         // Upload texture data
         try {
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
         } catch (Exception e) {
-            Log.e(TAG, "Error uploading texture data for resourceId=" + resourceId, e);
+            TimberLog.e(TAG, "Error uploading texture data for resourceId=" + resourceId, e);
             return false;
         }
 
         // Check for GL errors
         int glError = GLES20.glGetError();
         if (glError != GLES20.GL_NO_ERROR) {
-            Log.e(TAG, "GL error after texImage2D for resourceId=" + resourceId + ": " + glError);
+            TimberLog.e(TAG, "GL error after texImage2D for resourceId=" + resourceId + ": " + glError);
             return false;
         }
 
@@ -426,7 +428,7 @@ public class TextureManager {
         // Note: Mipmapping is not explicitly disabled in GLES 2.0 (no BASE_LEVEL/MAX_LEVEL support)
         // The texture will use full resolution since no mipmaps are generated during upload
 
-        Log.d(TAG, "Texture parameters set: MIN_FILTER=GL_LINEAR, MAG_FILTER=GL_LINEAR, wrapping=CLAMP_TO_EDGE, mipmaps disabled");
+        TimberLog.d(TAG, "Texture parameters set: MIN_FILTER=GL_LINEAR, MAG_FILTER=GL_LINEAR, wrapping=CLAMP_TO_EDGE, mipmaps disabled");
     }
 
     /**
@@ -443,7 +445,7 @@ public class TextureManager {
         for (Integer resourceId : resourceIdsToUnload) {
             // Skip if this texture is needed by the next scene
             if (resourceIdsToKeep.contains(resourceId)) {
-                Log.d(TAG, "Keeping texture for resourceId=" + resourceId + " (shared with next scene)");
+                TimberLog.d(TAG, "Keeping texture for resourceId=" + resourceId + " (shared with next scene)");
                 continue;
             }
 
@@ -453,7 +455,7 @@ public class TextureManager {
                 if (texIdObj != null) {
                     int texId = texIdObj;
                     texturesToDelete.add(texId);
-                    Log.d(TAG, "Marked for deletion: resourceId=" + resourceId + " (texId=" + texId + ")");
+                    TimberLog.d(TAG, "Marked for deletion: resourceId=" + resourceId + " (texId=" + texId + ")");
                 }
             }
         }
@@ -471,9 +473,9 @@ public class TextureManager {
                 freeTextureId(freedId);
             }
 
-            Log.d(TAG, "Texture cleanup complete: unloaded " + texturesToDelete.size() + " textures in single GL call (pool size: " + freedTextureIds.size() + ")");
+            TimberLog.d(TAG, "Texture cleanup complete: unloaded " + texturesToDelete.size() + " textures in single GL call (pool size: " + freedTextureIds.size() + ")");
         } else {
-            Log.d(TAG, "Texture cleanup complete: no textures to unload");
+            TimberLog.d(TAG, "Texture cleanup complete: no textures to unload");
         }
     }
 
@@ -506,7 +508,7 @@ public class TextureManager {
         pendingBitmaps.clear();
         textureCallbacks.clear();
 
-        Log.d(TAG, "All textures deleted and async resources cleaned up");
+        TimberLog.d(TAG, "All textures deleted and async resources cleaned up");
     }
 }
 

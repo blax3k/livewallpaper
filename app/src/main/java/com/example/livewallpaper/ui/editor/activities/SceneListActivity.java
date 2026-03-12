@@ -3,7 +3,7 @@ package com.example.livewallpaper.ui.editor.activities;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ExpandableListView;
@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
 import com.example.livewallpaper.ui.editor.adapters.SceneListExpandableAdapter;
@@ -42,7 +43,7 @@ public class SceneListActivity extends AppCompatActivity {
         registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == RESULT_OK) {
                 // Scene was saved in EditSceneActivity, refresh the list and metadata
-                Log.d(TAG, "Scene was saved, refreshing scene list");
+                TimberLog.d(TAG, "Scene was saved, refreshing scene list");
                 sceneFileNames = loadSceneFileNames();
 
                 // Reload metadata and rebuild grouped data
@@ -62,10 +63,10 @@ public class SceneListActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "SceneListActivity onCreate called");
+        TimberLog.d(TAG, "SceneListActivity onCreate called");
 
         setContentView(R.layout.activity_scene_list);
-        Log.d(TAG, "Scene list layout inflated successfully");
+        TimberLog.d(TAG, "Scene list layout inflated successfully");
 
         // Initialize SceneFileManager to access persistent storage
         sceneFileManager = new SceneFileManager(this, null);
@@ -98,7 +99,7 @@ public class SceneListActivity extends AppCompatActivity {
                 List<String> sceneList = scenesGroupedByTimeOfDay.get(timeOfDay);
                 if (sceneList != null && childPosition < sceneList.size()) {
                     String sceneFileName = sceneList.get(childPosition);
-                    Log.d(TAG, "Scene selected for editing: " + sceneFileName);
+                    TimberLog.d(TAG, "Scene selected for editing: " + sceneFileName);
                     openEditScene(sceneFileName);
                 }
                 return false;
@@ -138,9 +139,9 @@ public class SceneListActivity extends AppCompatActivity {
             // Expand all groups by default
             expandAllGroups();
 
-            Log.d(TAG, "Loaded " + sceneFileNames.size() + " scenes grouped by TimeOfDay");
+            TimberLog.d(TAG, "Loaded " + sceneFileNames.size() + " scenes grouped by TimeOfDay");
         } else {
-            Log.e(TAG, "Scenes ExpandableListView not found!");
+            TimberLog.e(TAG, "Scenes ExpandableListView not found!");
             Toast.makeText(this, "Failed to load scenes view", Toast.LENGTH_SHORT).show();
         }
     }
@@ -172,7 +173,7 @@ public class SceneListActivity extends AppCompatActivity {
                 try {
                     timeOfDay = SceneData.TimeOfDay.valueOf(timeOfDayStr);
                 } catch (IllegalArgumentException e) {
-                    Log.w(TAG, "Unknown TimeOfDay value: " + timeOfDayStr + ", defaulting to DAY");
+                    TimberLog.w(TAG, "Unknown TimeOfDay value: " + timeOfDayStr + ", defaulting to DAY");
                 }
             }
 
@@ -210,15 +211,15 @@ public class SceneListActivity extends AppCompatActivity {
             if (files != null) {
                 for (File file : files) {
                     fileNames.add(file.getName());
-                    Log.d(TAG, "Found scene file: " + file.getName());
+                    TimberLog.d(TAG, "Found scene file: " + file.getName());
                 }
                 // Sort the list for consistent display
                 java.util.Collections.sort(fileNames);
             } else {
-                Log.e(TAG, "Error listing files in persistent directory");
+                TimberLog.e(TAG, "Error listing files in persistent directory");
             }
         } else {
-            Log.e(TAG, "Persistent scenes directory does not exist or is not a directory");
+            TimberLog.e(TAG, "Persistent scenes directory does not exist or is not a directory");
         }
 
         return fileNames;
@@ -259,13 +260,13 @@ public class SceneListActivity extends AppCompatActivity {
             }
 
             Toast.makeText(this, "Scene deleted: " + sceneFileName, Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "Scene deleted successfully: " + sceneFileName);
+            TimberLog.d(TAG, "Scene deleted successfully: " + sceneFileName);
 
             // Refresh the scene list in the running wallpaper
             GLWallpaperService.refreshSceneList(this);
         } else {
             Toast.makeText(this, "Failed to delete scene: " + sceneFileName, Toast.LENGTH_SHORT).show();
-            Log.e(TAG, "Failed to delete scene: " + sceneFileName);
+            TimberLog.e(TAG, "Failed to delete scene: " + sceneFileName);
         }
     }
 
@@ -275,7 +276,7 @@ public class SceneListActivity extends AppCompatActivity {
             intent.putExtra(EditSceneActivity.EXTRA_SCENE_FILE_NAME, sceneFileName);
             editSceneActivityLauncher.launch(intent);
         } catch (Exception e) {
-            Log.e(TAG, "Error opening edit scene: " + e.getMessage(), e);
+            TimberLog.e(TAG, "Error opening edit scene: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to open scene editor: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -328,12 +329,12 @@ public class SceneListActivity extends AppCompatActivity {
             expandAllGroups();
 
             Toast.makeText(this, "Scene list reset to defaults", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "Scene list successfully reset to defaults");
+            TimberLog.d(TAG, "Scene list successfully reset to defaults");
 
             // Refresh the scene list in the running wallpaper
             GLWallpaperService.refreshSceneList(this);
         } catch (Exception e) {
-            Log.e(TAG, "Error resetting scenes: " + e.getMessage(), e);
+            TimberLog.e(TAG, "Error resetting scenes: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to reset scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }

@@ -2,7 +2,9 @@ package com.example.livewallpaper.sensors;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
+
+import com.example.livewallpaper.logging.TimberLog;
 
 /**
  * Thread-safe configuration class for sharing motion settings between
@@ -33,7 +35,7 @@ public class MotionConfig {
             // Load settings from persistent storage
             scrollMotionEnabled = sharedPreferences.getBoolean(KEY_SCROLL_MOTION, DEFAULT_SCROLL_MOTION);
             gyroMotionEnabled = sharedPreferences.getBoolean(KEY_GYRO_MOTION, DEFAULT_GYRO_MOTION);
-            Log.d(TAG, "MotionConfig initialized - Scroll: " + scrollMotionEnabled + ", Gyro: " + gyroMotionEnabled);
+            TimberLog.d(TAG, "MotionConfig initialized - Scroll: " + scrollMotionEnabled + ", Gyro: " + gyroMotionEnabled);
         }
     }
 
@@ -55,7 +57,7 @@ public class MotionConfig {
     public static void setScrollMotionEnabled(boolean enabled) {
         scrollMotionEnabled = enabled;
         persistSetting(KEY_SCROLL_MOTION, enabled);
-        Log.d(TAG, "Scroll motion set to: " + enabled);
+        TimberLog.d(TAG, "Scroll motion set to: " + enabled);
     }
 
     /**
@@ -76,7 +78,7 @@ public class MotionConfig {
     public static void setGyroMotionEnabled(boolean enabled) {
         gyroMotionEnabled = enabled;
         persistSetting(KEY_GYRO_MOTION, enabled);
-        Log.d(TAG, "Gyro motion set to: " + enabled);
+        TimberLog.d(TAG, "Gyro motion set to: " + enabled);
     }
 
     /**
@@ -89,7 +91,7 @@ public class MotionConfig {
         if (sharedPreferences != null) {
             sharedPreferences.edit().putBoolean(key, value).apply();
         } else {
-            Log.w(TAG, "SharedPreferences not initialized, setting not persisted: " + key);
+            TimberLog.w(TAG, "SharedPreferences not initialized, setting not persisted: " + key);
         }
     }
 }

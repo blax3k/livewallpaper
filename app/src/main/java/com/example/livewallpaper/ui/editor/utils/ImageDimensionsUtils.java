@@ -2,7 +2,9 @@ package com.example.livewallpaper.ui.editor.utils;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
+
+import com.example.livewallpaper.logging.TimberLog;
 
 /**
  * Utility class for getting drawable image dimensions without loading the full bitmap into memory.
@@ -25,14 +27,14 @@ public class ImageDimensionsUtils {
             BitmapFactory.decodeResource(context.getResources(), resourceId, options);
 
             if (options.outWidth > 0 && options.outHeight > 0) {
-                Log.d(TAG, "Image dimensions: " + options.outWidth + "x" + options.outHeight);
+                TimberLog.d(TAG, "Image dimensions: " + options.outWidth + "x" + options.outHeight);
                 return new ImageDimensions(options.outWidth, options.outHeight);
             } else {
-                Log.w(TAG, "Failed to get dimensions for resourceId=" + resourceId);
+                TimberLog.w(TAG, "Failed to get dimensions for resourceId=" + resourceId);
                 return null;
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error getting image dimensions for resourceId=" + resourceId, e);
+            TimberLog.e(TAG, "Error getting image dimensions for resourceId=" + resourceId, e);
             return null;
         }
     }

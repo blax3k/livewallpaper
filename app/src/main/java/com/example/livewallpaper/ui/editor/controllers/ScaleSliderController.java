@@ -2,11 +2,12 @@ package com.example.livewallpaper.ui.editor.controllers;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.managers.BaseSceneManager;
 import com.example.livewallpaper.scene.models.Sprite;
 
@@ -117,7 +118,7 @@ public class ScaleSliderController {
         // Update display text
         updateDisplay(scale);
 
-        Log.d(TAG, "Updated scale slider display - Scale: " + scale + "x");
+        TimberLog.d(TAG, "Updated scale slider display - Scale: " + scale + "x");
     }
 
     /**
@@ -166,7 +167,7 @@ public class ScaleSliderController {
                         onDimensionChangeCallback.run();
                     }
 
-                    Log.d(TAG, "Scale changed to: " + desiredScale + "x");
+                    TimberLog.d(TAG, "Scale changed to: " + desiredScale + "x");
                 }
             }
 
@@ -209,10 +210,10 @@ public class ScaleSliderController {
                     onDimensionChangeCallback.run();
                 }
 
-                Log.d(TAG, "Scale manually edited to: " + scale);
+                TimberLog.d(TAG, "Scale manually edited to: " + scale);
             } catch (NumberFormatException e) {
                 Toast.makeText(context, "Invalid number", Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "Invalid scale input: " + e.getMessage());
+                TimberLog.e(TAG, "Invalid scale input: " + e.getMessage());
             }
         });
 

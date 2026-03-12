@@ -10,7 +10,7 @@ import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -22,6 +22,7 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.livewallpaper.R;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.managers.EditSceneManager;
 import com.example.livewallpaper.scene.models.Sprite;
@@ -68,7 +69,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         // Disable gyro motion for texture editing to work with unscaled sprite dimensions
         wasGyroMotionEnabled = MotionConfig.isGyroMotionEnabled();
         MotionConfig.setGyroMotionEnabled(false);
-        Log.d(TAG, "Gyro motion disabled for texture editing (was: " + wasGyroMotionEnabled + ")");
+        TimberLog.d(TAG, "Gyro motion disabled for texture editing (was: " + wasGyroMotionEnabled + ")");
 
         // Set up back button
         ImageButton backButton = findViewById(R.id.back_button);
@@ -88,13 +89,13 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         spriteData = getIntent().getParcelableExtra(EXTRA_SPRITE_DATA);
 
         if (spriteData == null) {
-            Log.e(TAG, "Missing sprite data!");
+            TimberLog.e(TAG, "Missing sprite data!");
             Toast.makeText(this, "Error: Missing sprite data", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        Log.d(TAG, "Sprite data received: " + spriteData.name +
+        TimberLog.d(TAG, "Sprite data received: " + spriteData.name +
               ", Width: " + spriteData.width + ", Height: " + spriteData.height);
 
         // Initialize sensor manager
@@ -124,7 +125,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         }
 
         try {
-            Log.d(TAG, "Setting up GLSurfaceView renderer with sprite: " + spriteData.name);
+            TimberLog.d(TAG, "Setting up GLSurfaceView renderer with sprite: " + spriteData.name);
 
             // Create renderer with the sprite data (creates a minimal scene with just this sprite)
             renderer = new EditSceneManager(this, spriteData);
@@ -143,9 +144,9 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             // Initialize sliders after a short delay to ensure scene is loaded
             new Handler(Looper.getMainLooper()).postDelayed(this::initializeSliders, 500);
 
-            Log.d(TAG, "GLSurfaceView configured successfully for sprite: " + spriteData.name);
+            TimberLog.d(TAG, "GLSurfaceView configured successfully for sprite: " + spriteData.name);
         } catch (Exception e) {
-            Log.e(TAG, "Error setting up GLSurfaceView: " + e.getMessage(), e);
+            TimberLog.e(TAG, "Error setting up GLSurfaceView: " + e.getMessage(), e);
             Toast.makeText(this, "Error setting up preview: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -214,7 +215,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
 
                     textureEditState = new TextureEditState(scale, offsetU, offsetV);
 
-                    Log.d(TAG, "Applied sprite data - width: " + spriteData.width +
+                    TimberLog.d(TAG, "Applied sprite data - width: " + spriteData.width +
                           ", height: " + spriteData.height +
                           ", loaded texture state - scale: " + scale +
                           ", offsetU: " + offsetU + ", offsetV: " + offsetV);
@@ -269,23 +270,23 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 return;
             }
 
-            Log.d(TAG, "New texture dimensions: " + imageDims);
+            TimberLog.d(TAG, "New texture dimensions: " + imageDims);
 
             // Load the texture to GPU asynchronously
             renderer.getTextureManager().getTextureAsync(this, resourceId, (resId, textureId) -> {
                 if (textureId == 0) {
-                    Log.e(TAG, "Failed to load texture for resourceId=" + resourceId);
+                    TimberLog.e(TAG, "Failed to load texture for resourceId=" + resourceId);
                     runOnUiThread(() -> {
                         Toast.makeText(this, "Error: Failed to load texture", Toast.LENGTH_SHORT).show();
                     });
                     return;
                 }
 
-                Log.d(TAG, "Texture loaded to GPU: resourceId=" + resourceId + ", textureId=" + textureId);
+                TimberLog.d(TAG, "Texture loaded to GPU: resourceId=" + resourceId + ", textureId=" + textureId);
 
                 Sprite sprite = renderer.getSelectedSprite();
                 if (sprite == null) {
-                    Log.e(TAG, "Sprite is no longer available after texture load");
+                    TimberLog.e(TAG, "Sprite is no longer available after texture load");
                     return;
                 }
 
@@ -297,7 +298,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 // Keep sprite dimensions unchanged
                 float spriteWidth = sprite.getWidth();
                 float spriteHeight = sprite.getHeight();
-                Log.d(TAG, "Sprite dimensions (unchanged): " + spriteWidth + "x" + spriteHeight);
+                TimberLog.d(TAG, "Sprite dimensions (unchanged): " + spriteWidth + "x" + spriteHeight);
 
                 // Reset texture coordinates to default: full texture, centered, no offset
                 // TextureCoordinateCalculator will handle aspect ratio fitting
@@ -305,8 +306,8 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 sprite.updateTextureCoordinates(newTextureState);
                 textureEditState = newTextureState;
 
-                Log.d(TAG, "Texture coordinates reset to: scale=1.0, offsetU=0.0, offsetV=0.0");
-                Log.d(TAG, "Updated sprite texture resource: " + imageName + " (resourceId=" + resourceId + ")");
+                TimberLog.d(TAG, "Texture coordinates reset to: scale=1.0, offsetU=0.0, offsetV=0.0");
+                TimberLog.d(TAG, "Updated sprite texture resource: " + imageName + " (resourceId=" + resourceId + ")");
 
                 // Update the sliders to reflect new texture state on the UI thread
                 runOnUiThread(() -> {
@@ -320,11 +321,11 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     hasUnsavedChanges = true;
 
                     Toast.makeText(this, "Texture '" + imageName + "' set successfully", Toast.LENGTH_SHORT).show();
-                    Log.d(TAG, "New texture set: " + imageName + " with resourceId=" + resourceId);
+                    TimberLog.d(TAG, "New texture set: " + imageName + " with resourceId=" + resourceId);
                 });
             });
         } catch (Exception e) {
-            Log.e(TAG, "Error setting new texture: " + e.getMessage(), e);
+            TimberLog.e(TAG, "Error setting new texture: " + e.getMessage(), e);
             Toast.makeText(this, "Error setting texture: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -346,7 +347,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         Sprite currentSprite = renderer != null ? renderer.getSelectedSprite() : null;
         if (currentSprite != null && textureEditState != null) {
             currentSprite.updateTextureCoordinates(textureEditState);
-            Log.d(TAG, "Sprite texture coordinates updated");
+            TimberLog.d(TAG, "Sprite texture coordinates updated");
         }
     }
 
@@ -357,10 +358,10 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
      */
     private boolean handleGLViewTouch(View v, MotionEvent event) {
         Sprite currentSprite = renderer != null ? renderer.getSelectedSprite() : null;
-        Log.d(TAG, "handleGLViewTouch called - action: " + event.getAction() + ", currentSprite: " + (currentSprite != null ? currentSprite.getName() : "null"));
+        TimberLog.d(TAG, "handleGLViewTouch called - action: " + event.getAction() + ", currentSprite: " + (currentSprite != null ? currentSprite.getName() : "null"));
 
         if (currentSprite == null) {
-            Log.w(TAG, "currentSprite is null in touch handler");
+            TimberLog.w(TAG, "currentSprite is null in touch handler");
             return false;
         }
 
@@ -373,7 +374,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 isTouching = true;
                 lastTouchX = touchX;
                 lastTouchY = touchY;
-                Log.d(TAG, "Touch DOWN at (" + touchX + ", " + touchY + ")");
+                TimberLog.d(TAG, "Touch DOWN at (" + touchX + ", " + touchY + ")");
                 return true;
 
             case MotionEvent.ACTION_MOVE:
@@ -393,7 +394,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     float uOffset = -(deltaX / viewWidth);  // Negate to reverse x-axis motion
                     float vOffset = -(deltaY / viewHeight); // Inverted for texture coordinates
 
-                    Log.d(TAG, "Touch MOVE - deltaX: " + deltaX + ", deltaY: " + deltaY + ", uOffset: " + uOffset + ", vOffset: " + vOffset + ", viewSize: " + viewWidth + "x" + viewHeight);
+                    TimberLog.d(TAG, "Touch MOVE - deltaX: " + deltaX + ", deltaY: " + deltaY + ", uOffset: " + uOffset + ", vOffset: " + vOffset + ", viewSize: " + viewWidth + "x" + viewHeight);
 
                     // Apply the offset to the texture edit state with clamping
                     if (textureEditState != null) {
@@ -414,7 +415,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             case MotionEvent.ACTION_CANCEL:
                 // End tracking, texture coordinates remain at their new position
                 isTouching = false;
-                Log.d(TAG, "Touch released - texture coordinates locked");
+                TimberLog.d(TAG, "Touch released - texture coordinates locked");
                 return true;
         }
 
@@ -440,7 +441,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             try {
                 glSurfaceView.onPause();
             } catch (Exception e) {
-                Log.w(TAG, "Error pausing GLSurfaceView: " + e.getMessage());
+                TimberLog.w(TAG, "Error pausing GLSurfaceView: " + e.getMessage());
             }
         }
         if (renderer != null) {
@@ -451,7 +452,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
         }
         // Restore gyro motion to its original state when exiting this activity
         MotionConfig.setGyroMotionEnabled(wasGyroMotionEnabled);
-        Log.d(TAG, "Gyro motion restored to: " + wasGyroMotionEnabled);
+        TimberLog.d(TAG, "Gyro motion restored to: " + wasGyroMotionEnabled);
     }
 
     @Override
@@ -461,7 +462,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             try {
                 glSurfaceView.onResume();
             } catch (Exception e) {
-                Log.w(TAG, "Error resuming GLSurfaceView: " + e.getMessage());
+                TimberLog.w(TAG, "Error resuming GLSurfaceView: " + e.getMessage());
             }
         }
         if (renderer != null) {
@@ -495,7 +496,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                 Sprite sprite = scene.getSprites().get(0);
                 if (sprite != null) {
                     sprite.setPositionAtZero(false);
-                    Log.d(TAG, "Reset texture editing state for sprite: " + sprite.getName());
+                    TimberLog.d(TAG, "Reset texture editing state for sprite: " + sprite.getName());
                 }
             }
         }
@@ -561,20 +562,20 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
             float[] texCoordinates = currentSprite.getTextureCoordinates();
             if (texCoordinates != null) {
                 resultIntent.putExtra(RESULT_TEXTURE_COORDINATES, texCoordinates);
-                Log.d(TAG, "Returning texture coordinates: [" + texCoordinates[0] + "," + texCoordinates[1] + ",...]");
+                TimberLog.d(TAG, "Returning texture coordinates: [" + texCoordinates[0] + "," + texCoordinates[1] + ",...]");
             }
 
             // Set the result and finish
             setResult(RESULT_OK, resultIntent);
             hasUnsavedChanges = false;
             Toast.makeText(this, "Changes saved", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "Texture changes saved for sprite: " + spriteData.name);
+            TimberLog.d(TAG, "Texture changes saved for sprite: " + spriteData.name);
 
 
             // Finish the activity and return to EditSceneActivity
             finish();
         } catch (Exception e) {
-            Log.e(TAG, "Error saving changes: " + e.getMessage(), e);
+            TimberLog.e(TAG, "Error saving changes: " + e.getMessage(), e);
             Toast.makeText(this, "Error saving changes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }

@@ -4,13 +4,14 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
 import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.gl.PhoneGuideRenderer;
 import com.example.livewallpaper.gl.ShaderProgram;
 import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.TextureManager;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.PhoneGuide;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.Sprite;
@@ -68,24 +69,24 @@ public class EditSceneManager extends BaseSceneManager implements GLSurfaceView.
                 // Enable edge highlight for the single sprite being edited
                 sprite.setShowEdgeHighlight(true);
                 selectedSprite = sprite;
-                Log.d(TAG, "Sprite positioned at (0, 0) for single sprite preview: " + spriteNameToDisplay);
+                TimberLog.d(TAG, "Sprite positioned at (0, 0) for single sprite preview: " + spriteNameToDisplay);
             }
         }
     }
 
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        Log.d(TAG, "onSurfaceCreated called");
+        TimberLog.d(TAG, "onSurfaceCreated called");
 
         // Create texture manager
         textureManager = new TextureManager();
-        Log.d(TAG, "TextureManager created");
+        TimberLog.d(TAG, "TextureManager created");
 
         // Initialize common GL resources (shader, handles, sprite renderer)
         initializeGLResources();
 
         // Create phone guide renderer (PhoneGuide will be initialized after scene is loaded)
         phoneGuideRenderer = new PhoneGuideRenderer(handles);
-        Log.d(TAG, "PhoneGuideRenderer created");
+        TimberLog.d(TAG, "PhoneGuideRenderer created");
 
         // Initialize common scene resources (load scene, reload textures, etc.)
         initializeSceneResources();
@@ -109,19 +110,19 @@ public class EditSceneManager extends BaseSceneManager implements GLSurfaceView.
             // This ensures the scene renders with the correct scroll offset immediately
             // rather than starting at the default (0) and jumping when the slider is first moved
             updateScrollOffsetFromXFocus(xFocus);
-            Log.d(TAG, "PhoneGuide created and positioned with xOffset: " + xOffset + " (xFocus: " + xFocus + ")");
+            TimberLog.d(TAG, "PhoneGuide created and positioned with xOffset: " + xOffset + " (xFocus: " + xFocus + ")");
         } else {
-            Log.d(TAG, "PhoneGuide created with default position");
+            TimberLog.d(TAG, "PhoneGuide created with default position");
         }
 
         highlightSelectedSprite();
 
-        Log.d(TAG, "Surface created and scene loaded");
+        TimberLog.d(TAG, "Surface created and scene loaded");
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        Log.d(TAG, "onSurfaceChanged: " + width + "x" + height);
+        TimberLog.d(TAG, "onSurfaceChanged: " + width + "x" + height);
 
         GLES20.glViewport(0, 0, width, height);
         float aspectRatio = (float) width / (float) height;
@@ -131,7 +132,7 @@ public class EditSceneManager extends BaseSceneManager implements GLSurfaceView.
         float halfWorldW = halfWorldH * aspectRatio;
 
         Matrix.orthoM(projectionMatrix, 0, -halfWorldW, halfWorldW, halfWorldH, -halfWorldH, -1f, 1f);
-        Log.d(TAG, "Projection matrix set");
+        TimberLog.d(TAG, "Projection matrix set");
     }
 
     /**
@@ -142,7 +143,7 @@ public class EditSceneManager extends BaseSceneManager implements GLSurfaceView.
     @Override
     public void onDrawFrame(GL10 gl) {
         if (currentScene == null) {
-            Log.w(TAG, "Current scene is null, skipping draw");
+            TimberLog.w(TAG, "Current scene is null, skipping draw");
             return;
         }
 
@@ -155,7 +156,7 @@ public class EditSceneManager extends BaseSceneManager implements GLSurfaceView.
         if (shouldResortSprites) {
             currentScene.sortSpritesByParallax();
             shouldResortSprites = false;
-            Log.d(TAG, "Sprites re-sorted on GL thread");
+            TimberLog.d(TAG, "Sprites re-sorted on GL thread");
         }
 
         // Common rendering logic

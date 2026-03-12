@@ -1,9 +1,10 @@
 package com.example.livewallpaper.scene.managers;
 
 import android.content.Context;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 
 import com.example.livewallpaper.gl.TextureManager;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.SceneLoader;
 import com.example.livewallpaper.scene.ScenePicker;
 import com.example.livewallpaper.scene.models.Scene;
@@ -62,7 +63,7 @@ public class SceneSwitchManager {
 
         // Initialize scene picker with all loaded scenes
         this.scenePicker = new ScenePicker(this.loadedScenes);
-        Log.d(TAG, "SceneSwitchManager initialized with " + loadedScenes.size() + " scenes");
+        TimberLog.d(TAG, "SceneSwitchManager initialized with " + loadedScenes.size() + " scenes");
     }
 
     /**
@@ -74,9 +75,9 @@ public class SceneSwitchManager {
             try {
                 Scene scene = sceneLoader.loadScene(sceneFile);
                 loadedScenes.add(scene);
-                Log.d(TAG, "Preloaded scene: " + scene.getSceneName());
+                TimberLog.d(TAG, "Preloaded scene: " + scene.getSceneName());
             } catch (Exception e) {
-                Log.e(TAG, "Failed to preload scene: " + sceneFile, e);
+                TimberLog.e(TAG, "Failed to preload scene: " + sceneFile, e);
             }
         }
     }
@@ -116,7 +117,7 @@ public class SceneSwitchManager {
                 fileName.substring(0, fileName.length() - 5) : fileName;
 
             if (fileNameWithoutExtension.equals(sceneName)) {
-                Log.d(TAG, "Initialized scene manager at index " + i + " (" + fileName + ")");
+                TimberLog.d(TAG, "Initialized scene manager at index " + i + " (" + fileName + ")");
                 break;
             }
         }
@@ -148,7 +149,7 @@ public class SceneSwitchManager {
      */
     public void cycleToNextScene(Scene currentScene) {
         if (loadedScenes.isEmpty()) {
-            Log.w(TAG, "No scenes available to cycle through");
+            TimberLog.w(TAG, "No scenes available to cycle through");
             return;
         }
 
@@ -164,7 +165,7 @@ public class SceneSwitchManager {
         // Reset the preloaded scene so textures can be re-initialized
         newScene.resetForReuse();
 
-        Log.d(TAG, "Cycling to next scene: " + newScene.getSceneName());
+        TimberLog.d(TAG, "Cycling to next scene: " + newScene.getSceneName());
 
         try {
             // Apply gyro scaling if callback is set and gyro is currently active
@@ -177,7 +178,7 @@ public class SceneSwitchManager {
             transitionManager.startTransition(this.currentScene, newScene, context);
 
         } catch (Exception e) {
-            Log.e(TAG, "Failed to start transition to new scene", e);
+            TimberLog.e(TAG, "Failed to start transition to new scene", e);
         }
     }
 
@@ -198,7 +199,7 @@ public class SceneSwitchManager {
         // If transition just finished, update our reference
         if (!transitionManager.isTransitioning() && sceneToRender != currentScene) {
             currentScene = sceneToRender;
-            Log.d(TAG, "Scene switched successfully to: " + currentScene.getSceneName());
+            TimberLog.d(TAG, "Scene switched successfully to: " + currentScene.getSceneName());
         }
 
         return sceneToRender;
@@ -232,6 +233,6 @@ public class SceneSwitchManager {
         // Update ScenePicker with the newly loaded scenes
         this.scenePicker = new ScenePicker(this.loadedScenes);
 
-        Log.d(TAG, "Reloaded " + sceneFiles.length + " scene files and refreshed " + loadedScenes.size() + " scenes in memory");
+        TimberLog.d(TAG, "Reloaded " + sceneFiles.length + " scene files and refreshed " + loadedScenes.size() + " scenes in memory");
     }
 }

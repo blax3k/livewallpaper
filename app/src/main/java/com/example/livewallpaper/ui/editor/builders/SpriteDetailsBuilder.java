@@ -5,7 +5,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
+import com.example.livewallpaper.logging.TimberLog;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -14,6 +14,7 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 
 import com.example.livewallpaper.R;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.managers.BaseSceneManager;
 import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.ui.editor.controllers.DimensionController;
@@ -137,7 +138,7 @@ public class SpriteDetailsBuilder {
             true
         ));
 
-        Log.d(TAG, "Built details for sprite: " + sprite.getName());
+        TimberLog.d(TAG, "Built details for sprite: " + sprite.getName());
     }
 
     /**
@@ -287,7 +288,7 @@ public class SpriteDetailsBuilder {
         // Update the sprite's name
         sprite.setName(newName);
 
-        Log.d(TAG, "Sprite name updated to: " + newName);
+        TimberLog.d(TAG, "Sprite name updated to: " + newName);
 
         // Notify listener of the name change
         if (onSpriteNameChangeListener != null) {
