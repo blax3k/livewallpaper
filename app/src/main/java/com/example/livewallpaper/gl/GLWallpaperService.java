@@ -1,5 +1,7 @@
 package com.example.livewallpaper.gl;
 
+import timber.log.Timber;
+
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -17,9 +19,11 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.managers.LiveWallpaperSceneManager;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
+
 
 /**
  * A WallpaperService that renders OpenGL content as a live wallpaper.
@@ -151,7 +155,7 @@ public class GLWallpaperService extends WallpaperService {
             if (sensorManager != null && sensorRegistered) {
                 sensorManager.unregisterListener(sensorEventListener);
                 sensorRegistered = false;
-                Log.d(TAG, "Gyroscope sensor unregistered in onDestroy");
+                TimberLog.d(TAG, "Gyroscope sensor unregistered in onDestroy");
             }
             stopRendering();
             // Fully destroy EGL resources when the engine is being destroyed

@@ -58,6 +58,12 @@ dependencies {
     // DocumentFile for URI-based file operations
     implementation("androidx.documentfile:documentfile:1.0.1")
 
+    // Timber for logging
+    implementation("com.jakewharton.timber:timber:5.0.1")
+
+    // File logging with Timber
+    implementation("com.orhanobut:logger:2.2.0")
+
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("org.mockito:mockito-core:5.2.0")
