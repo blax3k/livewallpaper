@@ -5,7 +5,7 @@ import android.content.Context;
 import com.example.livewallpaper.gl.GLWallpaperRenderer;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.sensors.MotionConfig;
-import com.example.livewallpaper.ui.managers.SceneFileManager;
+import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
 
 import org.junit.Before;
 import org.junit.Test;

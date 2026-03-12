@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.controllers;
+package com.example.livewallpaper.ui.editor.controllers;
 
 import android.util.Log;
 import android.widget.SeekBar;

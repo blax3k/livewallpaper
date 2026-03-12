@@ -6,13 +6,9 @@ import android.opengl.Matrix;
 import android.util.Log;
 
 import com.example.livewallpaper.gl.GLWallpaperRenderer;
-import com.example.livewallpaper.gl.Handles;
-import com.example.livewallpaper.gl.ShaderProgram;
-import com.example.livewallpaper.gl.SpriteRenderer;
-import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.sensors.MotionConfig;
-import com.example.livewallpaper.ui.managers.SceneFileManager;
+import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
 
 /**
  * Scene manager for wallpaper mode using GLWallpaperRenderer.

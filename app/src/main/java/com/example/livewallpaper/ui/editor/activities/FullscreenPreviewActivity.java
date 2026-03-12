@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.activities;
+package com.example.livewallpaper.ui.editor.activities;
 import android.content.Context;
 import android.graphics.Color;
 import android.hardware.Sensor;

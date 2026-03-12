@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.activities;
+package com.example.livewallpaper.ui.editor.activities;
 
 import android.content.Context;
 import android.content.Intent;
@@ -28,11 +28,11 @@ import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.scene.models.SpriteData;
 import com.example.livewallpaper.scene.TextureCoordinateCalculator;
 import com.example.livewallpaper.scene.TextureEditState;
-import com.example.livewallpaper.ui.views.SquareGLSurfaceView;
+import com.example.livewallpaper.ui.editor.views.SquareGLSurfaceView;
 import com.example.livewallpaper.sensors.MotionConfig;
-import com.example.livewallpaper.ui.controllers.DrawableImagePickerDialog;
-import com.example.livewallpaper.ui.controllers.TextureSliderController;
-import com.example.livewallpaper.ui.utils.ImageDimensionsUtils;
+import com.example.livewallpaper.ui.editor.controllers.DrawableImagePickerDialog;
+import com.example.livewallpaper.ui.editor.controllers.TextureSliderController;
+import com.example.livewallpaper.ui.editor.utils.ImageDimensionsUtils;
 
 public class EditTextureActivity extends AppCompatActivity implements SensorEventListener {
     private static final String TAG = "EditTextureActivity";

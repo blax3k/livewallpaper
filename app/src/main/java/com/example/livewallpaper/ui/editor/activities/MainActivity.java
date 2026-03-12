@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.activities;
+package com.example.livewallpaper.ui.editor.activities;
 
 import android.app.WallpaperManager;
 import android.content.ComponentName;
@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.sensors.MotionConfig;
-import com.example.livewallpaper.ui.managers.SceneFileManager;
+import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";

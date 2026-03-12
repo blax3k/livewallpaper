@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.builders;
+package com.example.livewallpaper.ui.editor.builders;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -16,9 +16,9 @@ import android.widget.TextView;
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.managers.BaseSceneManager;
 import com.example.livewallpaper.scene.models.Sprite;
-import com.example.livewallpaper.ui.controllers.DimensionController;
-import com.example.livewallpaper.ui.controllers.ScaleSliderController;
-import com.example.livewallpaper.ui.controllers.SliderController;
+import com.example.livewallpaper.ui.editor.controllers.DimensionController;
+import com.example.livewallpaper.ui.editor.controllers.ScaleSliderController;
+import com.example.livewallpaper.ui.editor.controllers.SliderController;
 
 import java.util.Locale;
 

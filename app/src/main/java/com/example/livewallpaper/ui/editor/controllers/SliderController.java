@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.controllers;
+package com.example.livewallpaper.ui.editor.controllers;
 
 import android.app.AlertDialog;
 import android.content.Context;

@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.activities;
+package com.example.livewallpaper.ui.editor.activities;
 
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -16,8 +16,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.models.SceneData;
-import com.example.livewallpaper.ui.managers.SceneFileManager;
-import com.example.livewallpaper.ui.adapters.SceneListExpandableAdapter;
+import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
+import com.example.livewallpaper.ui.editor.adapters.SceneListExpandableAdapter;
 
 import java.io.File;
 import java.util.ArrayList;

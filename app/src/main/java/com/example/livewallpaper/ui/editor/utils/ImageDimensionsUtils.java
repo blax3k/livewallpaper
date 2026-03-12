@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.utils;
+package com.example.livewallpaper.ui.editor.utils;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;

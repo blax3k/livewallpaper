@@ -13,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Livewallpaper">
         <activity
-            android:name=".ui.activities.MainActivity"
+            android:name=".ui.editor.activities.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Livewallpaper">
             <intent-filter>
@@ -24,22 +24,22 @@
         </activity>
 
         <activity
-            android:name=".ui.activities.SceneListActivity"
+            android:name=".ui.editor.activities.SceneListActivity"
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper.WithActionBar" />
 
         <activity
-            android:name=".ui.activities.EditSceneActivity"
+            android:name=".ui.editor.activities.EditSceneActivity"
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper" />
 
         <activity
-            android:name=".ui.activities.EditTextureActivity"
+            android:name=".ui.editor.activities.EditTextureActivity"
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper" />
 
         <activity
-            android:name=".ui.activities.FullscreenPreviewActivity"
+            android:name=".ui.editor.activities.FullscreenPreviewActivity"
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper.Fullscreen" />
 
