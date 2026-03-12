@@ -18,7 +18,8 @@ import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 
 import com.example.livewallpaper.scene.managers.LiveWallpaperSceneManager;
-import com.example.livewallpaper.ui.managers.SceneFileManager;
+import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
 
 /**
  * A WallpaperService that renders OpenGL content as a live wallpaper.
@@ -32,6 +33,8 @@ public class GLWallpaperService extends WallpaperService {
 
     @Override
     public Engine onCreateEngine() {
+        // Initialize MotionConfig to load persisted settings from SharedPreferences
+        MotionConfig.initialize(this);
         return new GLWallpaperEngine();
     }
 
