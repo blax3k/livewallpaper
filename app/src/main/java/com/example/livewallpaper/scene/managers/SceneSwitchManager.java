@@ -205,6 +205,19 @@ public class SceneSwitchManager {
         return sceneToRender;
     }
 
+    public float getXFocus()
+    {
+        // If we're in a transition, smoothly transition to the next scene's xFocus
+        // Otherwise, use the current scene's xFocus
+        if (transitionManager.isTransitioning()) {
+            Scene transitioningScene = transitionManager.getNewScene();
+            if (transitioningScene != null) {
+                return transitioningScene.getXFocus();
+            }
+        }
+        return currentScene.getXFocus();
+    }
+
     /**
      * Get the next scene that is currently being transitioned to, if one exists.
      * Returns null if no transition is in progress.

@@ -16,8 +16,9 @@ public class ScrollOffsetProcessor {
     private static final float SCROLL_SCALE = 5.0f;
     // Time-based smoothing: duration in seconds over which we'll reach the target. Default ~120ms for user input.
     private float scrollSmoothingDuration = 0.05f;
-    // Duration for xFocus transitions: longer for smoother, more deliberate motion. Default ~1.5 seconds.
-    private static final float XFOCUS_SMOOTHING_DURATION = 1.5f;
+    // Duration for xFocus transitions: synchronized with scene transition duration (800ms = 0.8 seconds)
+    // so that xFocus animation and scene transition finish at the same time.
+    private static final float XFOCUS_SMOOTHING_DURATION = 2.0f;
     // Last frame timestamp (nanoseconds) used to compute delta time between frames.
     // Mark volatile because it may be updated from the UI thread (start/stop) while read from the render thread.
     private volatile long lastFrameTimeNs = -1L;

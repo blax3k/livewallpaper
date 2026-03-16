@@ -159,14 +159,15 @@ public class SceneTransitionManager {
         addedSprites.clear();
 
         // Clean up textures from old scene that aren't used in new scene
+        // This is done on a background thread to avoid blocking the GL thread
         Set<Integer> oldSceneTextureIds = oldScene.getUsedTextureResourceIds();
         Set<Integer> newSceneTextureIds = newScene.getUsedTextureResourceIds();
-        textureManager.unloadUnusedTextures(oldSceneTextureIds, newSceneTextureIds);
-        TimberLog.d(TAG, "Cleaned up unused textures from old scene");
 
-
-        // Sort new scene to maintain consistent draw order
-        newScene.sortSpritesByParallax();
+        textureUnloadExecutor.execute(() -> {
+            TimberLog.d(TAG, "Background thread: Starting texture cleanup");
+            textureManager.unloadUnusedTextures(oldSceneTextureIds, newSceneTextureIds);
+            TimberLog.d(TAG, "Background thread: Texture cleanup complete");
+        });
 
         state = TransitionState.IDLE;
 
