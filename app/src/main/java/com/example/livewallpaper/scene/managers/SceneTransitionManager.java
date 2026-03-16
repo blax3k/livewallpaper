@@ -10,6 +10,8 @@ import com.example.livewallpaper.scene.models.Sprite;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Manages smooth scene transitions with diagonal wipe effects.
@@ -17,10 +19,14 @@ import java.util.Set;
  * - Sprites common to both scenes remain fully visible
  * - Sprites only in the old scene wipe out (become transparent from top-left to bottom-right)
  * - Sprites only in the new scene wipe in (become visible from top-left to bottom-right)
+ *
+ * NOTE: FADE_DURATION_MS (800ms) is synchronized with ScrollOffsetProcessor.XFOCUS_SMOOTHING_DURATION
+ * so that the xFocus scroll animation and scene transition complete at the same time.
  */
 public class SceneTransitionManager {
     private static final String TAG = "SceneTransitionManager";
-    private static final long FADE_DURATION_MS = 800;
+    // Synchronized with ScrollOffsetProcessor.XFOCUS_SMOOTHING_DURATION (0.8 seconds)
+    private static final long FADE_DURATION_MS = 1000;
 
     private enum TransitionState {
         IDLE,
@@ -37,6 +43,11 @@ public class SceneTransitionManager {
 
     // Sprites added to oldScene during transition (need to be removed when done)
     private final List<Sprite> addedSprites = new ArrayList<>();
+
+    // ExecutorService for background texture unloading
+    private final ExecutorService textureUnloadExecutor = Executors.newSingleThreadExecutor();
+
+    // Timing for frame performance measurement
 
     public SceneTransitionManager() {
     }
@@ -79,7 +90,6 @@ public class SceneTransitionManager {
                 // Initialize textures for the new scene on the GL thread
                 if (context != null) {
                     newScene.initialize(context, textureManager);
-                    TimberLog.d(TAG, "Textures initialized for new scene: " + newScene.getSceneName());
                 }
                 // Now that textures are ready, begin the fade
                 beginFade();
