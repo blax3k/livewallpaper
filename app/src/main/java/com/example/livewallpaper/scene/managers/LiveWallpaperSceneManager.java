@@ -167,11 +167,21 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     @Override
     public void onRendererResume(long resumeTimeNs) {
-        TimberLog.d(TAG, "onRendererResume called");
+        TimberLog.d(TAG, "onRendererSuspendResume called");
 
-        // Resume gyro tracking from current position
+        // Resume gyro tracking after suspension
         gyroProcessor.resume();
         scrollOffsetProcessor.onRendererResume();
+
+        // Check if it's time for automatic scene cycling (every 5 minutes)
+        long currentTimeMs = System.currentTimeMillis();
+        if (currentTimeMs - lastSceneChangeTimeMs >= SCENE_CYCLE_INTERVAL_MS && sceneSwitchManager != null) {
+            sceneSwitchManager.cycleToNextScene(currentScene);
+            lastSceneChangeTimeMs = currentTimeMs;
+            TimberLog.d(TAG, "Auto-cycling to next scene (5 minutes elapsed)");
+        }
+
+        TimberLog.d(TAG, "Renderer resumed after suspension - gyro tracking resumed");
     }
 
     @Override
@@ -195,21 +205,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     @Override
     public void onRendererSuspendResume() {
-        TimberLog.d(TAG, "onRendererSuspendResume called");
-
-        // Resume gyro tracking after suspension
-        gyroProcessor.resume();
-        scrollOffsetProcessor.onRendererResume();
-
-        // Check if it's time for automatic scene cycling (every 5 minutes)
-        long currentTimeMs = System.currentTimeMillis();
-        if (currentTimeMs - lastSceneChangeTimeMs >= SCENE_CYCLE_INTERVAL_MS && sceneSwitchManager != null) {
-            sceneSwitchManager.cycleToNextScene(currentScene);
-            lastSceneChangeTimeMs = currentTimeMs;
-            TimberLog.d(TAG, "Auto-cycling to next scene (5 minutes elapsed)");
-        }
-
-        TimberLog.d(TAG, "Renderer resumed after suspension - gyro tracking resumed");
+        this.onRendererResume(System.nanoTime());
     }
 
     @Override
