@@ -1,6 +1,6 @@
 package com.example.livewallpaper.logging;
 
-import android.os.Environment;
+import android.content.Context;
 import android.util.Log;
 
 import java.io.File;
@@ -14,27 +14,38 @@ import timber.log.Timber;
 
 /**
  * Timber tree implementation that writes logs to a file on external storage.
- * Logs are stored in the app's cache directory on external storage.
+ * Logs are stored in the app-specific directory on external storage to avoid permission issues.
  */
 public class FileLoggingTree extends Timber.Tree {
 
-    private static final String LOG_DIR = "LiveWallpaperLogs";
+    private static final String TAG = "FileLoggingTree";
+    private static final String LOG_DIR = "logs";
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
     private static final SimpleDateFormat FILE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
 
+    private final Context context;
     private File logFile;
     private final Object lock = new Object();
 
-    public FileLoggingTree() {
+    public FileLoggingTree(Context context) {
+        this.context = context.getApplicationContext();
         initializeLogFile();
+        Log.d(TAG, "FileLoggingTree initialized. Log file: " + (logFile != null ? logFile.getAbsolutePath() : "null"));
     }
 
     private void initializeLogFile() {
         try {
-            File logDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), LOG_DIR);
+            // Use getExternalFilesDir to avoid EACCES (Permission denied) on Android 10+
+            File externalDir = context.getExternalFilesDir(null);
+            if (externalDir == null) {
+                Log.e(TAG, "External files directory is null");
+                return;
+            }
+
+            File logDir = new File(externalDir, LOG_DIR);
             if (!logDir.exists()) {
                 if (!logDir.mkdirs()) {
-                    Log.e("FileLoggingTree", "Failed to create log directory: " + logDir.getAbsolutePath());
+                    Log.e(TAG, "Failed to create log directory: " + logDir.getAbsolutePath());
                     return;
                 }
             }
@@ -46,17 +57,20 @@ public class FileLoggingTree extends Timber.Tree {
             // Create file if it doesn't exist
             if (!logFile.exists()) {
                 if (!logFile.createNewFile()) {
-                    Log.e("FileLoggingTree", "Failed to create log file: " + logFile.getAbsolutePath());
+                    Log.e(TAG, "Failed to create log file: " + logFile.getAbsolutePath());
+                } else {
+                    Log.d(TAG, "Created new log file: " + logFile.getAbsolutePath());
                 }
             }
         } catch (IOException e) {
-            Log.e("FileLoggingTree", "Error initializing log file", e);
+            Log.e(TAG, "Error initializing log file", e);
         }
     }
 
     @Override
     protected void log(int priority, String tag, String message, Throwable t) {
-        if (logFile == null || !logFile.exists()) {
+        // Always attempt to initialize if logFile is null
+        if (logFile == null) {
             initializeLogFile();
         }
 
@@ -74,7 +88,7 @@ public class FileLoggingTree extends Timber.Tree {
                 }
             }
         } catch (Exception e) {
-            Log.e("FileLoggingTree", "Error writing to log file", e);
+            Log.e(TAG, "Error writing to log file", e);
         }
     }
 
@@ -104,30 +118,34 @@ public class FileLoggingTree extends Timber.Tree {
     }
 
     private void writeToFile(String message) {
+        if (logFile == null) return;
+        
         try (FileWriter writer = new FileWriter(logFile, true)) {
             writer.append(message).append("\n");
             writer.flush();
         } catch (IOException e) {
-            Log.e("FileLoggingTree", "Failed to write to log file", e);
+            Log.e(TAG, "Failed to write to log file", e);
         }
     }
 
     /**
      * Get the path to the log file for debugging purposes.
      *
+     * @param context The context to use for retrieving the directory.
      * @return The absolute path to the current log file, or null if not initialized.
      */
-    public static String getLogFilePath() {
+    public static String getLogFilePath(Context context) {
         try {
-            File logDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), LOG_DIR);
+            File externalDir = context.getExternalFilesDir(null);
+            if (externalDir == null) return null;
+            
+            File logDir = new File(externalDir, LOG_DIR);
             String date = FILE_DATE_FORMAT.format(new Date());
             File logFile = new File(logDir, "app_logs_" + date + ".txt");
             return logFile.getAbsolutePath();
         } catch (Exception e) {
-            Log.e("FileLoggingTree", "Error getting log file path", e);
+            Log.e(TAG, "Error getting log file path", e);
             return null;
         }
     }
 }
-
-

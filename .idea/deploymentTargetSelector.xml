@@ -2,16 +2,11 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="app">
+      <SelectionState runConfigName="editor app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-01-09T21:02:43.859443514Z">
-          <Target type="DEFAULT_BOOT">
-            <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=fd77c3f7" />
-            </handle>
-          </Target>
-        </DropdownSelection>
-        <DialogSelection />
+      </SelectionState>
+      <SelectionState runConfigName="user app">
+        <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
   </component>
