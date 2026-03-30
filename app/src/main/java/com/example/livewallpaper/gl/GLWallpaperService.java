@@ -488,6 +488,10 @@ public class GLWallpaperService extends WallpaperService {
                                 Thread.sleep(sleepTimeNs / 1_000_000, (int)(sleepTimeNs % 1_000_000));
                             }
                         }
+                    } catch (InterruptedException e) {
+                        // Thread was interrupted, break out of render loop cleanly
+                        TimberLog.d(TAG, "Render thread interrupted, stopping rendering");
+                        break;
                     } catch (Exception e) {
                         TimberLog.e(TAG, "Rendering error", e);
                     }
