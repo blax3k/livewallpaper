@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 public class SceneTransitionManager {
     private static final String TAG = "SceneTransitionManager";
     // Synchronized with ScrollOffsetProcessor.XFOCUS_SMOOTHING_DURATION (0.8 seconds)
-    private static final long FADE_DURATION_MS = 2000;
+    private static final long FADE_DURATION_MS = 800;
 
     private enum TransitionState {
         IDLE,
