@@ -3,7 +3,6 @@ package com.example.livewallpaper.scene;
 import android.content.Context;
 import com.example.livewallpaper.logging.TimberLog;
 
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.scene.models.Sprite;
@@ -176,14 +175,6 @@ public class SceneLoader {
      * @return the resource ID, or 0 if not found
      */
     private int getDrawableResourceId(String resourceName) {
-        try {
-            Class<?> drawables = Class.forName(context.getPackageName() + ".R$drawable");
-            java.lang.reflect.Field field = drawables.getField(resourceName);
-            return field.getInt(null);
-        } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-            TimberLog.w(TAG, "Drawable resource not found via R.drawable lookup: " + resourceName, e);
-            return 0;
-        }
+        return context.getResources().getIdentifier(resourceName, "drawable", context.getPackageName());
     }
 }
-

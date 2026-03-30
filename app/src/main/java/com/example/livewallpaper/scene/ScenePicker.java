@@ -1,10 +1,9 @@
 package com.example.livewallpaper.scene;
 
 import com.example.livewallpaper.logging.TimberLog;
-
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.SceneData;
+import com.example.livewallpaper.sensors.MotionConfig;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -50,8 +49,8 @@ public class ScenePicker {
             throw new IllegalStateException("No scenes available");
         }
 
-        SceneData.TimeOfDay currentTimeOfDay = getCurrentTimeOfDay();
-        TimberLog.d(TAG, "Current time of day: " + currentTimeOfDay);
+        SceneData.TimeOfDay currentTimeOfDay = getOverriddenTimeOfDay();
+        TimberLog.d(TAG, "Effective time of day: " + currentTimeOfDay);
 
         // Filter scenes to those matching the current time of day
         List<Scene> viableScenes = new ArrayList<>();
@@ -71,6 +70,23 @@ public class ScenePicker {
         // Fallback: if no scenes match, pick a random scene from all scenes
         TimberLog.w(TAG, "No scenes found for " + currentTimeOfDay + ", selecting random scene");
         return scenes.get(random.nextInt(scenes.size()));
+    }
+
+    /**
+     * Determine the time of day, respecting the override in MotionConfig if set.
+     *
+     * @return the TimeOfDay to use for scene selection
+     */
+    private SceneData.TimeOfDay getOverriddenTimeOfDay() {
+        String override = MotionConfig.getTimeOfDayOverride();
+        if (override != null && !override.equals(MotionConfig.OVERRIDE_AUTO)) {
+            try {
+                return SceneData.TimeOfDay.valueOf(override);
+            } catch (IllegalArgumentException e) {
+                TimberLog.e(TAG, "Invalid time of day override: " + override, e);
+            }
+        }
+        return getCurrentTimeOfDay();
     }
 
     /**
@@ -94,4 +110,3 @@ public class ScenePicker {
         }
     }
 }
-

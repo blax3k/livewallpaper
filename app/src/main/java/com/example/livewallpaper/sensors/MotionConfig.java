@@ -4,8 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import com.example.livewallpaper.logging.TimberLog;
 
-import com.example.livewallpaper.logging.TimberLog;
-
 /**
  * Thread-safe configuration class for sharing motion settings between
  * MainActivity and the wallpaper service (render thread).
@@ -16,11 +14,15 @@ public class MotionConfig {
     private static final String PREFS_NAME = "motion_config";
     private static final String KEY_SCROLL_MOTION = "scroll_motion_enabled";
     private static final String KEY_GYRO_MOTION = "gyro_motion_enabled";
+    private static final String KEY_TIME_OF_DAY_OVERRIDE = "time_of_day_override";
+
     private static final boolean DEFAULT_SCROLL_MOTION = true;
     private static final boolean DEFAULT_GYRO_MOTION = true;
+    public static final String OVERRIDE_AUTO = "AUTO";
 
     private static volatile boolean scrollMotionEnabled = DEFAULT_SCROLL_MOTION;
     private static volatile boolean gyroMotionEnabled = DEFAULT_GYRO_MOTION;
+    private static volatile String timeOfDayOverride = OVERRIDE_AUTO;
     private static SharedPreferences sharedPreferences = null;
 
     /**
@@ -35,7 +37,8 @@ public class MotionConfig {
             // Load settings from persistent storage
             scrollMotionEnabled = sharedPreferences.getBoolean(KEY_SCROLL_MOTION, DEFAULT_SCROLL_MOTION);
             gyroMotionEnabled = sharedPreferences.getBoolean(KEY_GYRO_MOTION, DEFAULT_GYRO_MOTION);
-            TimberLog.d(TAG, "MotionConfig initialized - Scroll: " + scrollMotionEnabled + ", Gyro: " + gyroMotionEnabled);
+            timeOfDayOverride = sharedPreferences.getString(KEY_TIME_OF_DAY_OVERRIDE, OVERRIDE_AUTO);
+            TimberLog.d(TAG, "MotionConfig initialized - Scroll: " + scrollMotionEnabled + ", Gyro: " + gyroMotionEnabled + ", TimeOverride: " + timeOfDayOverride);
         }
     }
 
@@ -82,6 +85,28 @@ public class MotionConfig {
     }
 
     /**
+     * Get the current time of day override.
+     *
+     * @return the override value (AUTO, DAWN, DAY, SUNSET, NIGHT)
+     */
+    public static String getTimeOfDayOverride() {
+        return timeOfDayOverride;
+    }
+
+    /**
+     * Set the time of day override.
+     *
+     * @param override the override value (AUTO, DAWN, DAY, SUNSET, NIGHT)
+     */
+    public static void setTimeOfDayOverride(String override) {
+        timeOfDayOverride = override;
+        if (sharedPreferences != null) {
+            sharedPreferences.edit().putString(KEY_TIME_OF_DAY_OVERRIDE, override).apply();
+        }
+        TimberLog.d(TAG, "Time of day override set to: " + override);
+    }
+
+    /**
      * Persist a setting to SharedPreferences.
      *
      * @param key the preference key
@@ -95,4 +120,3 @@ public class MotionConfig {
         }
     }
 }
-

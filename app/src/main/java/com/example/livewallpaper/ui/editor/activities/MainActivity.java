@@ -5,16 +5,22 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import com.example.livewallpaper.logging.TimberLog;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.Toast;
+import android.view.View;
+import android.widget.AdapterView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -95,10 +101,58 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 TimberLog.e(TAG, "Gyro toggle switch not found in layout!");
             }
+
+            setupTimeOverrideSpinner();
+
         } catch (Exception e) {
             TimberLog.e(TAG, "Error in onCreate: " + e.getMessage(), e);
             Toast.makeText(this, "Initialization error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void setupTimeOverrideSpinner() {
+        Spinner timeSpinner = findViewById(R.id.spinner_time_override);
+        if (timeSpinner == null) {
+            TimberLog.e(TAG, "Time override spinner not found!");
+            return;
+        }
+
+        List<String> options = new ArrayList<>();
+        options.add(MotionConfig.OVERRIDE_AUTO);
+        options.add("DAWN");
+        options.add("DAY");
+        options.add("SUNSET");
+        options.add("NIGHT");
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, options);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        timeSpinner.setAdapter(adapter);
+
+        // Set initial selection
+        String currentOverride = MotionConfig.getTimeOfDayOverride();
+        int initialPosition = options.indexOf(currentOverride);
+        if (initialPosition >= 0) {
+            timeSpinner.setSelection(initialPosition);
+        }
+
+        timeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selected = options.get(position);
+                if (!selected.equals(MotionConfig.getTimeOfDayOverride())) {
+                    MotionConfig.setTimeOfDayOverride(selected);
+                    TimberLog.d(TAG, "Time of day override changed to: " + selected);
+                    Toast.makeText(MainActivity.this, "Time override: " + selected, Toast.LENGTH_SHORT).show();
+                    
+                    // Trigger an immediate scene cycle in the wallpaper if it's running
+                    GLWallpaperService.triggerSceneCycle();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
     }
 
     private void setWallpaper() {

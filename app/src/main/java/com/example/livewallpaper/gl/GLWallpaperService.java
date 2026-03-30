@@ -62,6 +62,18 @@ public class GLWallpaperService extends WallpaperService {
         }
     }
 
+    /**
+     * Trigger a scene cycle in the currently running wallpaper.
+     * This is useful when settings that affect scene selection (like time override) change.
+     */
+    public static void triggerSceneCycle() {
+        if (currentRenderer != null) {
+            // We use the double tap logic which requests a scene switch on the GL thread
+            currentRenderer.onDoubleTap(0, 0);
+            TimberLog.d(TAG, "Scene cycle triggered via static method");
+        }
+    }
+
     private class GLWallpaperEngine extends Engine implements SurfaceHolder.Callback {
         private volatile boolean running = false;
         private Thread renderThread;
