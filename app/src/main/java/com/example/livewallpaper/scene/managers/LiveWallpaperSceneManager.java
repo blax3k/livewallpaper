@@ -6,7 +6,6 @@ import android.opengl.Matrix;
 import com.example.livewallpaper.logging.TimberLog;
 
 import com.example.livewallpaper.gl.GLWallpaperRenderer;
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.ui.editor.managers.SceneFileManager;

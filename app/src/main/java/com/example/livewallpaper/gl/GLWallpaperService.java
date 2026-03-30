@@ -368,6 +368,13 @@ public class GLWallpaperService extends WallpaperService {
                     TimberLog.d(TAG, "✓ VSYNC disabled on resume (glClear stall fix applied)");
                 }
 
+                // Reload all GL resources after recreating the surface
+                // Although the GL context was preserved, shaders and texture bindings need to be restored
+                // This is called rarely (only on pause/resume), so the overhead is acceptable
+                if (renderer != null) {
+                    renderer.onSurfaceCreated();
+                }
+
                 TimberLog.d(TAG, "EGL resumed successfully (context preserved)");
                 return true;
             } catch (Exception e) {
