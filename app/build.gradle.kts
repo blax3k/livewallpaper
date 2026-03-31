@@ -53,6 +53,13 @@ android {
     }
 }
 
+// Fix for ambiguous testDebugUnitTest task when using product flavors
+tasks.register("testDebugUnitTest") {
+    dependsOn("testDevDebugUnitTest", "testUserDebugUnitTest")
+    group = "verification"
+    description = "Run unit tests for all debug flavors."
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
