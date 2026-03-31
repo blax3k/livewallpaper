@@ -27,7 +27,7 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
         }
-        create("prod") {
+        create("user") {
             dimension = "version"
         }
     }
