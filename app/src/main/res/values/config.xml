@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Whether double-tapping the home screen cycles to the next scene -->
+    <bool name="double_tap_to_change_scene_enabled">true</bool>
+</resources>

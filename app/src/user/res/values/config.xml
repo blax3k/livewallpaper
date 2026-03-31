@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Disable double-tap to change scene for the user version -->
+    <bool name="double_tap_to_change_scene_enabled">false</bool>
+</resources>

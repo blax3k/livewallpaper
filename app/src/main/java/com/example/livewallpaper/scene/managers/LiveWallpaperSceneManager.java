@@ -211,6 +211,14 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
     public void onDoubleTap(float x, float y) {
         TimberLog.d(TAG, "onDoubleTap received at screen coordinates (" + x + ", " + y + ")");
 
+        // Check if double tap is enabled for this flavor (e.g., disabled in user version)
+        // We allow (0,0) as a programmatic trigger even if user double tap is disabled
+        boolean isProgrammatic = (x == 0 && y == 0);
+        if (!isProgrammatic && !context.getResources().getBoolean(com.example.livewallpaper.R.bool.double_tap_to_change_scene_enabled)) {
+            TimberLog.d(TAG, "Double tap ignored: disabled in configuration for this flavor");
+            return;
+        }
+
         // Prevent interrupting an ongoing transition
         if (sceneSwitchManager != null && sceneSwitchManager.isTransitioning()) {
             TimberLog.d(TAG, "Double tap ignored: transition already in progress");
@@ -234,8 +242,3 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         }
     }
 }
-
-
-
-
-
