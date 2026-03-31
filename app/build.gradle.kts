@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
+    implementation(libs.material)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -82,6 +83,7 @@ dependencies {
 
     // File logging with Timber
     implementation("com.orhanobut:logger:2.2.0")
+    implementation(libs.androidx.cardview)
 
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.11.1")

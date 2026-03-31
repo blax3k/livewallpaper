@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Livewallpaper" parent="Theme.AppCompat.Light.NoActionBar" />
+    <style name="Theme.Livewallpaper" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/blue_primary</item>
+        <item name="colorButtonNormal">@color/gray_200</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="backgroundColor">@color/gray_600</item>
+    </style>
 
-    <style name="Theme.Livewallpaper.WithActionBar" parent="Theme.AppCompat.Light" />
-
-    <style name="Theme.Livewallpaper.Fullscreen" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="Theme.Livewallpaper.Fullscreen" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowTranslucentStatus">false</item>

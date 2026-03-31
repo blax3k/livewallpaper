@@ -24,7 +24,7 @@
         <activity
             android:name=".ui.editor.activities.SceneListActivity"
             android:exported="false"
-            android:theme="@style/Theme.Livewallpaper.WithActionBar" />
+            android:theme="@style/Theme.Livewallpaper" />
 
         <activity
             android:name=".ui.editor.activities.EditSceneActivity"
