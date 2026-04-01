@@ -14,7 +14,6 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.managers.BaseSceneManager;
 import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.ui.editor.controllers.DimensionController;

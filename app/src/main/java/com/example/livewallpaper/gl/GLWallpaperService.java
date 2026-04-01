@@ -1,7 +1,5 @@
 package com.example.livewallpaper.gl;
 
-import timber.log.Timber;
-
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -19,10 +17,10 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import androidx.annotation.NonNull;
 
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.managers.LiveWallpaperSceneManager;
 import com.example.livewallpaper.sensors.MotionConfig;
-import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
+import com.example.livewallpaper.managers.SceneFileManager;
+
 
 
 /**

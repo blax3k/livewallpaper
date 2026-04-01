@@ -4,11 +4,10 @@ import android.content.Context;
 import com.example.livewallpaper.logging.TimberLog;
 
 import com.example.livewallpaper.gl.TextureManager;
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.SceneLoader;
 import com.example.livewallpaper.scene.ScenePicker;
 import com.example.livewallpaper.scene.models.Scene;
-import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
+import com.example.livewallpaper.managers.SceneFileManager;
 
 import java.util.ArrayList;
 import java.util.List;

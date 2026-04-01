@@ -10,7 +10,6 @@ import com.example.livewallpaper.gl.Handles;
 import com.example.livewallpaper.gl.ShaderProgram;
 import com.example.livewallpaper.gl.SpriteRenderer;
 import com.example.livewallpaper.gl.TextureManager;
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.SceneLoader;
 import com.example.livewallpaper.scene.models.Sprite;
@@ -18,7 +17,7 @@ import com.example.livewallpaper.scene.models.SpriteData;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
-import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
+import com.example.livewallpaper.managers.SceneFileManager;
 
 import java.util.ArrayList;
 import java.util.List;

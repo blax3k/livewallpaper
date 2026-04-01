@@ -15,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
 import com.example.livewallpaper.ui.editor.adapters.SceneListExpandableAdapter;

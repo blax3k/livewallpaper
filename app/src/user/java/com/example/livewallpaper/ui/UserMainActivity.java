@@ -13,8 +13,7 @@ import com.example.livewallpaper.R;
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.sensors.MotionConfig;
-import com.example.livewallpaper.ui.editor.activities.SceneListActivity;
-import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
+import com.example.livewallpaper.managers.SceneFileManager;
 
 public class UserMainActivity extends AppCompatActivity {
     private static final String TAG = "UserMainActivity";
@@ -38,7 +37,7 @@ public class UserMainActivity extends AppCompatActivity {
         View settingsButton = findViewById(R.id.btn_settings);
         if (settingsButton != null) {
             settingsButton.setOnClickListener(v -> {
-                Intent intent = new Intent(this, SceneListActivity.class);
+                Intent intent = new Intent(this, UserSettingsActivity.class);
                 startActivity(intent);
             });
         }

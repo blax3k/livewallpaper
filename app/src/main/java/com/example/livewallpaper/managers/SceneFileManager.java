@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.editor.managers;
+package com.example.livewallpaper.managers;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -97,7 +97,7 @@ public class SceneFileManager {
             }
         }
 
-        TimberLog.d(TAG, "Loaded metadata for " + sceneMetadata.size() + " scenes");
+        TimberLog.d(TAG, "Loaded metadata for " + sceneMetadata.size() + "scenes");
         return sceneMetadata;
     }
     public String[] loadAvailableSceneFiles() {
