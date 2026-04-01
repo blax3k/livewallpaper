@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">user lw</string>
     <string name="tilt_motion_label">Tilt motion</string>
+    <string name="settings_title">Settings</string>
 </resources>

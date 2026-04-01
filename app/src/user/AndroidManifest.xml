@@ -13,7 +13,8 @@
         <activity
             android:name=".ui.UserSettingsActivity"
             android:exported="false"
-            android:label="@string/tilt_motion_label"
+            android:label="@string/settings_title"
+            android:parentActivityName=".ui.UserMainActivity"
             android:theme="@style/Theme.Livewallpaper" />
     </application>
 </manifest>
