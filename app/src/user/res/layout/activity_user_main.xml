@@ -4,7 +4,7 @@
     android:id="@+id/setWallpaperLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/backgroundColor"
+    android:background="?android:attr/colorBackground"
     android:gravity="bottom"
     android:orientation="vertical">
 
@@ -14,18 +14,18 @@
         android:layout_weight="1"
         android:orientation="vertical"></LinearLayout>
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="-48dp"
         android:layout_weight="4"
-        app:cardCornerRadius="48dp">
+        app:cardCornerRadius="48dp"
+        app:cardBackgroundColor="?attr/colorSurface">
 
         <LinearLayout
             android:id="@+id/buttonLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/material_dynamic_neutral10"
             android:orientation="horizontal"
             android:paddingLeft="12dp"
             android:paddingTop="16dp"
@@ -57,9 +57,8 @@
                 app:iconGravity="textStart"
                 app:iconPadding="0dp"
                 app:iconSize="32dp"
-                app:iconTint="@color/white"
                 app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>
