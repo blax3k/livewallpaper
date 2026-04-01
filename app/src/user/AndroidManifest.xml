@@ -10,5 +10,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.UserSettingsActivity"
+            android:exported="false"
+            android:label="@string/tilt_motion_label"
+            android:theme="@style/Theme.Livewallpaper" />
     </application>
 </manifest>
