@@ -3,7 +3,7 @@ package com.example.livewallpaper.scene;
 import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.SceneData;
-import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.sensors.ConfigManager;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -78,8 +78,8 @@ public class ScenePicker {
      * @return the TimeOfDay to use for scene selection
      */
     private SceneData.TimeOfDay getOverriddenTimeOfDay() {
-        String override = MotionConfig.getTimeOfDayOverride();
-        if (override != null && !override.equals(MotionConfig.OVERRIDE_AUTO)) {
+        String override = ConfigManager.getTimeOfDayOverride();
+        if (override != null && !override.equals(ConfigManager.OVERRIDE_AUTO)) {
             try {
                 return SceneData.TimeOfDay.valueOf(override);
             } catch (IllegalArgumentException e) {

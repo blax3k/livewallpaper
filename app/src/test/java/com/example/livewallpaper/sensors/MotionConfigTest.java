@@ -18,104 +18,104 @@ public class MotionConfigTest {
 
     @Test
     public void setScrollMotionEnabled_DisablesMotion() {
-        MotionConfig.setScrollMotionEnabled(false);
-        assertFalse("Scroll motion should be disabled", MotionConfig.isScrollMotionEnabled());
+        ConfigManager.setScrollMotionEnabled(false);
+        assertFalse("Scroll motion should be disabled", ConfigManager.isScrollMotionEnabled());
     }
 
     @Test
     public void setScrollMotionEnabled_EnablesMotion() {
-        MotionConfig.setScrollMotionEnabled(true);
-        assertTrue("Scroll motion should be enabled", MotionConfig.isScrollMotionEnabled());
+        ConfigManager.setScrollMotionEnabled(true);
+        assertTrue("Scroll motion should be enabled", ConfigManager.isScrollMotionEnabled());
     }
 
     @Test
     public void setScrollMotionEnabled_Toggles() {
-        MotionConfig.setScrollMotionEnabled(false);
-        assertFalse("Should be disabled", MotionConfig.isScrollMotionEnabled());
+        ConfigManager.setScrollMotionEnabled(false);
+        assertFalse("Should be disabled", ConfigManager.isScrollMotionEnabled());
 
-        MotionConfig.setScrollMotionEnabled(true);
-        assertTrue("Should be enabled", MotionConfig.isScrollMotionEnabled());
+        ConfigManager.setScrollMotionEnabled(true);
+        assertTrue("Should be enabled", ConfigManager.isScrollMotionEnabled());
 
-        MotionConfig.setScrollMotionEnabled(false);
-        assertFalse("Should be disabled again", MotionConfig.isScrollMotionEnabled());
+        ConfigManager.setScrollMotionEnabled(false);
+        assertFalse("Should be disabled again", ConfigManager.isScrollMotionEnabled());
     }
 
     // ==================== Gyro Motion Tests ====================
 
     @Test
     public void setGyroMotionEnabled_DisablesMotion() {
-        MotionConfig.setGyroMotionEnabled(false);
-        assertFalse("Gyro motion should be disabled", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setGyroMotionEnabled(false);
+        assertFalse("Gyro motion should be disabled", ConfigManager.isGyroMotionEnabled());
     }
 
     @Test
     public void setGyroMotionEnabled_EnablesMotion() {
-        MotionConfig.setGyroMotionEnabled(true);
-        assertTrue("Gyro motion should be enabled", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setGyroMotionEnabled(true);
+        assertTrue("Gyro motion should be enabled", ConfigManager.isGyroMotionEnabled());
     }
 
     @Test
     public void setGyroMotionEnabled_Toggles() {
-        MotionConfig.setGyroMotionEnabled(false);
-        assertFalse("Should be disabled", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setGyroMotionEnabled(false);
+        assertFalse("Should be disabled", ConfigManager.isGyroMotionEnabled());
 
-        MotionConfig.setGyroMotionEnabled(true);
-        assertTrue("Should be enabled", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setGyroMotionEnabled(true);
+        assertTrue("Should be enabled", ConfigManager.isGyroMotionEnabled());
 
-        MotionConfig.setGyroMotionEnabled(false);
-        assertFalse("Should be disabled again", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setGyroMotionEnabled(false);
+        assertFalse("Should be disabled again", ConfigManager.isGyroMotionEnabled());
     }
 
     // ==================== Independent Settings Tests ====================
 
     @Test
     public void scrollAndGyroMotion_AreIndependent() {
-        MotionConfig.setScrollMotionEnabled(true);
-        MotionConfig.setGyroMotionEnabled(false);
+        ConfigManager.setScrollMotionEnabled(true);
+        ConfigManager.setGyroMotionEnabled(false);
 
-        assertTrue("Scroll should be enabled", MotionConfig.isScrollMotionEnabled());
-        assertFalse("Gyro should be disabled", MotionConfig.isGyroMotionEnabled());
+        assertTrue("Scroll should be enabled", ConfigManager.isScrollMotionEnabled());
+        assertFalse("Gyro should be disabled", ConfigManager.isGyroMotionEnabled());
 
-        MotionConfig.setScrollMotionEnabled(false);
-        assertFalse("Scroll should be disabled", MotionConfig.isScrollMotionEnabled());
-        assertFalse("Gyro should still be disabled", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setScrollMotionEnabled(false);
+        assertFalse("Scroll should be disabled", ConfigManager.isScrollMotionEnabled());
+        assertFalse("Gyro should still be disabled", ConfigManager.isGyroMotionEnabled());
 
-        MotionConfig.setGyroMotionEnabled(true);
-        assertFalse("Scroll should still be disabled", MotionConfig.isScrollMotionEnabled());
-        assertTrue("Gyro should be enabled", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setGyroMotionEnabled(true);
+        assertFalse("Scroll should still be disabled", ConfigManager.isScrollMotionEnabled());
+        assertTrue("Gyro should be enabled", ConfigManager.isGyroMotionEnabled());
     }
 
     @Test
     public void setScrollMotionEnabled_DoesNotAffectGyro() {
-        MotionConfig.setGyroMotionEnabled(false);
-        MotionConfig.setScrollMotionEnabled(false);
+        ConfigManager.setGyroMotionEnabled(false);
+        ConfigManager.setScrollMotionEnabled(false);
 
-        assertFalse("Scroll should be disabled", MotionConfig.isScrollMotionEnabled());
-        assertFalse("Gyro should remain unchanged", MotionConfig.isGyroMotionEnabled());
+        assertFalse("Scroll should be disabled", ConfigManager.isScrollMotionEnabled());
+        assertFalse("Gyro should remain unchanged", ConfigManager.isGyroMotionEnabled());
     }
 
     @Test
     public void setGyroMotionEnabled_DoesNotAffectScroll() {
-        MotionConfig.setScrollMotionEnabled(false);
-        MotionConfig.setGyroMotionEnabled(false);
+        ConfigManager.setScrollMotionEnabled(false);
+        ConfigManager.setGyroMotionEnabled(false);
 
-        assertFalse("Scroll should remain unchanged", MotionConfig.isScrollMotionEnabled());
-        assertFalse("Gyro should be disabled", MotionConfig.isGyroMotionEnabled());
+        assertFalse("Scroll should remain unchanged", ConfigManager.isScrollMotionEnabled());
+        assertFalse("Gyro should be disabled", ConfigManager.isGyroMotionEnabled());
     }
 
     // ==================== Thread Safety Tests ====================
 
     @Test
     public void volatileFields_VisibleAcrossThreads() throws InterruptedException {
-        MotionConfig.setScrollMotionEnabled(true);
-        MotionConfig.setGyroMotionEnabled(true);
+        ConfigManager.setScrollMotionEnabled(true);
+        ConfigManager.setGyroMotionEnabled(true);
 
         final boolean[] scrollFromThread = new boolean[1];
         final boolean[] gyroFromThread = new boolean[1];
 
         Thread readerThread = new Thread(() -> {
-            scrollFromThread[0] = MotionConfig.isScrollMotionEnabled();
-            gyroFromThread[0] = MotionConfig.isGyroMotionEnabled();
+            scrollFromThread[0] = ConfigManager.isScrollMotionEnabled();
+            gyroFromThread[0] = ConfigManager.isGyroMotionEnabled();
         });
 
         readerThread.start();
@@ -134,8 +134,8 @@ public class MotionConfigTest {
             final int threadIndex = i;
             threads[i] = new Thread(() -> {
                 boolean enabled = (threadIndex % 2) == 0;
-                MotionConfig.setScrollMotionEnabled(enabled);
-                boolean value = MotionConfig.isScrollMotionEnabled();
+                ConfigManager.setScrollMotionEnabled(enabled);
+                boolean value = ConfigManager.isScrollMotionEnabled();
                 assertNotNull("Should be able to read scroll motion setting", Boolean.valueOf(value));
             });
         }
@@ -155,30 +155,30 @@ public class MotionConfigTest {
 
     @Test
     public void completeWorkflow() {
-        MotionConfig.setScrollMotionEnabled(true);
-        MotionConfig.setGyroMotionEnabled(true);
-        assertTrue("Both enabled", MotionConfig.isScrollMotionEnabled());
-        assertTrue("Both enabled", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setScrollMotionEnabled(true);
+        ConfigManager.setGyroMotionEnabled(true);
+        assertTrue("Both enabled", ConfigManager.isScrollMotionEnabled());
+        assertTrue("Both enabled", ConfigManager.isGyroMotionEnabled());
 
-        MotionConfig.setScrollMotionEnabled(false);
-        assertFalse("Scroll disabled", MotionConfig.isScrollMotionEnabled());
-        assertTrue("Gyro unchanged", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setScrollMotionEnabled(false);
+        assertFalse("Scroll disabled", ConfigManager.isScrollMotionEnabled());
+        assertTrue("Gyro unchanged", ConfigManager.isGyroMotionEnabled());
 
-        MotionConfig.setGyroMotionEnabled(false);
-        assertFalse("Scroll still disabled", MotionConfig.isScrollMotionEnabled());
-        assertFalse("Gyro disabled", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setGyroMotionEnabled(false);
+        assertFalse("Scroll still disabled", ConfigManager.isScrollMotionEnabled());
+        assertFalse("Gyro disabled", ConfigManager.isGyroMotionEnabled());
 
-        MotionConfig.setScrollMotionEnabled(true);
-        MotionConfig.setGyroMotionEnabled(true);
-        assertTrue("Scroll enabled", MotionConfig.isScrollMotionEnabled());
-        assertTrue("Gyro enabled", MotionConfig.isGyroMotionEnabled());
+        ConfigManager.setScrollMotionEnabled(true);
+        ConfigManager.setGyroMotionEnabled(true);
+        assertTrue("Scroll enabled", ConfigManager.isScrollMotionEnabled());
+        assertTrue("Gyro enabled", ConfigManager.isGyroMotionEnabled());
     }
 
     @Test
     public void multipleEnablementCycles() {
         for (int i = 0; i < 10; i++) {
-            MotionConfig.setScrollMotionEnabled(i % 2 == 0);
-            MotionConfig.setGyroMotionEnabled(i % 3 == 0);
+            ConfigManager.setScrollMotionEnabled(i % 2 == 0);
+            ConfigManager.setGyroMotionEnabled(i % 3 == 0);
         }
 
         assertTrue("Multiple cycles completed", true);

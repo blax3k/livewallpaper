@@ -2,7 +2,6 @@ package com.example.livewallpaper.sensors;
 
 import com.example.livewallpaper.logging.TimberLog;
 
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 
 /**
@@ -246,7 +245,7 @@ public class GyroSensorProcessor {
     public boolean updateAndApplyGyroUniforms(com.example.livewallpaper.gl.Handles handles,
                                                Scene scene,
                                                boolean spritesScaledForGyro) {
-        if (MotionConfig.isGyroMotionEnabled()) {
+        if (ConfigManager.isGyroMotionEnabled()) {
             float gyroOffsetX = updateAndGetCurrentOffsetX();
             float gyroOffsetY = updateAndGetCurrentOffsetY();
             android.opengl.GLES20.glUniform1f(handles.gyroOffsetXHandle, gyroOffsetX);
@@ -279,7 +278,7 @@ public class GyroSensorProcessor {
      * @param newScene the scene to apply gyro scaling to
      */
     public void applyGyroScalingToNewScene(Scene newScene) {
-        if (MotionConfig.isGyroMotionEnabled()) {
+        if (ConfigManager.isGyroMotionEnabled()) {
             newScene.enableGyroScaling();
             newScene.applyGyroScaling();
             TimberLog.d(TAG, "New scene initialized with gyro scaling applied");

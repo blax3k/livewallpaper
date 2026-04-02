@@ -9,7 +9,7 @@ import com.example.livewallpaper.logging.TimberLog;
  * MainActivity and the wallpaper service (render thread).
  * Settings are persisted to SharedPreferences and survive app restarts.
  */
-public class MotionConfig {
+public class ConfigManager {
     private static final String TAG = "MotionConfig";
     private static final String PREFS_NAME = "motion_config";
     private static final String KEY_SCROLL_MOTION = "scroll_motion_enabled";

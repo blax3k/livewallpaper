@@ -7,7 +7,7 @@ import com.example.livewallpaper.logging.TimberLog;
 
 import com.example.livewallpaper.gl.GLWallpaperRenderer;
 import com.example.livewallpaper.scene.models.Scene;
-import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.sensors.ConfigManager;
 import com.example.livewallpaper.managers.SceneFileManager;
 
 /**
@@ -152,7 +152,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
             }
 
             // Apply xFocus offset when scroll motion is disabled
-            if (!MotionConfig.isScrollMotionEnabled()) {
+            if (!ConfigManager.isScrollMotionEnabled()) {
                 // If we're in a transition, smoothly transition to the next scene's xFocus
                 // Otherwise, use the current scene's xFocus
                 Scene transitioningScene = sceneSwitchManager.getTransitioningScene();
@@ -192,7 +192,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
     @Override
     public void onScrollOffsetChanged(float offsetX) {
         // Only update scroll target if scroll motion is enabled
-        if (MotionConfig.isScrollMotionEnabled()) {
+        if (ConfigManager.isScrollMotionEnabled()) {
             scrollOffsetProcessor.setScrollTarget(offsetX);
         }
         // When scroll motion is disabled, completely ignore scroll input

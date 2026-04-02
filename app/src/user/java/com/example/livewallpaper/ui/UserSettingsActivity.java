@@ -6,7 +6,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.sensors.ConfigManager;
 
 public class UserSettingsActivity extends AppCompatActivity {
 
@@ -25,13 +25,13 @@ public class UserSettingsActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         // Ensure MotionConfig is initialized
-        MotionConfig.initialize(this);
+        ConfigManager.initialize(this);
 
         SwitchCompat tiltMotionSwitch = findViewById(R.id.switch_tilt_motion);
         if (tiltMotionSwitch != null) {
-            tiltMotionSwitch.setChecked(MotionConfig.isGyroMotionEnabled());
+            tiltMotionSwitch.setChecked(ConfigManager.isGyroMotionEnabled());
             tiltMotionSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                MotionConfig.setGyroMotionEnabled(isChecked);
+                ConfigManager.setGyroMotionEnabled(isChecked);
             });
         }
     }

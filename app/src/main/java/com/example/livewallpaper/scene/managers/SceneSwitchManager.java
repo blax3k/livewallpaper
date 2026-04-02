@@ -82,25 +82,22 @@ public class SceneSwitchManager {
     }
 
     /**
-     * Get the default/initial scene file to load
-     * @return the filename of the first scene to display
-     */
-    public String getInitialSceneFile() {
-        if (sceneFiles.length == 0) {
-            throw new RuntimeException("No scene files found in assets/scenes");
-        }
-        return sceneFiles[0];
-    }
-
-    /**
-     * Load the initial scene from the configured initial scene file.
+     * Load the initial scene based on time-of-day logic.
+     * Filters scenes to those matching the current time period and selects one randomly.
+     * If no scenes match the current time period, returns a random scene from all scenes.
      *
-     * @return the loaded Scene
-     * @throws Exception if scene loading fails
+     * @return the loaded Scene based on current time of day
+     * @throws Exception if no scenes are available
      */
     public Scene loadInitialScene() throws Exception {
-        String initialSceneFile = getInitialSceneFile();
-        return sceneLoader.loadScene(initialSceneFile);
+        if (loadedScenes.isEmpty()) {
+            throw new RuntimeException("No scene files found in assets/scenes");
+        }
+
+        // Create a dummy scene that won't match any real scene
+        // This allows scenePicker to select any valid scene for the current time of day
+        Scene dummyScene = new Scene("__DUMMY__");
+        return scenePicker.getNextScene(dummyScene);
     }
 
     /**

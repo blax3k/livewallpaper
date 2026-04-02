@@ -8,7 +8,7 @@ import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.SceneLoader;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.SpriteData;
-import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.sensors.ConfigManager;
 
 import java.io.IOException;
 
@@ -141,7 +141,7 @@ public class AvatarSceneManager extends BaseSceneManager {
             }
 
             // Apply xFocus offset when scroll motion is disabled
-            if (!MotionConfig.isScrollMotionEnabled()) {
+            if (!ConfigManager.isScrollMotionEnabled()) {
                 scrollOffsetProcessor.setScrollTargetFromXFocus(currentScene.getXFocus());
             }
 
@@ -185,7 +185,7 @@ public class AvatarSceneManager extends BaseSceneManager {
      * Handle scroll offset changes.
      */
     public void onScrollOffsetChanged(float offsetX) {
-        if (MotionConfig.isScrollMotionEnabled()) {
+        if (ConfigManager.isScrollMotionEnabled()) {
             scrollOffsetProcessor.setScrollTarget(offsetX);
         }
     }

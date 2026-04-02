@@ -21,7 +21,7 @@ import com.example.livewallpaper.R;
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.managers.AvatarSceneManager;
-import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.sensors.ConfigManager;
 import com.example.livewallpaper.managers.SceneFileManager;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -61,7 +61,7 @@ public class UserMainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_user_main);
 
         // Initialize MotionConfig
-        MotionConfig.initialize(this);
+        ConfigManager.initialize(this);
         
         // Initialize sensor manager for gyroscope input
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);

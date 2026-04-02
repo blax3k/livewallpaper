@@ -15,7 +15,7 @@ import com.example.livewallpaper.scene.SceneLoader;
 import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.scene.models.SpriteData;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
-import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.sensors.ConfigManager;
 import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
 import com.example.livewallpaper.managers.SceneFileManager;
 
@@ -247,7 +247,7 @@ public abstract class BaseSceneManager {
      * Called when gyroscope data is received. Forward to gyro processor.
      */
     public void onGyroscopeChanged(float rotationX, float rotationY, float rotationZ) {
-        if (MotionConfig.isGyroMotionEnabled()) {
+        if (ConfigManager.isGyroMotionEnabled()) {
             gyroProcessor.onGyroscopeChanged(rotationX, rotationY, rotationZ);
         }
     }

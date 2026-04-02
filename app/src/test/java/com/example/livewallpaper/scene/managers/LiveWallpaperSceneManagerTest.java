@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.example.livewallpaper.gl.GLWallpaperRenderer;
 import com.example.livewallpaper.scene.models.Scene;
-import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.sensors.ConfigManager;
 import com.example.livewallpaper.managers.SceneFileManager;
 
 import org.junit.Before;
@@ -171,7 +171,7 @@ public class LiveWallpaperSceneManagerTest {
         manager = new LiveWallpaperSceneManager(context);
 
         // Enable scroll motion
-        MotionConfig.setScrollMotionEnabled(true);
+        ConfigManager.setScrollMotionEnabled(true);
 
         // Should not throw exception
         manager.onScrollOffsetChanged(0.5f);
@@ -187,7 +187,7 @@ public class LiveWallpaperSceneManagerTest {
         manager = new LiveWallpaperSceneManager(context);
 
         // Disable scroll motion
-        MotionConfig.setScrollMotionEnabled(false);
+        ConfigManager.setScrollMotionEnabled(false);
 
         // Should not throw exception and should ignore scroll offset
         manager.onScrollOffsetChanged(0.5f);
