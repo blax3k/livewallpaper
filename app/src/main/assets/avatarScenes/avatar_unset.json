@@ -4,8 +4,8 @@
       "height": 10.3,
       "name": "background2",
       "parallaxMultiplier": 0.19999999,
-      "positionX": 0.15,
-      "positionY": 0.05,
+      "positionX": -0.9,
+      "positionY": 0.0,
       "texCoordinates": [
         0.0,
         1.0,
@@ -16,7 +16,7 @@
         1.0,
         0.0
       ],
-      "textureResource": "background2",
+      "textureResource": "background",
       "textureResourceId": 0,
       "width": 10.3
     },
