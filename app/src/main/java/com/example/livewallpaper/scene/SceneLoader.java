@@ -21,15 +21,26 @@ import java.nio.charset.StandardCharsets;
  */
 public class SceneLoader {
     private static final String TAG = "SceneLoader";
-    private static final String SCENES_FOLDER = "scenes";
+    private static final String DEFAULT_SCENES_FOLDER = "scenes";
 
     private final Context context;
     private final Gson gson;
     private String persistentScenesPath; // Path to persistent scenes directory
+    private String assetsFolder = DEFAULT_SCENES_FOLDER;
 
     public SceneLoader(Context context) {
         this.context = context;
         this.gson = new Gson();
+    }
+
+    /**
+     * Set the folder in assets to load scenes from. Defaults to "scenes".
+     *
+     * @param assetsFolder the folder name in assets
+     */
+    public void setAssetsFolder(String assetsFolder) {
+        this.assetsFolder = assetsFolder;
+        TimberLog.d(TAG, "Assets scenes folder set to: " + assetsFolder);
     }
 
     /**
@@ -46,7 +57,7 @@ public class SceneLoader {
     /**
      * Load a scene from a JSON file.
      * First attempts to load from persistent storage if a path is set,
-     * otherwise falls back to assets/scenes folder.
+     * otherwise falls back to assets folder.
      *
      * @param fileName the name of the JSON file (e.g., "girl_back.json")
      * @return a Scene object populated with sprites from the JSON data
@@ -60,11 +71,17 @@ public class SceneLoader {
         if (persistentScenesPath != null) {
             // Load from persistent storage
             File sceneFile = new File(persistentScenesPath, fileName);
-            TimberLog.d(TAG, "Loading from persistent storage: " + sceneFile.getAbsolutePath());
-            sceneData = parseSceneDataFromFile(sceneFile);
+            if (sceneFile.exists()) {
+                TimberLog.d(TAG, "Loading from persistent storage: " + sceneFile.getAbsolutePath());
+                sceneData = parseSceneDataFromFile(sceneFile);
+            } else {
+                TimberLog.d(TAG, "File not found in persistent storage, falling back to assets: " + fileName);
+                String filePath = assetsFolder + "/" + fileName;
+                sceneData = parseSceneDataFromAssets(filePath);
+            }
         } else {
             // Fall back to assets
-            String filePath = SCENES_FOLDER + "/" + fileName;
+            String filePath = assetsFolder + "/" + fileName;
             TimberLog.d(TAG, "Loading from assets: " + filePath);
             sceneData = parseSceneDataFromAssets(filePath);
         }
@@ -89,8 +106,7 @@ public class SceneLoader {
      */
     private SceneData parseSceneDataFromFile(File file) throws IOException {
         try (FileReader reader = new FileReader(file)) {
-            SceneData sceneData = gson.fromJson(reader, SceneData.class);
-            return sceneData;
+            return gson.fromJson(reader, SceneData.class);
         }
     }
 
@@ -98,11 +114,10 @@ public class SceneLoader {
      * Parse JSON file from assets into SceneData object.
      */
     private SceneData parseSceneDataFromAssets(String filePath) throws IOException {
-        InputStream inputStream = context.getAssets().open(filePath);
-        InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-        SceneData sceneData = gson.fromJson(reader, SceneData.class);
-        reader.close();
-        return sceneData;
+        try (InputStream inputStream = context.getAssets().open(filePath);
+             InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+            return gson.fromJson(reader, SceneData.class);
+        }
     }
 
     /**
@@ -112,7 +127,6 @@ public class SceneLoader {
         if (sceneData == null) {
             throw new IllegalArgumentException("Failed to parse JSON from: " + filePath);
         }
-
 
         if (sceneData.sprites == null) {
             throw new IllegalArgumentException("Sprites array is required in JSON: " + filePath);
@@ -155,7 +169,6 @@ public class SceneLoader {
         int resourceId = getDrawableResourceId(spriteData.textureResource);
         if (resourceId == 0) {
             TimberLog.w(TAG, "Could not find drawable resource: " + spriteData.textureResource + ". Skipping sprite.");
-            TimberLog.w(TAG, "Tried to resolve: package=" + context.getPackageName() + ", name=" + spriteData.textureResource);
             return null;
         }
 

@@ -37,6 +37,8 @@ import java.util.Map;
 public class SceneFileManager {
     private static final String TAG = "SceneFileManager";
     private static final String SCENES_FOLDER = "scenes";
+
+    private static final String AVATAR_SCENES_FOLDER = "avatarScenes";
     private static final String PREFS_NAME = "SceneFileManager";
     private static final String PREFS_KEY_SCENES_URI = "scenes_directory_uri";
 
