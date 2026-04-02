@@ -141,9 +141,20 @@ public class GLWallpaperService extends WallpaperService {
             try {
                 super.onCreate(surfaceHolder);
                 surfaceHolder.addCallback(this);
-                renderer = new LiveWallpaperSceneManager(GLWallpaperService.this);
-                // Set the static reference so the scene list can be refreshed from outside
-                currentRenderer = (LiveWallpaperSceneManager) renderer;
+
+                try {
+                    renderer = new LiveWallpaperSceneManager(GLWallpaperService.this);
+                    // Set the static reference so the scene list can be refreshed from outside
+                    currentRenderer = (LiveWallpaperSceneManager) renderer;
+
+                    if (renderer == null) {
+                        TimberLog.e(TAG, "Failed to create renderer - renderer is null");
+                        throw new RuntimeException("Failed to create LiveWallpaperSceneManager");
+                    }
+                } catch (Exception e) {
+                    TimberLog.e(TAG, "Error creating renderer: " + e.getMessage(), e);
+                    throw e;
+                }
 
                 // Enable touch events and initialize gesture detector for double tap detection
                 setTouchEventsEnabled(true);
@@ -158,7 +169,7 @@ public class GLWallpaperService extends WallpaperService {
                     }
                 }
 
-                TimberLog.d(TAG, "Engine created");
+                TimberLog.d(TAG, "Engine created successfully");
             } catch (Exception e) {
                 TimberLog.e(TAG, "Error in onCreate: " + e.getMessage(), e);
                 throw e;
@@ -474,7 +485,14 @@ public class GLWallpaperService extends WallpaperService {
             running = true;
             renderThread = new Thread(() -> {
                 SurfaceHolder holder = getSurfaceHolder();
+                if (holder == null) {
+                    TimberLog.e(TAG, "SurfaceHolder is null in render thread");
+                    running = false;
+                    return;
+                }
+
                 if (!initEGL(holder)) {
+                    TimberLog.e(TAG, "Failed to initialize EGL");
                     running = false;
                     return;
                 }
@@ -491,9 +509,14 @@ public class GLWallpaperService extends WallpaperService {
                         // Render a frame
                         if (renderer != null) {
                             renderer.onDrawFrame();
+                        } else {
+                            TimberLog.w(TAG, "Renderer is null in render loop");
                         }
+
                         // Swap buffers (NOT vsync'd - GPU renders immediately)
-                        EGL14.eglSwapBuffers(eglDisplay, eglSurface);
+                        if (eglDisplay != null && eglSurface != null) {
+                            EGL14.eglSwapBuffers(eglDisplay, eglSurface);
+                        }
 
                         // Frame rate limiting when vsync is disabled
                         if (DISABLE_VSYNC) {
@@ -510,7 +533,8 @@ public class GLWallpaperService extends WallpaperService {
                         TimberLog.d(TAG, "Render thread interrupted, stopping rendering");
                         break;
                     } catch (Exception e) {
-                        TimberLog.e(TAG, "Rendering error", e);
+                        TimberLog.e(TAG, "Rendering error: " + e.getMessage(), e);
+                        // Don't exit the loop on rendering errors - try to recover on next frame
                     }
                 }
 

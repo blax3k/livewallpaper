@@ -1,0 +1,46 @@
+{
+  "sprites": [
+    {
+      "height": 10.3,
+      "name": "backgroundsheet",
+      "parallaxMultiplier": 0.19999999,
+      "positionX": 0.15,
+      "positionY": 0.05,
+      "texCoordinates": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "textureResource": "background2",
+      "textureResourceId": 0,
+      "width": 10.3
+    },
+    {
+      "height": 8.0,
+      "name": "square_avatar",
+      "parallaxMultiplier": 1.0,
+      "positionX": 1.3,
+      "positionY": 1.25,
+      "texCoordinates": [
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.2692308,
+        1.0,
+        0.2692308,
+        0.0
+      ],
+      "textureResource": "square_avatar",
+      "textureResourceId": 0,
+      "width": 2.1538465
+    }
+  ],
+  "timeOfDay": "DAWN",
+  "xFocus": 0.88
+}

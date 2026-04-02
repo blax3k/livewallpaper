@@ -30,45 +30,76 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         super(context, (String) null);
 
         // Initialize scene manager for wallpaper mode
-        SceneFileManager sceneFileManager = new SceneFileManager(context, null);
-        this.sceneSwitchManager = new SceneSwitchManager(context, sceneFileManager);
-
-        // Load the initial scene
         try {
-            this.currentScene = sceneSwitchManager.loadInitialScene();
-            TimberLog.d(TAG, "Loaded initial scene: " + currentScene.getSceneName());
-        } catch (Exception e) {
-            TimberLog.e(TAG, "Failed to load initial scene, using empty scene", e);
-            this.currentScene = new Scene("DefaultScene");
-        }
+            SceneFileManager sceneFileManager = new SceneFileManager(context, null);
+            this.sceneSwitchManager = new SceneSwitchManager(context, sceneFileManager);
 
-        // Initialize the scene manager with the loaded scene
-        this.sceneSwitchManager.initialize(currentScene);
+            // Load the initial scene
+            try {
+                this.currentScene = sceneSwitchManager.loadInitialScene();
+                if (this.currentScene != null) {
+                    TimberLog.d(TAG, "Loaded initial scene: " + currentScene.getSceneName());
+                } else {
+                    TimberLog.e(TAG, "loadInitialScene returned null");
+                    this.currentScene = new Scene("DefaultScene");
+                }
+            } catch (Exception e) {
+                TimberLog.e(TAG, "Failed to load initial scene, using fallback empty scene", e);
+                this.currentScene = new Scene("DefaultScene");
+            }
+
+            // Initialize the scene manager with the loaded scene
+            try {
+                this.sceneSwitchManager.initialize(currentScene);
+            } catch (Exception e) {
+                TimberLog.e(TAG, "Failed to initialize scene manager", e);
+            }
+        } catch (Exception e) {
+            TimberLog.e(TAG, "Failed to initialize LiveWallpaperSceneManager", e);
+            // Ensure we have at least a fallback scene
+            if (this.currentScene == null) {
+                this.currentScene = new Scene("DefaultScene");
+            }
+        }
     }
 
     @Override
     public void onSurfaceCreated() {
         TimberLog.d(TAG, "onSurfaceCreated called");
 
-        // Initialize common GL resources (shader, handles, sprite renderer)
-        initializeGLResources();
+        try {
+            // Initialize common GL resources (shader, handles, sprite renderer)
+            initializeGLResources();
 
-        // Set up gyro scaling callback
-        if (sceneSwitchManager != null) {
-            sceneSwitchManager.setGyroScalingCallback((newScene) -> {
-                if (spritesScaledForGyro) {
-                    gyroProcessor.applyGyroScalingToNewScene(newScene);
-                }
-            });
+            // Set up gyro scaling callback
+            if (sceneSwitchManager != null) {
+                sceneSwitchManager.setGyroScalingCallback((newScene) -> {
+                    if (spritesScaledForGyro) {
+                        gyroProcessor.applyGyroScalingToNewScene(newScene);
+                    }
+                });
+            }
+
+            // Initialize common scene resources (load scene, reload textures, etc.)
+            initializeSceneResources();
+
+            // Verify scene is properly initialized before proceeding
+            if (currentScene == null) {
+                TimberLog.e(TAG, "Scene is null after initialization, using fallback");
+                currentScene = new Scene("FallbackScene");
+            }
+
+            // Reset the scene change timer
+            lastSceneChangeTimeMs = System.currentTimeMillis();
+
+            TimberLog.d(TAG, "Surface created and scene initialized for wallpaper");
+        } catch (Exception e) {
+            TimberLog.e(TAG, "Error in onSurfaceCreated: " + e.getMessage(), e);
+            // Ensure we have a fallback scene to prevent black screen
+            if (currentScene == null) {
+                currentScene = new Scene("FallbackScene");
+            }
         }
-
-        // Initialize common scene resources (load scene, reload textures, etc.)
-        initializeSceneResources();
-
-        // Reset the scene change timer
-        lastSceneChangeTimeMs = System.currentTimeMillis();
-
-        TimberLog.d(TAG, "Surface created and scene initialized for wallpaper");
     }
 
     @Override
@@ -98,41 +129,45 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
             return;
         }
 
-        if (textureManager != null) {
-            textureManager.processPendingUploads();
-        }
-
-        if(sceneSwitchManager == null)
-        {
-            return;
-        }
-        // Check if scene switch was requested (from UI thread) and perform it here on GL thread
-        // Only proceed if no transition is already in progress
-        if (sceneSwitchRequested && !sceneSwitchManager.isTransitioning()) {
-            sceneSwitchRequested = false;
-            sceneSwitchManager.cycleToNextScene(currentScene);
-            lastSceneChangeTimeMs = System.currentTimeMillis();
-        }
-
-        // Update scene transition (handles texture preload, crossfade, and scene switching)
-        if ( sceneSwitchManager.isTransitioning()) {
-            currentScene = sceneSwitchManager.updateTransition(textureManager);
-        }
-
-        // Apply xFocus offset when scroll motion is disabled
-        if (!MotionConfig.isScrollMotionEnabled()) {
-            // If we're in a transition, smoothly transition to the next scene's xFocus
-            // Otherwise, use the current scene's xFocus
-            Scene transitioningScene =  sceneSwitchManager.getTransitioningScene();
-            if (transitioningScene != null) {
-                scrollOffsetProcessor.setScrollTargetFromXFocus(transitioningScene.getXFocus());
-            } else {
-                scrollOffsetProcessor.setScrollTargetFromXFocus(currentScene.getXFocus());
+        try {
+            if (textureManager != null) {
+                textureManager.processPendingUploads();
             }
-        }
 
-        // Common rendering logic
-        performRenderFrame();
+            if (sceneSwitchManager == null) {
+                return;
+            }
+
+            // Check if scene switch was requested (from UI thread) and perform it here on GL thread
+            // Only proceed if no transition is already in progress
+            if (sceneSwitchRequested && !sceneSwitchManager.isTransitioning()) {
+                sceneSwitchRequested = false;
+                sceneSwitchManager.cycleToNextScene(currentScene);
+                lastSceneChangeTimeMs = System.currentTimeMillis();
+            }
+
+            // Update scene transition (handles texture preload, crossfade, and scene switching)
+            if (sceneSwitchManager.isTransitioning()) {
+                currentScene = sceneSwitchManager.updateTransition(textureManager);
+            }
+
+            // Apply xFocus offset when scroll motion is disabled
+            if (!MotionConfig.isScrollMotionEnabled()) {
+                // If we're in a transition, smoothly transition to the next scene's xFocus
+                // Otherwise, use the current scene's xFocus
+                Scene transitioningScene = sceneSwitchManager.getTransitioningScene();
+                if (transitioningScene != null) {
+                    scrollOffsetProcessor.setScrollTargetFromXFocus(transitioningScene.getXFocus());
+                } else if (currentScene != null) {
+                    scrollOffsetProcessor.setScrollTargetFromXFocus(currentScene.getXFocus());
+                }
+            }
+
+            // Common rendering logic
+            performRenderFrame();
+        } catch (Exception e) {
+            TimberLog.e(TAG, "Error in onDrawFrame: " + e.getMessage(), e);
+        }
     }
 
     @Override

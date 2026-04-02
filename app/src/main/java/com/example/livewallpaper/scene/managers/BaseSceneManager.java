@@ -167,31 +167,41 @@ public abstract class BaseSceneManager {
      * Common rendering logic shared between edit mode and wallpaper mode.
      * Handles projection setup, sprite rendering, and uniform updates.
      */
-    protected void performRenderFrame() {
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        if (shaderProgram != null) {
-            shaderProgram.use();
-        }
+     protected void performRenderFrame() {
+         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+         if (shaderProgram != null) {
+             shaderProgram.use();
+         }
 
-        // Set projection matrix
-        GLES20.glUniformMatrix4fv(handles.projectionMatrixHandle, 1, false, projectionMatrix, 0);
+         // Safety check: if scene is not ready, do not proceed with rendering
+         if (currentScene == null) {
+             TimberLog.w(TAG, "Cannot render frame: currentScene is null");
+             return;
+         }
 
-        // Update scroll offset interpolation and get the current value for this frame
-        float currentScrollOffset = scrollOffsetProcessor.updateAndGetCurrentOffset();
+         // Set projection matrix
+         GLES20.glUniformMatrix4fv(handles.projectionMatrixHandle, 1, false, projectionMatrix, 0);
 
-        // Set scroll offset uniform (applied by all sprites with their own multiplier)
-        GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
+         // Update scroll offset interpolation and get the current value for this frame
+         float currentScrollOffset = scrollOffsetProcessor.updateAndGetCurrentOffset();
 
-        // Update gyro offsets and apply uniforms
-        spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, spritesScaledForGyro);
+         // Set scroll offset uniform (applied by all sprites with their own multiplier)
+         GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
-        // Draw all sprites in the scene
-        for (Sprite sprite : currentScene.getSprites()) {
-            if (spriteRenderer != null) {
-                spriteRenderer.drawSprite(sprite);
-            }
-        }
-    }
+         // Update gyro offsets and apply uniforms
+         spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, spritesScaledForGyro);
+
+         // Draw all sprites in the scene
+         try {
+             for (Sprite sprite : currentScene.getSprites()) {
+                 if (spriteRenderer != null) {
+                     spriteRenderer.drawSprite(sprite);
+                 }
+             }
+         } catch (Exception e) {
+             TimberLog.e(TAG, "Error drawing sprites: " + e.getMessage(), e);
+         }
+     }
 
     protected void loadScene() {
         try {

@@ -1,12 +1,10 @@
-package com.example.livewallpaper.ui.editor.controllers;
+package com.hashilab.dev.editor.controllers;
 
 import android.content.Context;
-import com.example.livewallpaper.logging.TimberLog;
-
 import androidx.appcompat.app.AlertDialog;
-
+import com.example.livewallpaper.R;
 import com.example.livewallpaper.logging.TimberLog;
-
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,10 +57,11 @@ public class DrawableImagePickerDialog {
         List<String> drawables = new ArrayList<>();
 
         try {
-            Class<?> drawablesClass = Class.forName(context.getPackageName() + ".R$drawable");
-            java.lang.reflect.Field[] fields = drawablesClass.getFields();
+            // Use the R class from the app's namespace directly instead of Class.forName(context.getPackageName() + ".R$drawable")
+            // which fails when the applicationId has a suffix (like .dev) that differs from the namespace.
+            Field[] fields = R.drawable.class.getFields();
 
-            for (java.lang.reflect.Field field : fields) {
+            for (Field field : fields) {
                 String fieldName = field.getName();
                 // Skip system icons, launchers, and XML drawables
                 if (!fieldName.startsWith("ic_") && !fieldName.startsWith("ic_launcher") &&
@@ -70,8 +69,8 @@ public class DrawableImagePickerDialog {
                     drawables.add(fieldName);
                 }
             }
-        } catch (ClassNotFoundException e) {
-            TimberLog.e(TAG, "R.drawable class not found", e);
+        } catch (Exception e) {
+            TimberLog.e(TAG, "Error accessing R.drawable fields", e);
         }
 
         TimberLog.d(TAG, "Found " + drawables.size() + " drawable resources");
@@ -87,10 +86,9 @@ public class DrawableImagePickerDialog {
      */
     private static int getDrawableResourceId(Context context, String resourceName) {
         try {
-            Class<?> drawablesClass = Class.forName(context.getPackageName() + ".R$drawable");
-            java.lang.reflect.Field field = drawablesClass.getField(resourceName);
+            Field field = R.drawable.class.getField(resourceName);
             return field.getInt(null);
-        } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+        } catch (NoSuchFieldException | IllegalAccessException e) {
             TimberLog.e(TAG, "Failed to get drawable resource ID for: " + resourceName, e);
             return 0;
         }

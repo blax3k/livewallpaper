@@ -14,14 +14,14 @@ import java.io.IOException;
 
 /**
  * Scene manager for displaying a single scene.
- * Specifically configured to load 'test.json' from the 'avatarScenes' assets folder by default.
+ * Specifically configured to load 'avatar_unset.json' from the 'avatarScenes' assets folder by default.
  */
 public class AvatarSceneManager extends BaseSceneManager {
     private static final String AVATAR_SCENES_FOLDER = "avatarScenes";
-    private static final String DEFAULT_TEST_SCENE = "test.json";
+    private static final String DEFAULT_TEST_SCENE = "avatar_unset.json";
 
     /**
-     * Default constructor that loads 'test.json' from 'avatarScenes'.
+     * Default constructor that loads 'avatar_unset.json' from 'avatarScenes'.
      */
     public AvatarSceneManager(Context context) {
         super(context, DEFAULT_TEST_SCENE);
@@ -54,15 +54,33 @@ public class AvatarSceneManager extends BaseSceneManager {
                 // as it's specifically for loading these internal avatar scenes.
                 
                 currentScene = loader.loadScene(sceneFileName);
+
+                // Verify scene was loaded successfully
+                if (currentScene == null) {
+                    TimberLog.e(TAG, "Scene loader returned null for: " + sceneFileName);
+                    currentScene = new Scene("Error");
+                }
             } catch (IOException e) {
-                TimberLog.e(TAG, "Error loading avatar scene: " + e.getMessage(), e);
+                TimberLog.e(TAG, "IOException loading avatar scene '" + sceneFileName + "': " + e.getMessage(), e);
+                currentScene = new Scene("Error");
+            } catch (Exception e) {
+                TimberLog.e(TAG, "Unexpected error loading avatar scene '" + sceneFileName + "': " + e.getMessage(), e);
                 currentScene = new Scene("Error");
             }
         }
 
+        // Verify currentScene is not null before initializing
         if (currentScene != null) {
-            currentScene.initialize(context, textureManager);
-            currentScene.setEdgeHighlighted(false);
+            try {
+                currentScene.initialize(context, textureManager);
+                currentScene.setEdgeHighlighted(false);
+                TimberLog.d(TAG, "Scene loaded and initialized successfully: " + currentScene.getSceneName());
+            } catch (Exception e) {
+                TimberLog.e(TAG, "Error initializing scene: " + e.getMessage(), e);
+                // Keep the scene even if initialization fails
+            }
+        } else {
+            TimberLog.e(TAG, "currentScene is null after loading attempt");
         }
     }
 
@@ -70,9 +88,25 @@ public class AvatarSceneManager extends BaseSceneManager {
      * Called when the GL surface is created.
      */
     public void onSurfaceCreated() {
-        TimberLog.d(TAG, "onSurfaceCreated called");
-        initializeGLResources();
-        initializeSceneResources();
+        try {
+            TimberLog.d(TAG, "onSurfaceCreated called");
+            initializeGLResources();
+            initializeSceneResources();
+
+            // Verify scene is valid after initialization
+            if (currentScene == null) {
+                TimberLog.e(TAG, "Scene is null after initialization in onSurfaceCreated");
+                currentScene = new Scene("FallbackScene");
+            }
+
+            TimberLog.d(TAG, "onSurfaceCreated completed successfully");
+        } catch (Exception e) {
+            TimberLog.e(TAG, "Error in onSurfaceCreated: " + e.getMessage(), e);
+            // Ensure we have a fallback scene
+            if (currentScene == null) {
+                currentScene = new Scene("FallbackScene");
+            }
+        }
     }
 
     /**
@@ -96,20 +130,25 @@ public class AvatarSceneManager extends BaseSceneManager {
      * Called every frame to render the scene.
      */
     public void onDrawFrame() {
-        if (currentScene == null) {
-            return;
-        }
+        try {
+            if (currentScene == null) {
+                TimberLog.w(TAG, "onDrawFrame called but currentScene is null");
+                return;
+            }
 
-        if (textureManager != null) {
-            textureManager.processPendingUploads();
-        }
+            if (textureManager != null) {
+                textureManager.processPendingUploads();
+            }
 
-        // Apply xFocus offset when scroll motion is disabled
-        if (!MotionConfig.isScrollMotionEnabled()) {
-            scrollOffsetProcessor.setScrollTargetFromXFocus(currentScene.getXFocus());
-        }
+            // Apply xFocus offset when scroll motion is disabled
+            if (!MotionConfig.isScrollMotionEnabled()) {
+                scrollOffsetProcessor.setScrollTargetFromXFocus(currentScene.getXFocus());
+            }
 
-        performRenderFrame();
+            performRenderFrame();
+        } catch (Exception e) {
+            TimberLog.e(TAG, "Error in onDrawFrame: " + e.getMessage(), e);
+        }
     }
 
     /**

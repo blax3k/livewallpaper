@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.editor.activities;
+package com.hashilab.dev.editor.activities;
 
 import android.content.Context;
 import android.content.Intent;
@@ -32,11 +32,12 @@ import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.scene.models.SpriteData;
 import com.example.livewallpaper.sensors.MotionConfig;
-import com.example.livewallpaper.ui.editor.managers.SceneFileManager;
+import com.example.livewallpaper.managers.SceneFileManager;
 import com.example.livewallpaper.ui.editor.adapters.SpritesDropdownAdapter;
 import com.example.livewallpaper.ui.editor.views.SquareGLSurfaceView;
-import com.example.livewallpaper.ui.editor.controllers.DrawableImagePickerDialog;
+import com.hashilab.dev.editor.controllers.DrawableImagePickerDialog;
 import com.example.livewallpaper.ui.editor.builders.SpriteDetailsBuilder;
+import com.hashilab.dev.editor.activities.FullscreenPreviewActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -920,4 +921,3 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
         focusPointValue.setText(String.format(Locale.US, "%.2f", value));
     }
 }
-

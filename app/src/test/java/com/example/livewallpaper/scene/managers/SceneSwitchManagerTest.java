@@ -59,7 +59,7 @@ public class SceneSwitchManagerTest {
     public void reloadAvailableScenes_MethodExists() {
         try {
             var method = SceneSwitchManager.class.getMethod("reloadAvailableScenes",
-                Class.forName("com.example.livewallpaper.ui.editor.managers.SceneFileManager"));
+                Class.forName("com.example.livewallpaper.managers.SceneFileManager"));
             assertNotNull("reloadAvailableScenes method should exist", method);
         } catch (NoSuchMethodException | ClassNotFoundException e) {
             fail("reloadAvailableScenes method should exist: " + e.getMessage());
@@ -129,4 +129,3 @@ public class SceneSwitchManagerTest {
         }
     }
 }
-

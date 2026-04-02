@@ -1,4 +1,5 @@
-package com.example.livewallpaper.ui.editor.activities;
+package com.hashilab.dev.editor.activities;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.hardware.Sensor;
@@ -18,7 +19,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.managers.EditSceneManager;
 

@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 
     <application
         android:name=".LoggingApplication"
@@ -15,31 +15,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Livewallpaper">
-
-        <activity
-            android:name=".ui.editor.activities.MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Livewallpaper" />
-
-        <activity
-            android:name=".ui.editor.activities.SceneListActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Livewallpaper" />
-
-        <activity
-            android:name=".ui.editor.activities.EditSceneActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Livewallpaper" />
-
-        <activity
-            android:name=".ui.editor.activities.EditTextureActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Livewallpaper" />
-
-        <activity
-            android:name=".ui.editor.activities.FullscreenPreviewActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Livewallpaper.Fullscreen" />
 
         <service
             android:name=".gl.GLWallpaperService"
