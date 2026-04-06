@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
  * is not tested here to avoid complexity with static state.
  */
 @RunWith(RobolectricTestRunner.class)
-public class MotionConfigTest {
+public class ConfigManagerTest {
 
     // ==================== Scroll Motion Tests ====================
 
