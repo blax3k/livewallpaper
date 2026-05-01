@@ -16,11 +16,8 @@
         0.5,
         0.5
       ],
-      "textureOffsetU": -0.25,
-      "textureOffsetV": 0.25,
       "textureResource": "backgroundsheet",
       "textureResourceId": 0,
-      "textureScale": 2.0,
       "width": 5.7749996
     },
     {
@@ -39,11 +36,8 @@
         1.0,
         0.0
       ],
-      "textureOffsetU": 0.0,
-      "textureOffsetV": 0.0,
       "textureResource": "room_day",
       "textureResourceId": 0,
-      "textureScale": 1.0,
       "width": 9.999999
     },
     {
@@ -62,11 +56,8 @@
         0.21999994,
         0.5
       ],
-      "textureOffsetU": -0.42380953,
-      "textureOffsetV": 0.26190475,
       "textureResource": "girlspritesheet",
       "textureResourceId": 0,
-      "textureScale": 2.0,
       "width": 2.2
     },
     {
@@ -85,11 +76,8 @@
         1.0,
         0.0
       ],
-      "textureOffsetU": 0.0,
-      "textureOffsetV": 0.0,
       "textureResource": "bed",
       "textureResourceId": 0,
-      "textureScale": 1.0,
       "width": 16.5
     }
   ],

@@ -200,10 +200,17 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     }
                     sprite.setTextureCoordinates(texCoordsToLoad);
 
-                    // The saved texture coordinates are loaded into originalTexCoordinates via
-                    // setTextureCoordinates() above. TextureCoordinateCalculator reproduces them
-                    // exactly when scale=1 and offset=0, so we always start from that baseline.
-                    textureEditState = new TextureEditState(1.0f, 0.0f, 0.0f);
+                    // Under the relative-scale model, textureScale=1.0 means the texture just covers
+                    // the sprite (minimum). To reproduce the saved coordinates we need:
+                    //   textureScale = 1.0 / max(initWindowU, initWindowV)
+                    // For default coords (window=1.0) this is 1.0; for a previously zoomed-in
+                    // coord set it is > 1.0, placing the slider at the correct starting position.
+                    float initWU = Math.abs(texCoordsToLoad[4] - texCoordsToLoad[0]);
+                    float initWV = Math.abs(texCoordsToLoad[1] - texCoordsToLoad[3]);
+                    float maxWindow = Math.max(initWU, initWV);
+                    float initialScale = (maxWindow > 0.001f) ? 1.0f / maxWindow : 1.0f;
+                    initialScale = Math.max(1.0f, initialScale);
+                    textureEditState = new TextureEditState(initialScale, 0.0f, 0.0f);
 
                     TimberLog.d(TAG, "Applied sprite data - width: " + spriteData.width +
                           ", height: " + spriteData.height +

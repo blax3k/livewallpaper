@@ -60,8 +60,6 @@ public class Sprite implements Parcelable {
     private float[] originalTexCoordinates;
     private final float textureScaleFactor;  // The scale factor of the texture in world space, set at construction
 
-    // Store the current texture edit state (scale and offsets) for accurate retrieval
-    private TextureEditState currentTextureEditState = new TextureEditState(1.0f, 0.0f, 0.0f);
 
     // Track gyro scaling state
     private boolean isGyroScaled = false;
@@ -85,7 +83,6 @@ public class Sprite implements Parcelable {
                 config.texCoordinates != null ? config.texCoordinates.clone() : null);
 
         // Initialize texture edit state to default (scale/offset will be derived from texture coordinates if needed)
-        this.currentTextureEditState = new TextureEditState(1.0f, 0.0f, 0.0f);
     }
 
     /**
@@ -677,12 +674,6 @@ public class Sprite implements Parcelable {
      * @param textureEditState the current texture editing state (scale and offsets)
      */
     public void updateTextureCoordinates(TextureEditState textureEditState) {
-        // Store the texture edit state for accurate retrieval later
-        this.currentTextureEditState = new TextureEditState(
-                textureEditState.getTextureScale(),
-                textureEditState.getTextureOffsetU(),
-                textureEditState.getTextureOffsetV()
-        );
 
         TextureCoordinateCalculator.updateTextureCoordinates(
                 texCoordBuffer,
@@ -835,11 +826,6 @@ public class Sprite implements Parcelable {
         // Initialize geometry with the deserialized texture coordinates
         initializeGeometry(originalTexCoordinates);
 
-        // Restore texture edit state
-        float scale = in.readFloat();
-        float offsetU = in.readFloat();
-        float offsetV = in.readFloat();
-        currentTextureEditState = new TextureEditState(scale, offsetU, offsetV);
 
         // Use readInt instead of readBoolean for API 24 compatibility (readBoolean requires API 29)
         isGyroScaled = in.readInt() != 0;
@@ -873,9 +859,6 @@ public class Sprite implements Parcelable {
         }
 
         // Write texture edit state
-        dest.writeFloat(currentTextureEditState.getTextureScale());
-        dest.writeFloat(currentTextureEditState.getTextureOffsetU());
-        dest.writeFloat(currentTextureEditState.getTextureOffsetV());
 
         // Use writeInt instead of writeBoolean for API 24 compatibility (writeBoolean requires API 29)
         dest.writeInt(isGyroScaled ? 1 : 0);

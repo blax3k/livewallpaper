@@ -80,9 +80,11 @@ public class TextureCoordinateCalculator {
         }
 
         // The effective scale must be large enough so the texture always covers the sprite.
-        // (Requirement 5: sprite growing past texture edge causes texture to grow to match.)
+        // textureScale is a multiplier relative to the minimum-coverage scale, so the slider always
+        // has a meaningful effect regardless of how large the sprite has grown.
+        // textureScale=1.0 → texture edge just meets sprite edge on the closest axis.
         float minScaleForCoverage = Math.max(width / naturalTexW, height / naturalTexH);
-        float effectiveScale = Math.max(textureScale, minScaleForCoverage);
+        float effectiveScale = minScaleForCoverage * textureScale;
 
         // Fraction of the texture that is visible along each axis.
         // Both values are in (0, 1] by construction.
@@ -188,7 +190,7 @@ public class TextureCoordinateCalculator {
         }
 
         float minScaleForCoverage = Math.max(width / naturalTexW, height / naturalTexH);
-        float effectiveScale = Math.max(textureScale, minScaleForCoverage);
+        float effectiveScale = minScaleForCoverage * textureScale;
 
         float windowSizeU = Math.min(1.0f, width  / (naturalTexW * effectiveScale));
         float windowSizeV = Math.min(1.0f, height / (naturalTexH * effectiveScale));
@@ -246,14 +248,30 @@ public class TextureCoordinateCalculator {
             float[] originalTexCoordinates) {
 
         if (texCoords == null || texCoords.length < 8) return 1.0f;
-        float vMin = texCoords[3];
-        float vMax = texCoords[1];
-        float windowSizeV = Math.abs(vMax - vMin);
-        if (windowSizeV <= 0f) return 1.0f;
-        // effectiveScale = spriteOriginalHeight / (naturalTexH * windowSizeV)
-        // naturalTexH = spriteOriginalHeight * textureScaleFactor — but we don't have textureScaleFactor here.
-        // Fall back to scale = 1/windowSizeV (correct when textureScaleFactor == 1)
-        float scale = 1.0f / windowSizeV;
+        if (originalTexCoordinates == null || originalTexCoordinates.length < 8) return 1.0f;
+
+        float initWindowU = Math.abs(originalTexCoordinates[4] - originalTexCoordinates[0]);
+        float initWindowV = Math.abs(originalTexCoordinates[1] - originalTexCoordinates[3]);
+        if (initWindowU <= 0f && initWindowV <= 0f) return 1.0f;
+
+        // minScaleForCoverage when current dimensions equal baseline (the case when extracting during editing)
+        float minScaleForCoverage = Math.max(initWindowU, initWindowV);
+
+        // Use the constraining axis (largest initWindow) to derive effectiveScale.
+        // effectiveScale = initWindow / observedWindowSize for that axis.
+        float effectiveScale;
+        if (initWindowV >= initWindowU) {
+            float windowSizeV = Math.abs(texCoords[1] - texCoords[3]);
+            if (windowSizeV <= 0f) return 1.0f;
+            effectiveScale = initWindowV / windowSizeV;
+        } else {
+            float windowSizeU = Math.abs(texCoords[4] - texCoords[0]);
+            if (windowSizeU <= 0f) return 1.0f;
+            effectiveScale = initWindowU / windowSizeU;
+        }
+
+        // textureScale is the user-facing relative multiplier: effectiveScale = minScaleForCoverage * textureScale
+        float scale = (minScaleForCoverage > 0f) ? effectiveScale / minScaleForCoverage : effectiveScale;
         return Math.max(1.0f, Math.min(8.0f, scale));
     }
 
