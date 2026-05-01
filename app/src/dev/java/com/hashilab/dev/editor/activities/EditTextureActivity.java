@@ -26,7 +26,6 @@ import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.managers.EditSceneManager;
 import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.scene.models.SpriteData;
-import com.example.livewallpaper.scene.TextureCoordinateCalculator;
 import com.example.livewallpaper.scene.TextureEditState;
 import com.example.livewallpaper.ui.editor.views.SquareGLSurfaceView;
 import com.example.livewallpaper.sensors.MotionConfig;
@@ -201,23 +200,14 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     }
                     sprite.setTextureCoordinates(texCoordsToLoad);
 
-                    // Initialize textureEditState from the loaded coordinates
-                    // Extract scale and offset from the texture coordinate range
-                    float scale = TextureCoordinateCalculator.extractScaleFromCoordinates(
-                            texCoordsToLoad,
-                            spriteData.width,
-                            spriteData.height,
-                            sprite.getOriginalTextureCoordinates()
-                    );
-                    float offsetU = TextureCoordinateCalculator.extractOffsetUFromCoordinates(texCoordsToLoad);
-                    float offsetV = TextureCoordinateCalculator.extractOffsetVFromCoordinates(texCoordsToLoad);
-
-                    textureEditState = new TextureEditState(scale, offsetU, offsetV);
+                    // The saved texture coordinates are loaded into originalTexCoordinates via
+                    // setTextureCoordinates() above. TextureCoordinateCalculator reproduces them
+                    // exactly when scale=1 and offset=0, so we always start from that baseline.
+                    textureEditState = new TextureEditState(1.0f, 0.0f, 0.0f);
 
                     TimberLog.d(TAG, "Applied sprite data - width: " + spriteData.width +
                           ", height: " + spriteData.height +
-                          ", loaded texture state - scale: " + scale +
-                          ", offsetU: " + offsetU + ", offsetV: " + offsetV);
+                          ", texture state reset to scale=1.0, offset=(0,0)");
 
                     // Set up the sliders with the sprite and texture state
                     textureSliderController.setup(sprite, textureEditState);
@@ -399,7 +389,7 @@ public class EditTextureActivity extends AppCompatActivity implements SensorEven
                     if (textureEditState != null) {
                         textureEditState.offsetTextureCoordinates(uOffset, vOffset, currentSprite.getWidth(), currentSprite.getHeight(),
                                 currentSprite.getTextureEditingBaselineWidth(), currentSprite.getTextureEditingBaselineHeight(), 1.0f,
-                                currentSprite.getTextureCoordinates());
+                                currentSprite.getOriginalTextureCoordinates());
                         updateSpriteTextureCoordinates();
                         hasUnsavedChanges = true;
                     }
