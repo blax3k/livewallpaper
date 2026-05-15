@@ -15,9 +15,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.managers.SceneFileManager;
-import com.example.livewallpaper.ui.editor.adapters.SceneListExpandableAdapter;
+import com.hashilab.dev.editor.adapters.SceneListExpandableAdapter;
 
 import java.io.File;
 import java.util.ArrayList;
