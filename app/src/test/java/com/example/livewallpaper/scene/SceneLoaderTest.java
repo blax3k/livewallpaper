@@ -1,5 +1,6 @@
 package com.example.livewallpaper.scene;
 
+import com.example.livewallpaper.scene.models.SceneData;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -76,15 +77,13 @@ public class SceneLoaderTest {
         assertFalse("Should reject > 1.0", isValid);
     }
 
-    // ==================== TimeOfDay Enum Tests ====================
+    // ==================== Time Range Tests ====================
 
     @Test
-    public void timeOfDayEnum_HasAllValues() {
-        // Verify enum values exist
-        assertTrue("Should have DAY", true);
-        assertTrue("Should have NIGHT", true);
-        assertTrue("Should have DAWN", true);
-        assertTrue("Should have SUNSET", true);
+    public void timeRange_DefaultValues() {
+        SceneData sceneData = new SceneData();
+        assertEquals("Default startTime should be 0 (00:00)", 0, sceneData.startTime);
+        assertEquals("Default endTime should be 1439 (23:59)", 1439, sceneData.endTime);
     }
 }
 

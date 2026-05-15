@@ -1,7 +1,6 @@
 package com.example.livewallpaper.scene;
 
 import com.example.livewallpaper.scene.models.Scene;
-import com.example.livewallpaper.scene.models.SceneData;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -13,8 +12,7 @@ import static org.junit.Assert.*;
 
 /**
  * Unit tests for ScenePicker.
- * Tests scene selection logic based on filtering and randomization.
- * Note: Time-of-day filtering depends on wall-clock time, so tests focus on selection logic.
+ * Tests scene selection logic based on time range filtering and randomization.
  */
 public class ScenePickerTest {
 
@@ -25,7 +23,6 @@ public class ScenePickerTest {
     public void setUp() {
         testScenes = new ArrayList<>();
 
-        // Create test scenes for various time periods
         for (int i = 0; i < 4; i++) {
             Scene scene = new Scene("scene_" + i);
             testScenes.add(scene);
@@ -89,31 +86,64 @@ public class ScenePickerTest {
         }
     }
 
+    // ==================== isSceneAvailable Tests ====================
+
     @Test
-    public void getCurrentTimeOfDay_IdentifiesDawn() {
-        assertTrue("6:00 should be DAWN", isTimeInPeriod(6, SceneData.TimeOfDay.DAWN));
-        assertTrue("8:00 should be DAWN", isTimeInPeriod(8, SceneData.TimeOfDay.DAWN));
+    public void isSceneAvailable_NormalRange_InsideRange() {
+        // 09:00 = 540 min, 18:00 = 1080 min
+        Scene scene = createSceneWithRange("day", 540, 1080);
+        assertTrue("14:00 (840) in 09:00-18:00", ScenePicker.isSceneAvailable(scene, 840));
+        assertTrue("09:00 (540) in 09:00-18:00", ScenePicker.isSceneAvailable(scene, 540));
+        assertTrue("18:00 (1080) in 09:00-18:00", ScenePicker.isSceneAvailable(scene, 1080));
+        assertTrue("09:30 (570) in 09:00-18:00", ScenePicker.isSceneAvailable(scene, 570));
     }
 
     @Test
-    public void getCurrentTimeOfDay_IdentifiesDay() {
-        assertTrue("9:00 should be DAY", isTimeInPeriod(9, SceneData.TimeOfDay.DAY));
-        assertTrue("12:00 should be DAY", isTimeInPeriod(12, SceneData.TimeOfDay.DAY));
-        assertTrue("17:00 should be DAY", isTimeInPeriod(17, SceneData.TimeOfDay.DAY));
+    public void isSceneAvailable_NormalRange_OutsideRange() {
+        Scene scene = createSceneWithRange("day", 540, 1080);
+        assertFalse("08:59 (539) not in 09:00-18:00", ScenePicker.isSceneAvailable(scene, 539));
+        assertFalse("18:01 (1081) not in 09:00-18:00", ScenePicker.isSceneAvailable(scene, 1081));
+        assertFalse("00:00 (0) not in 09:00-18:00", ScenePicker.isSceneAvailable(scene, 0));
     }
 
     @Test
-    public void getCurrentTimeOfDay_IdentifiesSunset() {
-        assertTrue("18:00 should be SUNSET", isTimeInPeriod(18, SceneData.TimeOfDay.SUNSET));
-        assertTrue("20:00 should be SUNSET", isTimeInPeriod(20, SceneData.TimeOfDay.SUNSET));
+    public void isSceneAvailable_OvernightRange_InsideRange() {
+        // 22:00 = 1320 min, 06:00 = 360 min
+        Scene scene = createSceneWithRange("night", 1320, 360);
+        assertTrue("23:00 (1380) in overnight 22:00-06:00", ScenePicker.isSceneAvailable(scene, 1380));
+        assertTrue("00:00 (0) in overnight 22:00-06:00", ScenePicker.isSceneAvailable(scene, 0));
+        assertTrue("03:30 (210) in overnight 22:00-06:00", ScenePicker.isSceneAvailable(scene, 210));
+        assertTrue("06:00 (360) in overnight 22:00-06:00", ScenePicker.isSceneAvailable(scene, 360));
+        assertTrue("22:00 (1320) in overnight 22:00-06:00", ScenePicker.isSceneAvailable(scene, 1320));
+        assertTrue("22:30 (1350) in overnight 22:00-06:00", ScenePicker.isSceneAvailable(scene, 1350));
     }
 
     @Test
-    public void getCurrentTimeOfDay_IdentifiesNight() {
-        assertTrue("21:00 should be NIGHT", isTimeInPeriod(21, SceneData.TimeOfDay.NIGHT));
-        assertTrue("23:00 should be NIGHT", isTimeInPeriod(23, SceneData.TimeOfDay.NIGHT));
-        assertTrue("0:00 should be NIGHT", isTimeInPeriod(0, SceneData.TimeOfDay.NIGHT));
-        assertTrue("3:00 should be NIGHT", isTimeInPeriod(3, SceneData.TimeOfDay.NIGHT));
+    public void isSceneAvailable_OvernightRange_OutsideRange() {
+        Scene scene = createSceneWithRange("night", 1320, 360);
+        assertFalse("06:01 (361) not in overnight 22:00-06:00", ScenePicker.isSceneAvailable(scene, 361));
+        assertFalse("12:00 (720) not in overnight 22:00-06:00", ScenePicker.isSceneAvailable(scene, 720));
+        assertFalse("21:59 (1319) not in overnight 22:00-06:00", ScenePicker.isSceneAvailable(scene, 1319));
+    }
+
+    @Test
+    public void isSceneAvailable_AlwaysActive_DefaultRange() {
+        Scene scene = new Scene("always");
+        // Default range is 0-1439 (always active)
+        assertTrue("00:00 (0) available by default", ScenePicker.isSceneAvailable(scene, 0));
+        assertTrue("12:00 (720) available by default", ScenePicker.isSceneAvailable(scene, 720));
+        assertTrue("23:59 (1439) available by default", ScenePicker.isSceneAvailable(scene, 1439));
+    }
+
+    @Test
+    public void isSceneAvailable_MinuteGranularity() {
+        // 09:15 = 555 min, 09:45 = 585 min
+        Scene scene = createSceneWithRange("short", 555, 585);
+        assertTrue("09:15 (555) in 09:15-09:45", ScenePicker.isSceneAvailable(scene, 555));
+        assertTrue("09:30 (570) in 09:15-09:45", ScenePicker.isSceneAvailable(scene, 570));
+        assertTrue("09:45 (585) in 09:15-09:45", ScenePicker.isSceneAvailable(scene, 585));
+        assertFalse("09:14 (554) not in 09:15-09:45", ScenePicker.isSceneAvailable(scene, 554));
+        assertFalse("09:46 (586) not in 09:15-09:45", ScenePicker.isSceneAvailable(scene, 586));
     }
 
     @Test
@@ -177,20 +207,13 @@ public class ScenePickerTest {
         assertNotNull("Second picker should return scene", next2);
     }
 
-    private boolean isTimeInPeriod(int hour, SceneData.TimeOfDay expectedPeriod) {
-        SceneData.TimeOfDay actual;
+    // ==================== Helper Methods ====================
 
-        if (hour >= 6 && hour < 9) {
-            actual = SceneData.TimeOfDay.DAWN;
-        } else if (hour >= 9 && hour < 18) {
-            actual = SceneData.TimeOfDay.DAY;
-        } else if (hour >= 18 && hour < 21) {
-            actual = SceneData.TimeOfDay.SUNSET;
-        } else {
-            actual = SceneData.TimeOfDay.NIGHT;
-        }
-
-        return actual == expectedPeriod;
+    private Scene createSceneWithRange(String name, int startTime, int endTime) {
+        Scene scene = new Scene(name);
+        scene.setStartTime(startTime);
+        scene.setEndTime(endTime);
+        return scene;
     }
 }
 

@@ -69,10 +69,10 @@ public class SceneFileManager {
     }
 
     /**
-     * Load all scene files and cache their metadata (filename and timeOfDay).
+     * Load all scene files and cache their metadata (filename and time range).
      * This is more efficient than loading individual files on-demand.
      *
-     * @return a Map of filename -> timeOfDay string (e.g., "DAWN", "DAY", "SUNSET", "NIGHT")
+     * @return a Map of filename -> time range string (e.g., "0-23", "9-18")
      */
     public Map<String, String> loadSceneMetadata() {
         Map<String, String> sceneMetadata = new HashMap<>();
@@ -86,15 +86,15 @@ public class SceneFileManager {
             for (File sceneFile : sceneFiles) {
                 try (java.io.FileReader reader = new java.io.FileReader(sceneFile)) {
                     SceneData sceneData = gson.fromJson(reader, SceneData.class);
-                    String timeOfDayStr = (sceneData != null && sceneData.timeOfDay != null)
-                        ? sceneData.timeOfDay.toString()
-                        : "DAY"; // Default to DAY if not found
-                    sceneMetadata.put(sceneFile.getName(), timeOfDayStr);
-                    TimberLog.d(TAG, "Loaded metadata for " + sceneFile.getName() + ": " + timeOfDayStr);
+                    String timeRangeStr = (sceneData != null)
+                        ? formatMinutes(sceneData.startTime) + "-" + formatMinutes(sceneData.endTime)
+                        : "00:00-23:59"; // Default if not found
+                    sceneMetadata.put(sceneFile.getName(), timeRangeStr);
+                    TimberLog.d(TAG, "Loaded metadata for " + sceneFile.getName() + ": " + timeRangeStr);
                 } catch (IOException e) {
                     TimberLog.w(TAG, "Error loading metadata for scene " + sceneFile.getName() + ": " + e.getMessage());
                     // Put a default value if loading fails
-                    sceneMetadata.put(sceneFile.getName(), "DAY");
+                    sceneMetadata.put(sceneFile.getName(), "00:00-23:59");
                 }
             }
         }
@@ -102,6 +102,16 @@ public class SceneFileManager {
         TimberLog.d(TAG, "Loaded metadata for " + sceneMetadata.size() + "scenes");
         return sceneMetadata;
     }
+    /**
+     * Format a minutes-of-day value (0–1439) as "HH:MM".
+     */
+    private static String formatMinutes(int totalMinutes) {
+        totalMinutes = Math.max(0, Math.min(1439, totalMinutes));
+        int h = totalMinutes / 60;
+        int m = totalMinutes % 60;
+        return String.format(java.util.Locale.US, "%02d:%02d", h, m);
+    }
+
     public String[] loadAvailableSceneFiles() {
         // If no directory is configured, use fallback directory and copy from bundle
         if (scenesDirectoryUri == null) {
@@ -632,7 +642,8 @@ public class SceneFileManager {
         // Create SceneData object with current sprite values
         SceneData sceneData = new SceneData();
         sceneData.xFocus = scene.getXFocus();
-        sceneData.timeOfDay = scene.getTimeOfDay();
+        sceneData.startTime = scene.getStartTime();
+        sceneData.endTime = scene.getEndTime();
 
         // Create SpriteData array from current sprites
         List<SpriteData> spriteDatas = new ArrayList<>();
@@ -696,7 +707,8 @@ public class SceneFileManager {
         // Create SceneData object with current sprite values
         SceneData sceneData = new SceneData();
         sceneData.xFocus = scene.getXFocus();
-        sceneData.timeOfDay = scene.getTimeOfDay();
+        sceneData.startTime = scene.getStartTime();
+        sceneData.endTime = scene.getEndTime();
 
         // Create SpriteData array from current sprites
         List<SpriteData> spriteDatas = new ArrayList<>();

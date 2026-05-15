@@ -8,22 +8,21 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.scene.models.SceneData;
 
 import java.util.List;
 import java.util.Map;
 
 public class SceneListExpandableAdapter extends BaseExpandableListAdapter {
     private final Context context;
-    private final List<SceneData.TimeOfDay> groups;
-    private final Map<SceneData.TimeOfDay, List<String>> children;
+    private final List<String> groups;
+    private final Map<String, List<String>> children;
 
     /**
      * Constructor for the expandable adapter
      */
     public SceneListExpandableAdapter(Context context,
-                                      List<SceneData.TimeOfDay> groups,
-                                      Map<SceneData.TimeOfDay, List<String>> children,
+                                      List<String> groups,
+                                      Map<String, List<String>> children,
                                       Map<String, String> sceneMetadata) {
         this.context = context;
         this.groups = groups;
@@ -37,8 +36,8 @@ public class SceneListExpandableAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        SceneData.TimeOfDay timeOfDay = groups.get(groupPosition);
-        List<String> sceneList = children.get(timeOfDay);
+        String group = groups.get(groupPosition);
+        List<String> sceneList = children.get(group);
         return sceneList != null ? sceneList.size() : 0;
     }
 
@@ -49,8 +48,8 @@ public class SceneListExpandableAdapter extends BaseExpandableListAdapter {
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        SceneData.TimeOfDay timeOfDay = groups.get(groupPosition);
-        List<String> sceneList = children.get(timeOfDay);
+        String group = groups.get(groupPosition);
+        List<String> sceneList = children.get(group);
         if (sceneList != null) {
             return sceneList.get(childPosition);
         }
@@ -81,11 +80,11 @@ public class SceneListExpandableAdapter extends BaseExpandableListAdapter {
 
         TextView groupTitle = (TextView) convertView;
 
-        SceneData.TimeOfDay timeOfDay = groups.get(groupPosition);
-        List<String> sceneList = children.get(timeOfDay);
+        String group = groups.get(groupPosition);
+        List<String> sceneList = children.get(group);
         int sceneCount = sceneList != null ? sceneList.size() : 0;
 
-        groupTitle.setText(timeOfDay.toString() + " (" + sceneCount + ")");
+        groupTitle.setText(group + " (" + sceneCount + ")");
 
         return convertView;
     }
@@ -99,8 +98,8 @@ public class SceneListExpandableAdapter extends BaseExpandableListAdapter {
 
         TextView sceneNameTextView = (TextView) convertView;
 
-        SceneData.TimeOfDay timeOfDay = groups.get(groupPosition);
-        List<String> sceneList = children.get(timeOfDay);
+        String group = groups.get(groupPosition);
+        List<String> sceneList = children.get(group);
         if (sceneList == null || childPosition >= sceneList.size()) {
             return convertView;
         }
@@ -125,8 +124,7 @@ public class SceneListExpandableAdapter extends BaseExpandableListAdapter {
      * @param groups the list of TimeOfDay groups
      * @param children the map of TimeOfDay to scene filenames
      */
-    public void updateData(List<SceneData.TimeOfDay> groups,
-                          Map<SceneData.TimeOfDay, List<String>> children) {
+    public void updateData(List<String> groups, Map<String, List<String>> children) {
         this.groups.clear();
         this.groups.addAll(groups);
         this.children.clear();
@@ -134,4 +132,3 @@ public class SceneListExpandableAdapter extends BaseExpandableListAdapter {
         notifyDataSetChanged();
     }
 }
-

@@ -23,7 +23,8 @@ public class Scene implements Parcelable {
     private boolean isInitialized = false;
     private boolean isGyroScaled = false;
     private float xFocus = 0.5f; // Default to center; represents the x-position to focus on (0.0 = left, 0.5 = center, 1.0 = right)
-    public SceneData.TimeOfDay timeOfDay = SceneData.TimeOfDay.DAY; // Time of day for this scene
+    private int startTime = 0;    // Start time as minutes-of-day (0–1439) when this scene is available
+    private int endTime = 1439;   // End time as minutes-of-day (0–1439, inclusive) when this scene is available
 
     public Scene(String sceneName) {
         this.sceneName = sceneName;
@@ -54,17 +55,31 @@ public class Scene implements Parcelable {
     }
 
     /**
-     * Get the time of day for this scene.
+     * Get the start time (minutes-of-day, 0–1439) when this scene becomes available.
      */
-    public SceneData.TimeOfDay getTimeOfDay() {
-        return timeOfDay;
+    public int getStartTime() {
+        return startTime;
     }
 
     /**
-     * Set the time of day for this scene.
+     * Set the start time (minutes-of-day, 0–1439) when this scene becomes available.
      */
-    public void setTimeOfDay(SceneData.TimeOfDay timeOfDay) {
-        this.timeOfDay = timeOfDay;
+    public void setStartTime(int startTime) {
+        this.startTime = Math.max(0, Math.min(1439, startTime));
+    }
+
+    /**
+     * Get the end time (minutes-of-day, 0–1439, inclusive) until which this scene is available.
+     */
+    public int getEndTime() {
+        return endTime;
+    }
+
+    /**
+     * Set the end time (minutes-of-day, 0–1439, inclusive) until which this scene is available.
+     */
+    public void setEndTime(int endTime) {
+        this.endTime = Math.max(0, Math.min(1439, endTime));
     }
 
     /**
@@ -366,9 +381,9 @@ public class Scene implements Parcelable {
         this.isInitialized = in.readInt() != 0;
         this.isGyroScaled = in.readInt() != 0;
 
-        // Read timeOfDay enum
-        String timeOfDayStr = in.readString();
-        this.timeOfDay = timeOfDayStr != null ? SceneData.TimeOfDay.valueOf(timeOfDayStr) : SceneData.TimeOfDay.DAY;
+        // Read startTime and endTime
+        this.startTime = in.readInt();
+        this.endTime = in.readInt();
 
         // Reconstruct synchronized list
         List<Sprite> spriteList = new ArrayList<>();
@@ -383,8 +398,9 @@ public class Scene implements Parcelable {
         // Use writeInt instead of writeBoolean for API 24 compatibility (writeBoolean requires API 29)
         dest.writeInt(isInitialized ? 1 : 0);
         dest.writeInt(isGyroScaled ? 1 : 0);
-        // Write timeOfDay enum as string
-        dest.writeString(timeOfDay != null ? timeOfDay.toString() : SceneData.TimeOfDay.DAY.toString());
+        // Write startTime and endTime
+        dest.writeInt(startTime);
+        dest.writeInt(endTime);
         dest.writeList(new ArrayList<>(sprites));
     }
 

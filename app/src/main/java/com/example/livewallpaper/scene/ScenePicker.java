@@ -2,7 +2,6 @@ package com.example.livewallpaper.scene;
 
 import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.scene.models.Scene;
-import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.sensors.ConfigManager;
 
 import java.util.ArrayList;
@@ -12,14 +11,9 @@ import java.util.Objects;
 import java.util.Random;
 
 /**
- * Selects the next scene based on the current time of day and scene's timeOfDay properties.
- * Uses device time to determine which time-of-day period we're in, then filters scenes accordingly.
- *
- * Time periods:
- * - Dawn: 06:00 - 09:00
- * - Day: 09:00 - 18:00
- * - Sunset: 18:00 - 21:00
- * - Night: 21:00 - 06:00
+ * Selects the next scene based on the current time of day and the scene's startTime/endTime range.
+ * A scene is available when the current minute-of-day (0–1439) falls within [startTime, endTime].
+ * For overnight ranges (e.g. startTime=1320 [22:00], endTime=360 [06:00]), the check wraps around midnight.
  */
 public class ScenePicker {
     private static final String TAG = "ScenePicker";
@@ -39,8 +33,8 @@ public class ScenePicker {
 
     /**
      * Get the next scene based on the current time of day.
-     * Filters scenes to only those matching the current time period, then selects one randomly.
-     * If no scenes match the current time period, returns a random scene from all scenes.
+     * Filters scenes to only those whose time range covers the current hour, then selects one randomly.
+     * If no scenes match, returns a random scene from all scenes.
      *
      * @return the next scene to display
      */
@@ -49,64 +43,62 @@ public class ScenePicker {
             throw new IllegalStateException("No scenes available");
         }
 
-        SceneData.TimeOfDay currentTimeOfDay = getOverriddenTimeOfDay();
-        TimberLog.d(TAG, "Effective time of day: " + currentTimeOfDay);
+        int currentMinute = getCurrentMinuteOfDay();
+        TimberLog.d(TAG, "Current minute-of-day for scene selection: " + currentMinute);
 
-        // Filter scenes to those matching the current time of day
+        // Filter scenes whose time range covers the current minute of day
         List<Scene> viableScenes = new ArrayList<>();
         for (Scene scene : scenes) {
-            if (scene.getTimeOfDay() == currentTimeOfDay && !Objects.equals(scene.getSceneName(), currentScene.getSceneName())) {
+            if (isSceneAvailable(scene, currentMinute) && !Objects.equals(scene.getSceneName(), currentScene.getSceneName())) {
                 viableScenes.add(scene);
             }
         }
 
-        // If we have viable scenes for this time period, pick one randomly
+        // If we have viable scenes for this time, pick one randomly
         if (!viableScenes.isEmpty()) {
             Scene selected = viableScenes.get(random.nextInt(viableScenes.size()));
-            TimberLog.d(TAG, "Selected scene for " + currentTimeOfDay + ": " + selected.getSceneName());
+            TimberLog.d(TAG, "Selected scene for minute " + currentMinute + ": " + selected.getSceneName());
             return selected;
         }
 
         // Fallback: if no scenes match, pick a random scene from all scenes
-        TimberLog.w(TAG, "No scenes found for " + currentTimeOfDay + ", selecting random scene");
+        TimberLog.w(TAG, "No scenes found for minute " + currentMinute + ", selecting random scene");
         return scenes.get(random.nextInt(scenes.size()));
     }
 
     /**
-     * Determine the time of day, respecting the override in MotionConfig if set.
-     *
-     * @return the TimeOfDay to use for scene selection
+     * Check whether a scene is available at the given minute-of-day (0–1439).
+     * Handles both normal ranges (e.g. 540–1080 for 09:00–18:00) and overnight ranges
+     * (e.g. 1320–360 for 22:00–06:00).
      */
-    private SceneData.TimeOfDay getOverriddenTimeOfDay() {
-        String override = ConfigManager.getTimeOfDayOverride();
-        if (override != null && !override.equals(ConfigManager.OVERRIDE_AUTO)) {
-            try {
-                return SceneData.TimeOfDay.valueOf(override);
-            } catch (IllegalArgumentException e) {
-                TimberLog.e(TAG, "Invalid time of day override: " + override, e);
-            }
+    public static boolean isSceneAvailable(Scene scene, int minuteOfDay) {
+        int start = scene.getStartTime();
+        int end = scene.getEndTime();
+        if (start <= end) {
+            return minuteOfDay >= start && minuteOfDay <= end;
+        } else {
+            // Overnight: available when minuteOfDay >= start OR minuteOfDay <= end
+            return minuteOfDay >= start || minuteOfDay <= end;
         }
-        return getCurrentTimeOfDay();
     }
 
     /**
-     * Determine the current time of day based on the device's current time.
-     *
-     * @return the TimeOfDay that matches the current hour
+     * Get the current minute-of-day (0–1439), respecting the override in ConfigManager if set.
+     * The override can be a numeric minute-of-day string (e.g. "840" for 14:00) or ConfigManager.OVERRIDE_AUTO.
      */
-    private SceneData.TimeOfDay getCurrentTimeOfDay() {
-        Calendar calendar = Calendar.getInstance();
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-
-        if (hour >= 6 && hour < 9) {
-            return SceneData.TimeOfDay.DAWN;
-        } else if (hour >= 9 && hour < 18) {
-            return SceneData.TimeOfDay.DAY;
-        } else if (hour >= 18 && hour < 21) {
-            return SceneData.TimeOfDay.SUNSET;
-        } else {
-            // 21:00 - 06:00
-            return SceneData.TimeOfDay.NIGHT;
+    private int getCurrentMinuteOfDay() {
+        String override = ConfigManager.getTimeOfDayOverride();
+        if (override != null && !override.equals(ConfigManager.OVERRIDE_AUTO)) {
+            try {
+                int minute = Integer.parseInt(override);
+                if (minute >= 0 && minute <= 1439) {
+                    return minute;
+                }
+            } catch (NumberFormatException e) {
+                TimberLog.e(TAG, "Invalid minute-of-day override: " + override, e);
+            }
         }
+        Calendar cal = Calendar.getInstance();
+        return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
     }
 }

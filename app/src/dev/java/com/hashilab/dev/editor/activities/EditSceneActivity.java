@@ -28,7 +28,6 @@ import androidx.appcompat.widget.PopupMenu;
 
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.scene.managers.EditSceneManager;
-import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.scene.models.Sprite;
 import com.example.livewallpaper.scene.models.SpriteData;
 import com.example.livewallpaper.sensors.MotionConfig;
@@ -785,7 +784,9 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
     }
 
     /**
-     * Show dialog to set the time of day for the scene.
+     * Show dialog to set the available time range for the scene using HH:MM pickers.
+     * Times are stored as minutes-of-day (0–1439). For overnight ranges, set start after end
+     * (e.g. start=22:00, end=06:00).
      */
     private void showSetTimeDialog() {
         if (renderer == null || renderer.getCurrentScene() == null) {
@@ -793,74 +794,113 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             return;
         }
 
+        com.example.livewallpaper.scene.models.Scene currentScene = renderer.getCurrentScene();
+        int currentStart = currentScene.getStartTime();
+        int currentEnd = currentScene.getEndTime();
+
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int dp8 = (int)(8 * getResources().getDisplayMetrics().density);
+        int dp16 = dp8 * 2;
+        layout.setPadding(dp16, dp16, dp16, dp8);
+
+        // --- Start time row ---
+        android.widget.TextView startLabel = new android.widget.TextView(this);
+        startLabel.setText("Start time:");
+        layout.addView(startLabel);
+
+        android.widget.LinearLayout startRow = new android.widget.LinearLayout(this);
+        startRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        startRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        final android.widget.NumberPicker startHourPicker = new android.widget.NumberPicker(this);
+        startHourPicker.setMinValue(0);
+        startHourPicker.setMaxValue(23);
+        startHourPicker.setValue(currentStart / 60);
+        startHourPicker.setFormatter(value -> String.format(Locale.US, "%02d", value));
+
+        android.widget.TextView colonStart = new android.widget.TextView(this);
+        colonStart.setText(":");
+        colonStart.setPadding(dp8, 0, dp8, 0);
+
+        final android.widget.NumberPicker startMinutePicker = new android.widget.NumberPicker(this);
+        startMinutePicker.setMinValue(0);
+        startMinutePicker.setMaxValue(59);
+        startMinutePicker.setValue(currentStart % 60);
+        startMinutePicker.setFormatter(value -> String.format(Locale.US, "%02d", value));
+
+        startRow.addView(startHourPicker);
+        startRow.addView(colonStart);
+        startRow.addView(startMinutePicker);
+        layout.addView(startRow);
+
+        // --- End time row ---
+        android.widget.TextView endLabel = new android.widget.TextView(this);
+        endLabel.setText("End time (inclusive):");
+        android.widget.LinearLayout.LayoutParams endLabelParams =
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        endLabelParams.topMargin = dp8;
+        endLabel.setLayoutParams(endLabelParams);
+        layout.addView(endLabel);
+
+        android.widget.LinearLayout endRow = new android.widget.LinearLayout(this);
+        endRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        endRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        final android.widget.NumberPicker endHourPicker = new android.widget.NumberPicker(this);
+        endHourPicker.setMinValue(0);
+        endHourPicker.setMaxValue(23);
+        endHourPicker.setValue(currentEnd / 60);
+        endHourPicker.setFormatter(value -> String.format(Locale.US, "%02d", value));
+
+        android.widget.TextView colonEnd = new android.widget.TextView(this);
+        colonEnd.setText(":");
+        colonEnd.setPadding(dp8, 0, dp8, 0);
+
+        final android.widget.NumberPicker endMinutePicker = new android.widget.NumberPicker(this);
+        endMinutePicker.setMinValue(0);
+        endMinutePicker.setMaxValue(59);
+        endMinutePicker.setValue(currentEnd % 60);
+        endMinutePicker.setFormatter(value -> String.format(Locale.US, "%02d", value));
+
+        endRow.addView(endHourPicker);
+        endRow.addView(colonEnd);
+        endRow.addView(endMinutePicker);
+        layout.addView(endRow);
+
+        // Hint
+        android.widget.TextView hint = new android.widget.TextView(this);
+        hint.setText("Tip: for overnight (e.g. 22:00 to 06:00), set start time after end time.");
+        hint.setTextSize(11f);
+        android.widget.LinearLayout.LayoutParams hintParams =
+                new android.widget.LinearLayout.LayoutParams(
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                        android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        hintParams.topMargin = dp8;
+        hint.setLayoutParams(hintParams);
+        layout.addView(hint);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Set Time of Day");
-
-        // Get the current time of day value
-        SceneData.TimeOfDay currentTimeOfDay =
-            renderer.getCurrentScene().timeOfDay;
-
-        // Create the time of day options
-        SceneData.TimeOfDay[] timeValues =
-            SceneData.TimeOfDay.values();
-        String[] timeDisplayNames = new String[timeValues.length];
-        int currentSelection = 0;
-
-        for (int i = 0; i < timeValues.length; i++) {
-            timeDisplayNames[i] = timeValues[i].toString();
-            if (timeValues[i] == currentTimeOfDay) {
-                currentSelection = i;
-            }
-        }
-
-        // Create a spinner-like selector using a single choice list dialog
-        builder.setSingleChoiceItems(timeDisplayNames, currentSelection, (dialog, which) -> {
-            // Selection is handled in the positive button click
-        });
-
-        final int[] selectedIndex = {currentSelection};
-        builder.setOnDismissListener(dialogInterface -> {
-            // Store the selected index when dialog is dismissed
-        });
+        builder.setTitle("Set Available Time Range");
+        builder.setView(layout);
 
         builder.setPositiveButton("Save", (dialog, which) -> {
-            // Get the selected time of day
-            SceneData.TimeOfDay selectedTime =
-                timeValues[selectedIndex[0]];
+            int newStart = startHourPicker.getValue() * 60 + startMinutePicker.getValue();
+            int newEnd = endHourPicker.getValue() * 60 + endMinutePicker.getValue();
 
-            // Update the scene's time of day
-            renderer.getCurrentScene().timeOfDay = selectedTime;
-            TimberLog.d(TAG, "Scene time of day changed to: " + selectedTime);
+            currentScene.setStartTime(newStart);
+            currentScene.setEndTime(newEnd);
 
-            Toast.makeText(EditSceneActivity.this,
-                "Time of day set to " + selectedTime,
-                Toast.LENGTH_SHORT).show();
+            String startStr = String.format(Locale.US, "%02d:%02d", newStart / 60, newStart % 60);
+            String endStr = String.format(Locale.US, "%02d:%02d", newEnd / 60, newEnd % 60);
+            TimberLog.d(TAG, "Scene time range changed to: " + startStr + " – " + endStr);
+            Toast.makeText(this, "Time range set to " + startStr + " – " + endStr, Toast.LENGTH_SHORT).show();
         });
 
-        builder.setNegativeButton("Cancel", (dialog, which) -> {
-            // Do nothing, just close the dialog
-        });
-
-        // To properly capture the selected item, we need to create the dialog and
-        // override the click listener to capture the selection
-        AlertDialog dialog = builder.create();
-        dialog.setOnShowListener(dialogInterface -> {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-                int selectedItem = ((AlertDialog) dialogInterface).getListView().getCheckedItemPosition();
-                if (selectedItem >= 0) {
-                    selectedIndex[0] = selectedItem;
-                    SceneData.TimeOfDay selectedTime =
-                        timeValues[selectedIndex[0]];
-                    renderer.getCurrentScene().timeOfDay = selectedTime;
-                    TimberLog.d(TAG, "Scene time of day changed to: " + selectedTime);
-                    Toast.makeText(EditSceneActivity.this,
-                        "Time of day set to " + selectedTime,
-                        Toast.LENGTH_SHORT).show();
-                    dialog.dismiss();
-                }
-            });
-        });
-        dialog.show();
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 
     /**

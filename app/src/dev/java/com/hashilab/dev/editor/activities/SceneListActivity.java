@@ -33,9 +33,9 @@ public class SceneListActivity extends AppCompatActivity {
     private SceneListExpandableAdapter adapter;
     private ExpandableListView scenesList;
 
-    // Data structures for grouping scenes by TimeOfDay
-    private List<SceneData.TimeOfDay> timeOfDayGroups;
-    private Map<SceneData.TimeOfDay, List<String>> scenesGroupedByTimeOfDay;
+    // Data structures for scene list display
+    private List<String> sceneGroups;
+    private Map<String, List<String>> scenesGroupedByKey;
 
     // Activity result launcher for opening EditSceneActivity
     private final ActivityResultLauncher<Intent> editSceneActivityLauncher =
@@ -51,7 +51,7 @@ public class SceneListActivity extends AppCompatActivity {
 
                 // Update adapter with new grouped data
                 if (adapter != null) {
-                    adapter.updateData(timeOfDayGroups, scenesGroupedByTimeOfDay);
+                    adapter.updateData(sceneGroups, scenesGroupedByKey);
                 }
 
                 // Also refresh the wallpaper since scene was modified
@@ -89,13 +89,13 @@ public class SceneListActivity extends AppCompatActivity {
             buildGroupedSceneData(sceneFileNames, sceneMetadata);
 
             // Create and set the expandable adapter
-            adapter = new SceneListExpandableAdapter(this, timeOfDayGroups, scenesGroupedByTimeOfDay, sceneMetadata);
+            adapter = new SceneListExpandableAdapter(this, sceneGroups, scenesGroupedByKey, sceneMetadata);
             scenesList.setAdapter(adapter);
 
             // Set up click listener for child items (to edit scene)
             scenesList.setOnChildClickListener((parent, v, groupPosition, childPosition, id) -> {
-                SceneData.TimeOfDay timeOfDay = timeOfDayGroups.get(groupPosition);
-                List<String> sceneList = scenesGroupedByTimeOfDay.get(timeOfDay);
+                String group = sceneGroups.get(groupPosition);
+                List<String> sceneList = scenesGroupedByKey.get(group);
                 if (sceneList != null && childPosition < sceneList.size()) {
                     String sceneFileName = sceneList.get(childPosition);
                     TimberLog.d(TAG, "Scene selected for editing: " + sceneFileName);
@@ -117,8 +117,8 @@ public class SceneListActivity extends AppCompatActivity {
                         int groupPosition = ExpandableListView.getPackedPositionGroup(info.packedPosition);
                         int childPosition = ExpandableListView.getPackedPositionChild(info.packedPosition);
 
-                        SceneData.TimeOfDay timeOfDay = timeOfDayGroups.get(groupPosition);
-                        List<String> sceneList = scenesGroupedByTimeOfDay.get(timeOfDay);
+                        String group = sceneGroups.get(groupPosition);
+                        List<String> sceneList = scenesGroupedByKey.get(group);
 
                         if (sceneList != null && childPosition < sceneList.size()) {
                             String sceneFileName = sceneList.get(childPosition);
@@ -146,43 +146,18 @@ public class SceneListActivity extends AppCompatActivity {
     }
 
     /**
-     * Build a data structure that groups scenes by TimeOfDay.
-     * Ensures all TimeOfDay categories are present, even if empty.
+     * Build a data structure that lists all scenes under a single "All Scenes" group.
      */
     private void buildGroupedSceneData(List<String> sceneFileNames, Map<String, String> sceneMetadata) {
-        // Initialize the groups list with all TimeOfDay values
-        timeOfDayGroups = new ArrayList<>();
-        for (SceneData.TimeOfDay timeOfDay : SceneData.TimeOfDay.values()) {
-            timeOfDayGroups.add(timeOfDay);
-        }
+        final String ALL_SCENES = "All Scenes";
 
-        // Initialize the map to hold scenes for each TimeOfDay
-        scenesGroupedByTimeOfDay = new HashMap<>();
-        for (SceneData.TimeOfDay timeOfDay : SceneData.TimeOfDay.values()) {
-            scenesGroupedByTimeOfDay.put(timeOfDay, new ArrayList<>());
-        }
+        sceneGroups = new ArrayList<>();
+        sceneGroups.add(ALL_SCENES);
 
-        // Group the scenes by their TimeOfDay
-        for (String fileName : sceneFileNames) {
-            String timeOfDayStr = sceneMetadata != null ? sceneMetadata.get(fileName) : null;
-
-            // Default to DAY if metadata is missing
-            SceneData.TimeOfDay timeOfDay = SceneData.TimeOfDay.DAY;
-            if (timeOfDayStr != null && !timeOfDayStr.isEmpty()) {
-                try {
-                    timeOfDay = SceneData.TimeOfDay.valueOf(timeOfDayStr);
-                } catch (IllegalArgumentException e) {
-                    TimberLog.w(TAG, "Unknown TimeOfDay value: " + timeOfDayStr + ", defaulting to DAY");
-                }
-            }
-
-            scenesGroupedByTimeOfDay.get(timeOfDay).add(fileName);
-        }
-
-        // Sort scenes within each group for consistent display
-        for (List<String> sceneList : scenesGroupedByTimeOfDay.values()) {
-            java.util.Collections.sort(sceneList);
-        }
+        scenesGroupedByKey = new HashMap<>();
+        List<String> allScenes = new ArrayList<>(sceneFileNames);
+        java.util.Collections.sort(allScenes);
+        scenesGroupedByKey.put(ALL_SCENES, allScenes);
     }
 
     /**
@@ -255,7 +230,7 @@ public class SceneListActivity extends AppCompatActivity {
 
             // Update adapter with new grouped data
             if (adapter != null) {
-                adapter.updateData(timeOfDayGroups, scenesGroupedByTimeOfDay);
+                adapter.updateData(sceneGroups, scenesGroupedByKey);
             }
 
             Toast.makeText(this, "Scene deleted: " + sceneFileName, Toast.LENGTH_SHORT).show();
@@ -321,7 +296,7 @@ public class SceneListActivity extends AppCompatActivity {
 
             // Update adapter with new grouped data
             if (adapter != null) {
-                adapter.updateData(timeOfDayGroups, scenesGroupedByTimeOfDay);
+                adapter.updateData(sceneGroups, scenesGroupedByKey);
             }
 
             // Re-expand all groups

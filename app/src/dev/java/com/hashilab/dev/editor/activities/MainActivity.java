@@ -119,16 +119,23 @@ public class MainActivity extends AppCompatActivity {
 
         List<String> options = new ArrayList<>();
         options.add(MotionConfig.OVERRIDE_AUTO);
-        options.add("DAWN");
-        options.add("DAY");
-        options.add("SUNSET");
-        options.add("NIGHT");
+        // Add every 30-minute interval as minute-of-day values, displayed as HH:MM
+        for (int m = 0; m < 1440; m += 30) {
+            options.add(String.valueOf(m));
+        }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, options);
+        // Display labels: "Auto", "00:00", "00:30", "01:00", ...
+        List<String> displayLabels = new ArrayList<>();
+        displayLabels.add(MotionConfig.OVERRIDE_AUTO);
+        for (int m = 0; m < 1440; m += 30) {
+            displayLabels.add(String.format(java.util.Locale.US, "%02d:%02d", m / 60, m % 60));
+        }
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, displayLabels);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         timeSpinner.setAdapter(adapter);
 
-        // Set initial selection
+        // Set initial selection based on stored override value
         String currentOverride = MotionConfig.getTimeOfDayOverride();
         int initialPosition = options.indexOf(currentOverride);
         if (initialPosition >= 0) {
@@ -138,12 +145,13 @@ public class MainActivity extends AppCompatActivity {
         timeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // Map display position back to raw minute value
                 String selected = options.get(position);
                 if (!selected.equals(MotionConfig.getTimeOfDayOverride())) {
                     MotionConfig.setTimeOfDayOverride(selected);
                     TimberLog.d(TAG, "Time of day override changed to: " + selected);
-                    Toast.makeText(MainActivity.this, "Time override: " + selected, Toast.LENGTH_SHORT).show();
-                    
+                    Toast.makeText(MainActivity.this, "Time override: " + displayLabels.get(position), Toast.LENGTH_SHORT).show();
+
                     // Trigger an immediate scene cycle in the wallpaper if it's running
                     GLWallpaperService.triggerSceneCycle();
                 }

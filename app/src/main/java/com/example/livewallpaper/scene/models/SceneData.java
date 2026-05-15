@@ -5,19 +5,12 @@ package com.example.livewallpaper.scene.models;
  * This class is used for JSON serialization/deserialization with Gson.
  */
 public class SceneData {
-    /**
-     * Enum representing different times of day in the scene.
-     */
-    public enum TimeOfDay {
-        DAWN,
-        DAY,
-        SUNSET,
-        NIGHT
-    }
-
     public String sceneName;
     public SpriteData[] sprites;
     public float xFocus = 0.5f; // Default to center if not specified in JSON
-    public TimeOfDay timeOfDay = TimeOfDay.DAY; // Default to DAY if not specified in JSON
+    /** Start time as minutes-of-day (0–1439, inclusive) when this scene becomes available. Defaults to 0 (00:00). */
+    public int startTime = 0;
+    /** End time as minutes-of-day (0–1439, inclusive) until which this scene is available. Defaults to 1439 (23:59). */
+    public int endTime = 1439;
 }
 

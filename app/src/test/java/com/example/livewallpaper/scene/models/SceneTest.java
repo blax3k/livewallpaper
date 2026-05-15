@@ -32,7 +32,8 @@ public class SceneTest {
     @Test
     public void constructor_InitializesWithDefaultValues() {
         assertEquals(0.5f, scene.getXFocus(), 0.001f);
-        assertEquals(SceneData.TimeOfDay.DAY, scene.getTimeOfDay());
+        assertEquals(0, scene.getStartTime());
+        assertEquals(1439, scene.getEndTime());
         assertNotNull("sprites list should not be null", scene.getSprites());
         assertEquals("sprites list should be empty initially", 0, scene.getSprites().size());
     }
@@ -81,31 +82,58 @@ public class SceneTest {
         assertEquals(1.0f, scene.getXFocus(), 0.001f);
     }
 
-    // ==================== TimeOfDay Property Tests ====================
+    // ==================== Time Range Property Tests ====================
 
     @Test
-    public void timeOfDayProperty_HasDefaultValue() {
-        assertEquals(SceneData.TimeOfDay.DAY, scene.getTimeOfDay());
+    public void startTimeProperty_HasDefaultValue() {
+        assertEquals(0, scene.getStartTime());
     }
 
     @Test
-    public void setTimeOfDay_UpdatesTimeOfDay() {
-        scene.setTimeOfDay(SceneData.TimeOfDay.DAWN);
-        assertEquals(SceneData.TimeOfDay.DAWN, scene.getTimeOfDay());
-
-        scene.setTimeOfDay(SceneData.TimeOfDay.SUNSET);
-        assertEquals(SceneData.TimeOfDay.SUNSET, scene.getTimeOfDay());
-
-        scene.setTimeOfDay(SceneData.TimeOfDay.NIGHT);
-        assertEquals(SceneData.TimeOfDay.NIGHT, scene.getTimeOfDay());
+    public void endTimeProperty_HasDefaultValue() {
+        assertEquals(1439, scene.getEndTime());
     }
 
     @Test
-    public void setTimeOfDay_AllEnumValues() {
-        for (SceneData.TimeOfDay timeOfDay : SceneData.TimeOfDay.values()) {
-            scene.setTimeOfDay(timeOfDay);
-            assertEquals(timeOfDay, scene.getTimeOfDay());
-        }
+    public void setStartTime_UpdatesStartTime() {
+        scene.setStartTime(360);   // 06:00
+        assertEquals(360, scene.getStartTime());
+
+        scene.setStartTime(0);
+        assertEquals(0, scene.getStartTime());
+
+        scene.setStartTime(1439);
+        assertEquals(1439, scene.getStartTime());
+    }
+
+    @Test
+    public void setEndTime_UpdatesEndTime() {
+        scene.setEndTime(1080);  // 18:00
+        assertEquals(1080, scene.getEndTime());
+
+        scene.setEndTime(0);
+        assertEquals(0, scene.getEndTime());
+
+        scene.setEndTime(1439);
+        assertEquals(1439, scene.getEndTime());
+    }
+
+    @Test
+    public void setStartTime_ClampsOutOfRangeValues() {
+        scene.setStartTime(-1);
+        assertEquals(0, scene.getStartTime());
+
+        scene.setStartTime(1440);
+        assertEquals(1439, scene.getStartTime());
+    }
+
+    @Test
+    public void setEndTime_ClampsOutOfRangeValues() {
+        scene.setEndTime(-1);
+        assertEquals(0, scene.getEndTime());
+
+        scene.setEndTime(1440);
+        assertEquals(1439, scene.getEndTime());
     }
 
     // ==================== Sprite Management Tests ====================
@@ -261,7 +289,8 @@ public class SceneTest {
     @Test
     public void sceneWithComplexConfiguration() {
         scene.setXFocus(0.3f);
-        scene.setTimeOfDay(SceneData.TimeOfDay.SUNSET);
+        scene.setStartTime(1080);  // 18:00
+        scene.setEndTime(1439);    // 23:59
 
         Sprite sprite1 = createTestSprite("bg");
         Sprite sprite2 = createTestSprite("player");
@@ -271,13 +300,12 @@ public class SceneTest {
         scene.addSprite(sprite1);
         scene.addSprite(sprite2);
 
-        // Verify all properties
         assertEquals("TestScene", scene.getSceneName());
         assertEquals(0.3f, scene.getXFocus(), 0.001f);
-        assertEquals(SceneData.TimeOfDay.SUNSET, scene.getTimeOfDay());
+        assertEquals(1080, scene.getStartTime());
+        assertEquals(1439, scene.getEndTime());
         assertEquals(2, scene.getSprites().size());
 
-        // Update wipe progress
         scene.updateWipeProgress(0.6f);
         assertEquals(0.6f, sprite1.getWipeProgress(), 0.001f);
     }

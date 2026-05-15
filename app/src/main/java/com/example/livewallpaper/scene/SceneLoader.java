@@ -134,15 +134,14 @@ public class SceneLoader {
     }
 
     /**
-     * Apply scene-level settings like xFocus and timeOfDay.
+     * Apply scene-level settings like xFocus and time range.
      */
     private void applySceneSettings(Scene scene, SceneData sceneData) {
         if (sceneData.xFocus >= 0.0f && sceneData.xFocus <= 1.0f) {
             scene.setXFocus(sceneData.xFocus);
         }
-        if (sceneData.timeOfDay != null) {
-            scene.setTimeOfDay(sceneData.timeOfDay);
-        }
+        scene.setStartTime(sceneData.startTime);
+        scene.setEndTime(sceneData.endTime);
     }
 
     /**

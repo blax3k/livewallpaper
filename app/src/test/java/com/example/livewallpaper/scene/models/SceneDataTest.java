@@ -24,7 +24,8 @@ public class SceneDataTest {
         assertNull("sceneName should be null by default", sceneData.sceneName);
         assertNull("sprites should be null by default", sceneData.sprites);
         assertEquals("xFocus should default to 0.5", 0.5f, sceneData.xFocus, 0.001f);
-        assertEquals("timeOfDay should default to DAY", SceneData.TimeOfDay.DAY, sceneData.timeOfDay);
+        assertEquals("startTime should default to 0", 0, sceneData.startTime);
+        assertEquals("endTime should default to 1439", 1439, sceneData.endTime);
     }
 
     // ==================== Field Assignment Tests ====================
@@ -51,15 +52,27 @@ public class SceneDataTest {
     }
 
     @Test
-    public void timeOfDayAssignment_WorksCorrectly() {
-        sceneData.timeOfDay = SceneData.TimeOfDay.DAWN;
-        assertEquals(SceneData.TimeOfDay.DAWN, sceneData.timeOfDay);
+    public void startTimeAssignment_WorksCorrectly() {
+        sceneData.startTime = 540;   // 09:00
+        assertEquals(540, sceneData.startTime);
 
-        sceneData.timeOfDay = SceneData.TimeOfDay.SUNSET;
-        assertEquals(SceneData.TimeOfDay.SUNSET, sceneData.timeOfDay);
+        sceneData.startTime = 0;
+        assertEquals(0, sceneData.startTime);
 
-        sceneData.timeOfDay = SceneData.TimeOfDay.NIGHT;
-        assertEquals(SceneData.TimeOfDay.NIGHT, sceneData.timeOfDay);
+        sceneData.startTime = 1439;
+        assertEquals(1439, sceneData.startTime);
+    }
+
+    @Test
+    public void endTimeAssignment_WorksCorrectly() {
+        sceneData.endTime = 1080;  // 18:00
+        assertEquals(1080, sceneData.endTime);
+
+        sceneData.endTime = 0;
+        assertEquals(0, sceneData.endTime);
+
+        sceneData.endTime = 1439;
+        assertEquals(1439, sceneData.endTime);
     }
 
     @Test
@@ -73,31 +86,6 @@ public class SceneDataTest {
         assertEquals("sprites array length should be 2", 2, sceneData.sprites.length);
     }
 
-    // ==================== TimeOfDay Enum Tests ====================
-
-    @Test
-    public void timeOfDayEnum_ContainsAllValues() {
-        SceneData.TimeOfDay[] values = SceneData.TimeOfDay.values();
-        assertEquals("TimeOfDay should have 4 values", 4, values.length);
-    }
-
-    @Test
-    public void timeOfDayEnum_ContainsExpectedValues() {
-        assertTrue("Should contain DAWN", contains(SceneData.TimeOfDay.values(), SceneData.TimeOfDay.DAWN));
-        assertTrue("Should contain DAY", contains(SceneData.TimeOfDay.values(), SceneData.TimeOfDay.DAY));
-        assertTrue("Should contain SUNSET", contains(SceneData.TimeOfDay.values(), SceneData.TimeOfDay.SUNSET));
-        assertTrue("Should contain NIGHT", contains(SceneData.TimeOfDay.values(), SceneData.TimeOfDay.NIGHT));
-    }
-
-    @Test
-    public void timeOfDayEnum_CanBeConvertedFromString() {
-        SceneData.TimeOfDay dawn = SceneData.TimeOfDay.valueOf("DAWN");
-        assertEquals(SceneData.TimeOfDay.DAWN, dawn);
-
-        SceneData.TimeOfDay night = SceneData.TimeOfDay.valueOf("NIGHT");
-        assertEquals(SceneData.TimeOfDay.NIGHT, night);
-    }
-
     // ==================== Multiple Instances Tests ====================
 
     @Test
@@ -107,25 +95,20 @@ public class SceneDataTest {
 
         scene1.sceneName = "Scene1";
         scene1.xFocus = 0.3f;
+        scene1.startTime = 6;
+        scene1.endTime = 12;
+        scene1.startTime = 360;   // 06:00
+        scene1.endTime = 720;     // 12:00
 
-        scene2.sceneName = "Scene2";
-        scene2.xFocus = 0.7f;
+        scene2.startTime = 1080;  // 18:00
+        scene2.endTime = 1439;    // 23:59
 
         assertEquals("Scene1", scene1.sceneName);
         assertEquals("Scene2", scene2.sceneName);
         assertEquals(0.3f, scene1.xFocus, 0.001f);
         assertEquals(0.7f, scene2.xFocus, 0.001f);
-    }
-
-    // ==================== Helper Methods ====================
-
-    private boolean contains(SceneData.TimeOfDay[] array, SceneData.TimeOfDay value) {
-        for (SceneData.TimeOfDay item : array) {
-            if (item == value) {
-                return true;
-            }
-        }
-        return false;
+        assertEquals(360, scene1.startTime);
+        assertEquals(1080, scene2.startTime);
     }
 }
 
