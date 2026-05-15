@@ -34,9 +34,8 @@ import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.managers.SceneFileManager;
 import com.example.livewallpaper.ui.editor.adapters.SpritesDropdownAdapter;
 import com.example.livewallpaper.ui.editor.views.SquareGLSurfaceView;
+import com.hashilab.dev.editor.builders.SpriteDetailsBuilder;
 import com.hashilab.dev.editor.controllers.DrawableImagePickerDialog;
-import com.example.livewallpaper.ui.editor.builders.SpriteDetailsBuilder;
-import com.hashilab.dev.editor.activities.FullscreenPreviewActivity;
 
 import java.util.ArrayList;
 import java.util.List;

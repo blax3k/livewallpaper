@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.editor.builders;
+package com.hashilab.dev.editor.builders;
 
 import android.app.Activity;
 import android.app.AlertDialog;
