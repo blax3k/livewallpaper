@@ -1,4 +1,4 @@
-package com.example.livewallpaper.ui.editor.adapters;
+package com.hashilab.dev.editor.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
