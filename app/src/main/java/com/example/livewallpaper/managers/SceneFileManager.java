@@ -201,7 +201,7 @@ public class SceneFileManager {
      *
      * @return the fallback scenes directory
      */
-    private File getFallbackScenesDirectory() {
+    public File getFallbackScenesDirectory() {
         File externalFilesDir = context.getExternalFilesDir("scenes");
         if (externalFilesDir == null) {
             File cacheDir = context.getExternalCacheDir();
@@ -313,6 +313,32 @@ public class SceneFileManager {
      */
     public String getFallbackScenesDirectoryPath() {
         return getFallbackScenesDirectory().getAbsolutePath();
+    }
+
+    /**
+     * Get or create the fallback textures directory for downloaded image assets.
+     * Downloaded textures (from /uploads/ on the web editor) are stored here.
+     *
+     * @return the textures directory
+     */
+    public File getFallbackTexturesDirectory() {
+        File dir = context.getExternalFilesDir("textures");
+        if (dir == null) {
+            dir = new File(context.getCacheDir(), "textures");
+        }
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
+
+    /**
+     * Get the path to the fallback textures directory.
+     *
+     * @return the absolute path to the textures directory
+     */
+    public String getFallbackTexturesDirectoryPath() {
+        return getFallbackTexturesDirectory().getAbsolutePath();
     }
 
     /**

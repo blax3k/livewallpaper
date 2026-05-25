@@ -41,7 +41,7 @@
             android:text="@string/browse_web_editor" />
     </LinearLayout>
 
-    <!-- Middle/Bottom: Motion Controls -->
+    <!-- Middle/Bottom: Motion Controls + Settings -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -96,7 +96,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -110,6 +111,33 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
         </LinearLayout>
+
+        <!-- API Server URL -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="API Server URL"
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/edit_api_server_url"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:hint="https://example.com"
+                android:inputType="textUri"
+                android:singleLine="true"
+                android:textSize="14sp" />
+        </LinearLayout>
+
     </LinearLayout>
 
 </LinearLayout>
+

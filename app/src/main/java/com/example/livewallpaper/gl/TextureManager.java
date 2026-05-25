@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 public class TextureManager {
     private static final String TAG = "TextureManager";
     private final Map<Integer, Integer> textureCache = new HashMap<>(); // resourceId -> textureId
+    private final Map<String, Integer> fileTextureCache = new ConcurrentHashMap<>(); // filePath -> textureId
     private final Queue<Integer> freedTextureIds = new LinkedList<>(); // Pool of freed texture IDs for reuse
     private int maxTextureSize = 1024; // Default fallback, will be queried from GPU
     private boolean gpuLimitsQueried = false;
@@ -159,6 +160,71 @@ public class TextureManager {
                 if (cb != null) {
                     cb.onTextureLoaded(resourceId, 0);
                 }
+            }
+        });
+    }
+
+    /**
+     * Load a texture from a file path asynchronously.
+     * Used for downloaded image assets referenced by their local file path.
+     * The callback receives the file path and the GL texture ID (0 on failure).
+     *
+     * @param filePath absolute path to the image file on disk
+     * @param callback callback invoked on the GL thread when the texture is ready
+     */
+    public void getTextureAsyncFromFilePath(final String filePath, final TextureLoadCallback callback) {
+        // Check file-path cache first
+        if (fileTextureCache.containsKey(filePath)) {
+            int cached = fileTextureCache.get(filePath);
+            TimberLog.d(TAG, "File texture cache hit for: " + filePath + " texId=" + cached);
+            if (callback != null) {
+                // Use a sentinel negative resourceId so the signature matches TextureLoadCallback
+                callback.onTextureLoaded(-1, cached);
+            }
+            return;
+        }
+
+        // Decode on background thread
+        backgroundExecutor.execute(() -> {
+            try {
+                java.io.File file = new java.io.File(filePath);
+                if (!file.exists()) {
+                    TimberLog.e(TAG, "File texture not found: " + filePath);
+                    if (callback != null) callback.onTextureLoaded(-1, 0);
+                    return;
+                }
+
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inScaled = false;
+                opts.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(filePath, opts);
+
+                int inSampleSize = calculateInSampleSize(opts.outWidth, opts.outHeight, -1);
+                opts.inJustDecodeBounds = false;
+                opts.inSampleSize = inSampleSize;
+                Bitmap bitmap = BitmapFactory.decodeFile(filePath, opts);
+
+                if (bitmap == null) {
+                    TimberLog.e(TAG, "Failed to decode file texture: " + filePath);
+                    if (callback != null) callback.onTextureLoaded(-1, 0);
+                    return;
+                }
+
+                bitmap = ensureARGB8888Format(bitmap);
+
+                // Upload on GL thread via the pending uploads queue using a unique negative ID
+                final int virtualId = filePath.hashCode(); // stable per-path ID for the pending map
+                pendingBitmaps.put(virtualId, bitmap);
+                if (callback != null) {
+                    textureCallbacks.put(virtualId, (resId, texId) -> {
+                        if (texId != 0) fileTextureCache.put(filePath, texId);
+                        callback.onTextureLoaded(-1, texId);
+                    });
+                }
+                TimberLog.d(TAG, "File texture decoded, queued for GPU upload: " + filePath);
+            } catch (Exception e) {
+                TimberLog.e(TAG, "Exception decoding file texture: " + filePath, e);
+                if (callback != null) callback.onTextureLoaded(-1, 0);
             }
         });
     }
@@ -492,6 +558,7 @@ public class TextureManager {
         }
         GLES20.glDeleteTextures(ids.length, ids, 0);
         textureCache.clear();
+        fileTextureCache.clear();
 
         // Clear the pool since GL context is being destroyed
         freedTextureIds.clear();

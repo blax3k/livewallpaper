@@ -2,11 +2,16 @@ package com.hashilab.dev.editor.activities;
 
 import android.app.WallpaperManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import com.example.livewallpaper.logging.TimberLog;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.Toast;
@@ -18,6 +23,7 @@ import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
 import com.example.livewallpaper.sensors.MotionConfig;
 import com.example.livewallpaper.managers.SceneFileManager;
+import com.hashilab.dev.editor.activities.ProjectBrowserActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +74,11 @@ public class MainActivity extends AppCompatActivity {
                 TimberLog.e(TAG, "Reload Scenes button not found in layout!");
             }
 
+            Button browseWebEditorButton = findViewById(R.id.btn_browse_web_editor);
+            if (browseWebEditorButton != null) {
+                browseWebEditorButton.setOnClickListener(v -> browseWebEditor());
+            }
+
             Switch scrollToggle = findViewById(R.id.toggle_scroll_motion);
             if (scrollToggle != null) {
                 TimberLog.d(TAG, "Scroll toggle switch found, setting listener");
@@ -103,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             setupTimeOverrideSpinner();
+            setupApiServerUrlField();
 
         } catch (Exception e) {
             TimberLog.e(TAG, "Error in onCreate: " + e.getMessage(), e);
@@ -163,6 +175,34 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void setupApiServerUrlField() {
+        EditText urlField = findViewById(R.id.edit_api_server_url);
+        if (urlField == null) {
+            TimberLog.e(TAG, "API server URL field not found in layout!");
+            return;
+        }
+
+        SharedPreferences prefs = getSharedPreferences(
+                ProjectBrowserActivity.PREFS_NAME, Context.MODE_PRIVATE);
+        String stored = prefs.getString(
+                ProjectBrowserActivity.PREF_SERVER_URL,
+                ProjectBrowserActivity.DEFAULT_SERVER_URL);
+        urlField.setText(stored);
+
+        urlField.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                String url = s.toString().trim();
+                prefs.edit()
+                     .putString(ProjectBrowserActivity.PREF_SERVER_URL, url)
+                     .apply();
+                TimberLog.d(TAG, "API server URL updated: " + url);
+            }
+        });
+    }
+
     private void setWallpaper() {
         try {
             Intent intent = new Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER);
@@ -195,6 +235,16 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             TimberLog.e(TAG, "Error reloading scenes: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to reload scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void browseWebEditor() {
+        try {
+            Intent intent = new Intent(this, ProjectBrowserActivity.class);
+            startActivity(intent);
+        } catch (Exception e) {
+            TimberLog.e(TAG, "Error opening web editor browser: " + e.getMessage(), e);
+            Toast.makeText(this, "Failed to open web editor browser: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

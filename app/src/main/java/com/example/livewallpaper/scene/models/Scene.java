@@ -224,6 +224,19 @@ public class Scene implements Parcelable {
     public void loadSpriteTexture(Context context, TextureManager textureManager, Sprite sprite) {
         int resourceId = sprite.getTextureResourceId();
 
+        if (resourceId == -1) {
+            // File-based texture (downloaded upload asset)
+            String filePath = sprite.getTextureResource();
+            textureManager.getTextureAsyncFromFilePath(filePath, (resId, texId) -> {
+                sprite.setTextureId(texId);
+                TimberLog.d(TAG, "File texture '" + filePath + "' loaded with texId=" + texId);
+                if (texId == 0) {
+                    TimberLog.w(TAG, "WARNING: Failed to load file texture: " + filePath);
+                }
+            });
+            return;
+        }
+
         textureManager.getTextureAsync(context, resourceId, (resId, texId) -> {
             sprite.setTextureId(texId);
             TimberLog.d(TAG, "Sprite textureResourceId=" + resourceId + " loaded with texId=" + texId);

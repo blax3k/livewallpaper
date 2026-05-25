@@ -135,10 +135,10 @@ public class Sprite implements Parcelable {
         float halfHeight = height / 2f;
 
         float[] squareCoords = {
-                positionX - halfWidth, positionY + halfHeight, 0.0f,  // top left
-                positionX - halfWidth, positionY - halfHeight, 0.0f,  // bottom left
-                positionX + halfWidth, positionY + halfHeight, 0.0f,  // top right
-                positionX + halfWidth, positionY - halfHeight, 0.0f   // bottom right
+                positionX - halfWidth, -positionY + halfHeight, 0.0f,  // top left
+                positionX - halfWidth, -positionY - halfHeight, 0.0f,  // bottom left
+                positionX + halfWidth, -positionY + halfHeight, 0.0f,  // top right
+                positionX + halfWidth, -positionY - halfHeight, 0.0f   // bottom right
         };
 
         ByteBuffer bb = ByteBuffer.allocateDirect(squareCoords.length * 4);
@@ -194,11 +194,11 @@ public class Sprite implements Parcelable {
 
         // Initialize edge line buffer for highlight outline (5 vertices to draw a closed box)
         float[] edgeLineCoords = {
-                positionX - halfWidth, positionY + halfHeight, 0.0f,  // top left
-                positionX + halfWidth, positionY + halfHeight, 0.0f,  // top right
-                positionX + halfWidth, positionY - halfHeight, 0.0f,  // bottom right
-                positionX - halfWidth, positionY - halfHeight, 0.0f,  // bottom left
-                positionX - halfWidth, positionY + halfHeight, 0.0f   // back to top left
+                positionX - halfWidth, -positionY + halfHeight, 0.0f,  // top left
+                positionX + halfWidth, -positionY + halfHeight, 0.0f,  // top right
+                positionX + halfWidth, -positionY - halfHeight, 0.0f,  // bottom right
+                positionX - halfWidth, -positionY - halfHeight, 0.0f,  // bottom left
+                positionX - halfWidth, -positionY + halfHeight, 0.0f   // back to top left
         };
         ByteBuffer ebb = ByteBuffer.allocateDirect(edgeLineCoords.length * 4);
         ebb.order(ByteOrder.nativeOrder());
@@ -235,10 +235,10 @@ public class Sprite implements Parcelable {
         float scaledPositionY = effectivePositionY * scaleFactor;
 
         float[] squareCoords = {
-                scaledPositionX - halfWidth, scaledPositionY + halfHeight, 0.0f,  // top left
-                scaledPositionX - halfWidth, scaledPositionY - halfHeight, 0.0f,  // bottom left
-                scaledPositionX + halfWidth, scaledPositionY + halfHeight, 0.0f,  // top right
-                scaledPositionX + halfWidth, scaledPositionY - halfHeight, 0.0f   // bottom right
+                scaledPositionX - halfWidth, -scaledPositionY + halfHeight, 0.0f,  // top left
+                scaledPositionX - halfWidth, -scaledPositionY - halfHeight, 0.0f,  // bottom left
+                scaledPositionX + halfWidth, -scaledPositionY + halfHeight, 0.0f,  // top right
+                scaledPositionX + halfWidth, -scaledPositionY - halfHeight, 0.0f   // bottom right
         };
 
         vertexBuffer.position(0);
@@ -247,11 +247,11 @@ public class Sprite implements Parcelable {
 
         // Update edge line buffer as well
         float[] edgeLineCoords = {
-                scaledPositionX - halfWidth, scaledPositionY + halfHeight, 0.0f,  // top left
-                scaledPositionX + halfWidth, scaledPositionY + halfHeight, 0.0f,  // top right
-                scaledPositionX + halfWidth, scaledPositionY - halfHeight, 0.0f,  // bottom right
-                scaledPositionX - halfWidth, scaledPositionY - halfHeight, 0.0f,  // bottom left
-                scaledPositionX - halfWidth, scaledPositionY + halfHeight, 0.0f   // back to top left
+                scaledPositionX - halfWidth, -scaledPositionY + halfHeight, 0.0f,  // top left
+                scaledPositionX + halfWidth, -scaledPositionY + halfHeight, 0.0f,  // top right
+                scaledPositionX + halfWidth, -scaledPositionY - halfHeight, 0.0f,  // bottom right
+                scaledPositionX - halfWidth, -scaledPositionY - halfHeight, 0.0f,  // bottom left
+                scaledPositionX - halfWidth, -scaledPositionY + halfHeight, 0.0f   // back to top left
         };
         edgeLineBuffer.position(0);
         edgeLineBuffer.put(edgeLineCoords);

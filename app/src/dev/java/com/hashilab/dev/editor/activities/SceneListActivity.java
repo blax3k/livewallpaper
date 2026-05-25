@@ -73,6 +73,20 @@ public class SceneListActivity extends AppCompatActivity {
         loadAndDisplayScenes();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh the scene list in case scenes were downloaded (e.g. from ProjectBrowserActivity)
+        if (sceneFileManager != null && adapter != null) {
+            TimberLog.d(TAG, "onResume: refreshing scene list");
+            sceneFileNames = loadSceneFileNames();
+            var sceneMetadata = sceneFileManager.loadSceneMetadata();
+            buildGroupedSceneData(sceneFileNames, sceneMetadata);
+            adapter.updateData(sceneGroups, scenesGroupedByKey);
+            expandAllGroups();
+        }
+    }
+
     /**
      * Load and display the scenes in the expandable list view grouped by TimeOfDay
      */

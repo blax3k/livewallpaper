@@ -56,6 +56,7 @@ public class SceneSwitchManager {
         if (persistentPath != null) {
             sceneLoader.setPersistentScenesPath(persistentPath);
         }
+        sceneLoader.setTexturesPath(sceneFileManager.getFallbackTexturesDirectoryPath());
 
         // Preload all scene files into memory
         loadAllScenes();

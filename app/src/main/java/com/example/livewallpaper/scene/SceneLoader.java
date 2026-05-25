@@ -26,6 +26,7 @@ public class SceneLoader {
     private final Context context;
     private final Gson gson;
     private String persistentScenesPath; // Path to persistent scenes directory
+    private String texturesPath;          // Path to downloaded textures directory
     private String assetsFolder = DEFAULT_SCENES_FOLDER;
 
     public SceneLoader(Context context) {
@@ -52,6 +53,18 @@ public class SceneLoader {
     public void setPersistentScenesPath(String persistentPath) {
         this.persistentScenesPath = persistentPath;
         TimberLog.d(TAG, "Persistent scenes path set to: " + persistentPath);
+    }
+
+    /**
+     * Set the path to the downloaded textures directory.
+     * When a sprite's textureResource starts with "/uploads/", the loader will
+     * look for the file in this directory.
+     *
+     * @param texturesPath the absolute path to the textures directory
+     */
+    public void setTexturesPath(String texturesPath) {
+        this.texturesPath = texturesPath;
+        TimberLog.d(TAG, "Textures path set to: " + texturesPath);
     }
 
     /**
@@ -163,6 +176,21 @@ public class SceneLoader {
         if (spriteData.textureResource == null || spriteData.textureResource.isEmpty()) {
             TimberLog.w(TAG, "Skipping sprite with missing textureResource in scene: " + sceneName);
             return null;
+        }
+
+        // Uploaded image: textureResource is "/uploads/<filename>"
+        if (spriteData.textureResource.startsWith("/uploads/") && texturesPath != null) {
+            String filename = spriteData.textureResource.substring("/uploads/".length());
+            java.io.File textureFile = new java.io.File(texturesPath, filename);
+            if (textureFile.exists()) {
+                spriteData.textureResourceId = -1; // Marker: resolve via file path
+                spriteData.textureResource = textureFile.getAbsolutePath();
+                spriteData.name = filename;
+                return new Sprite(spriteData);
+            } else {
+                TimberLog.w(TAG, "Downloaded texture file not found: " + textureFile.getAbsolutePath() + ". Skipping sprite.");
+                return null;
+            }
         }
 
         int resourceId = getDrawableResourceId(spriteData.textureResource);

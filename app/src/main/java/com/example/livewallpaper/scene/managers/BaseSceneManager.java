@@ -218,6 +218,7 @@ public abstract class BaseSceneManager {
                 SceneFileManager sceneFileManager = new SceneFileManager(context, null);
                 String persistentPath = sceneFileManager.getPersistentScenesDirectoryPath();
                 sceneLoader.setPersistentScenesPath(persistentPath);
+                sceneLoader.setTexturesPath(sceneFileManager.getFallbackTexturesDirectoryPath());
                 TimberLog.d(TAG, "SceneLoader configured to load from persistent path: " + persistentPath);
 
                 currentScene = sceneLoader.loadScene(sceneFileName);

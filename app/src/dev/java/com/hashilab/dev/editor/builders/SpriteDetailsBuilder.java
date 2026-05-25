@@ -105,10 +105,8 @@ public class SpriteDetailsBuilder {
 
             sliderManager.setupSlider(new SliderController.SliderConfig(
                 positionYSlider, positionYValue, -15f, 15f, 0.25f, "Position Y",
-                // Negate: UI value positive-up → internal value positive-down
-                v -> renderer.updateSpritePosition(sprite, sprite.getPositionX(), -v),
-                // Negate: internal positive-down → display positive-up
-                () -> -sprite.getPositionY()
+                v -> renderer.updateSpritePosition(sprite, sprite.getPositionX(), v),
+                sprite::getPositionY
             ));
         } else {
             // No sliders - just update the text displays
@@ -116,7 +114,7 @@ public class SpriteDetailsBuilder {
                 positionXValue.setText(String.format(Locale.US, "%.2f", sprite.getPositionX()));
             }
             if (positionYValue != null) {
-                positionYValue.setText(String.format(Locale.US, "%.2f", -sprite.getPositionY()));
+                positionYValue.setText(String.format(Locale.US, "%.2f", sprite.getPositionY()));
             }
         }
 

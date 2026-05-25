@@ -665,11 +665,11 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                     float viewHeight = v.getHeight();
 
                     // Convert pixel movement to position coordinates.
-                    // Screen Y increases downward; internal positionY is stored inverted
-                    // (negative = visually up), so both axes use the same sign convention here.
+                    // positionY uses positive-Y-up convention matching the web app,
+                    // so dragging down (deltaY > 0) should decrease positionY.
                     float positionRange = POSITION_MAX - POSITION_MIN;
                     float deltaPositionX = (deltaX / viewWidth) * positionRange;
-                    float deltaPositionY = (deltaY / viewHeight) * positionRange;
+                    float deltaPositionY = -(deltaY / viewHeight) * positionRange;
 
                     // Get current position and apply delta with clamping
                     float newX = Math.max(POSITION_MIN, Math.min(POSITION_MAX,
@@ -720,14 +720,14 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
 
     /**
      * Update the position display fields.
-     * X is shown as-is; Y is negated so that the UI convention matches positive-Y-up.
+     * Both X and Y are shown as-is since positionY now uses positive-Y-up convention.
      */
     private void updatePositionDisplay(float x, float y) {
         if (positionXValue != null) {
             positionXValue.setText(String.format(Locale.US, "%.2f", x));
         }
         if (positionYValue != null) {
-            positionYValue.setText(String.format(Locale.US, "%.2f", -y));
+            positionYValue.setText(String.format(Locale.US, "%.2f", y));
         }
     }
 
@@ -741,8 +741,8 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
             return;
         }
 
-        // For Y, we negate for display (positive-Y-up convention in UI)
-        float currentValue = axis.equals("X") ? currentSprite.getPositionX() : -currentSprite.getPositionY();
+        // For Y, display the stored value directly (positive-Y-up convention)
+        float currentValue = axis.equals("X") ? currentSprite.getPositionX() : currentSprite.getPositionY();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Position " + axis);
@@ -767,14 +767,12 @@ public class EditSceneActivity extends AppCompatActivity implements SensorEventL
                 }
 
                 // Update sprite position.
-                // For Y, negate the user-entered value to convert from UI convention (positive=up)
-                // back to internal convention (positive=down in the inverted projection).
                 if (axis.equals("X")) {
                     renderer.updateSpritePosition(currentSprite, value, currentSprite.getPositionY());
                     updatePositionDisplay(value, currentSprite.getPositionY());
                 } else {
-                    renderer.updateSpritePosition(currentSprite, currentSprite.getPositionX(), -value);
-                    updatePositionDisplay(currentSprite.getPositionX(), -value);
+                    renderer.updateSpritePosition(currentSprite, currentSprite.getPositionX(), value);
+                    updatePositionDisplay(currentSprite.getPositionX(), value);
                 }
 
                 Toast.makeText(EditSceneActivity.this, "Position " + axis + " updated", Toast.LENGTH_SHORT).show();
