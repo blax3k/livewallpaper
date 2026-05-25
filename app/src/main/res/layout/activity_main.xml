@@ -38,7 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/browse_web_editor" />
+            android:text="@string/view_wallpapers" />
     </LinearLayout>
 
     <!-- Middle/Bottom: Motion Controls -->

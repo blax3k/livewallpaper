@@ -43,13 +43,6 @@ public class MainActivity extends AppCompatActivity {
                 TimberLog.e(TAG, "View Scenes button not found!");
             }
 
-            Button reloadScenesButton = findViewById(R.id.btn_reload_scenes);
-            if (reloadScenesButton != null) {
-                reloadScenesButton.setOnClickListener(v -> reloadScenes());
-            } else {
-                TimberLog.e(TAG, "Reload Scenes button not found!");
-            }
-
             Button browseWebEditorButton = findViewById(R.id.btn_browse_web_editor);
             if (browseWebEditorButton != null) {
                 browseWebEditorButton.setOnClickListener(v -> browseWebEditor());
@@ -88,17 +81,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             TimberLog.e(TAG, "Error navigating to scenes: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to open scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void reloadScenes() {
-        try {
-            GLWallpaperService.refreshSceneList(this);
-            TimberLog.d(TAG, "Scene reload requested");
-            Toast.makeText(this, "Scenes reloaded", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            TimberLog.e(TAG, "Error reloading scenes: " + e.getMessage(), e);
-            Toast.makeText(this, "Failed to reload scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
