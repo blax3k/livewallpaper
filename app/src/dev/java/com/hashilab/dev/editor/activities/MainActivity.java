@@ -2,31 +2,18 @@ package com.hashilab.dev.editor.activities;
 
 import android.app.WallpaperManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import com.example.livewallpaper.logging.TimberLog;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.Toast;
-import android.view.View;
-import android.widget.AdapterView;
+
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.livewallpaper.gl.GLWallpaperService;
 import com.example.livewallpaper.R;
-import com.example.livewallpaper.sensors.MotionConfig;
+import com.example.livewallpaper.gl.GLWallpaperService;
+import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.managers.SceneFileManager;
-import com.hashilab.dev.editor.activities.ProjectBrowserActivity;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.example.livewallpaper.sensors.MotionConfig;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -37,41 +24,30 @@ public class MainActivity extends AppCompatActivity {
             super.onCreate(savedInstanceState);
             TimberLog.d(TAG, "onCreate called");
 
-            // Initialize MotionConfig with persistent storage
             MotionConfig.initialize(this);
-
-            // Initialize persistent scenes folder on app startup
             initializePersistentScenes();
 
             setContentView(R.layout.activity_main);
-            TimberLog.d(TAG, "Layout inflated successfully");
 
             Button setWallpaperButton = findViewById(R.id.btn_set_wallpaper);
             if (setWallpaperButton != null) {
-                TimberLog.d(TAG, "Button found, setting click listener");
                 setWallpaperButton.setOnClickListener(v -> setWallpaper());
-                TimberLog.d(TAG, "Button click listener set");
             } else {
-                TimberLog.e(TAG, "Button not found in layout!");
-                Toast.makeText(this, "UI initialization failed", Toast.LENGTH_SHORT).show();
+                TimberLog.e(TAG, "Set Wallpaper button not found!");
             }
 
             Button viewScenesButton = findViewById(R.id.btn_view_scenes);
             if (viewScenesButton != null) {
-                TimberLog.d(TAG, "View Scenes button found, setting click listener");
                 viewScenesButton.setOnClickListener(v -> viewScenes());
-                TimberLog.d(TAG, "View Scenes button click listener set");
             } else {
-                TimberLog.e(TAG, "View Scenes button not found in layout!");
+                TimberLog.e(TAG, "View Scenes button not found!");
             }
 
             Button reloadScenesButton = findViewById(R.id.btn_reload_scenes);
             if (reloadScenesButton != null) {
-                TimberLog.d(TAG, "Reload Scenes button found, setting click listener");
                 reloadScenesButton.setOnClickListener(v -> reloadScenes());
-                TimberLog.d(TAG, "Reload Scenes button click listener set");
             } else {
-                TimberLog.e(TAG, "Reload Scenes button not found in layout!");
+                TimberLog.e(TAG, "Reload Scenes button not found!");
             }
 
             Button browseWebEditorButton = findViewById(R.id.btn_browse_web_editor);
@@ -79,128 +55,17 @@ public class MainActivity extends AppCompatActivity {
                 browseWebEditorButton.setOnClickListener(v -> browseWebEditor());
             }
 
-            Switch scrollToggle = findViewById(R.id.toggle_scroll_motion);
-            if (scrollToggle != null) {
-                TimberLog.d(TAG, "Scroll toggle switch found, setting listener");
-                // Set initial state based on the config
-                scrollToggle.setChecked(MotionConfig.isScrollMotionEnabled());
-                scrollToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    MotionConfig.setScrollMotionEnabled(isChecked);
-                    TimberLog.d(TAG, "Scroll motion toggled: " + (isChecked ? "ON" : "OFF"));
-                    Toast.makeText(MainActivity.this,
-                        "Scroll motion " + (isChecked ? "enabled" : "disabled"),
-                        Toast.LENGTH_SHORT).show();
-                });
-                TimberLog.d(TAG, "Scroll toggle switch listener set");
+            Button settingsButton = findViewById(R.id.btn_settings);
+            if (settingsButton != null) {
+                settingsButton.setOnClickListener(v -> openSettings());
             } else {
-                TimberLog.e(TAG, "Scroll toggle switch not found in layout!");
+                TimberLog.e(TAG, "Settings button not found!");
             }
-
-            Switch gyroToggle = findViewById(R.id.toggle_gyro_motion);
-            if (gyroToggle != null) {
-                TimberLog.d(TAG, "Gyro toggle switch found, setting listener");
-                // Set initial state based on the config
-                gyroToggle.setChecked(MotionConfig.isGyroMotionEnabled());
-                gyroToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    MotionConfig.setGyroMotionEnabled(isChecked);
-                    TimberLog.d(TAG, "Gyro motion toggled: " + (isChecked ? "ON" : "OFF"));
-                    Toast.makeText(MainActivity.this,
-                        "Gyro motion " + (isChecked ? "enabled" : "disabled"),
-                        Toast.LENGTH_SHORT).show();
-                });
-                TimberLog.d(TAG, "Gyro toggle switch listener set");
-            } else {
-                TimberLog.e(TAG, "Gyro toggle switch not found in layout!");
-            }
-
-            setupTimeOverrideSpinner();
-            setupApiServerUrlField();
 
         } catch (Exception e) {
             TimberLog.e(TAG, "Error in onCreate: " + e.getMessage(), e);
             Toast.makeText(this, "Initialization error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void setupTimeOverrideSpinner() {
-        Spinner timeSpinner = findViewById(R.id.spinner_time_override);
-        if (timeSpinner == null) {
-            TimberLog.e(TAG, "Time override spinner not found!");
-            return;
-        }
-
-        List<String> options = new ArrayList<>();
-        options.add(MotionConfig.OVERRIDE_AUTO);
-        // Add every 30-minute interval as minute-of-day values, displayed as HH:MM
-        for (int m = 0; m < 1440; m += 30) {
-            options.add(String.valueOf(m));
-        }
-
-        // Display labels: "Auto", "00:00", "00:30", "01:00", ...
-        List<String> displayLabels = new ArrayList<>();
-        displayLabels.add(MotionConfig.OVERRIDE_AUTO);
-        for (int m = 0; m < 1440; m += 30) {
-            displayLabels.add(String.format(java.util.Locale.US, "%02d:%02d", m / 60, m % 60));
-        }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, displayLabels);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        timeSpinner.setAdapter(adapter);
-
-        // Set initial selection based on stored override value
-        String currentOverride = MotionConfig.getTimeOfDayOverride();
-        int initialPosition = options.indexOf(currentOverride);
-        if (initialPosition >= 0) {
-            timeSpinner.setSelection(initialPosition);
-        }
-
-        timeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                // Map display position back to raw minute value
-                String selected = options.get(position);
-                if (!selected.equals(MotionConfig.getTimeOfDayOverride())) {
-                    MotionConfig.setTimeOfDayOverride(selected);
-                    TimberLog.d(TAG, "Time of day override changed to: " + selected);
-                    Toast.makeText(MainActivity.this, "Time override: " + displayLabels.get(position), Toast.LENGTH_SHORT).show();
-
-                    // Trigger an immediate scene cycle in the wallpaper if it's running
-                    GLWallpaperService.triggerSceneCycle();
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-            }
-        });
-    }
-
-    private void setupApiServerUrlField() {
-        EditText urlField = findViewById(R.id.edit_api_server_url);
-        if (urlField == null) {
-            TimberLog.e(TAG, "API server URL field not found in layout!");
-            return;
-        }
-
-        SharedPreferences prefs = getSharedPreferences(
-                ProjectBrowserActivity.PREFS_NAME, Context.MODE_PRIVATE);
-        String stored = prefs.getString(
-                ProjectBrowserActivity.PREF_SERVER_URL,
-                ProjectBrowserActivity.DEFAULT_SERVER_URL);
-        urlField.setText(stored);
-
-        urlField.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override
-            public void afterTextChanged(Editable s) {
-                String url = s.toString().trim();
-                prefs.edit()
-                     .putString(ProjectBrowserActivity.PREF_SERVER_URL, url)
-                     .apply();
-                TimberLog.d(TAG, "API server URL updated: " + url);
-            }
-        });
     }
 
     private void setWallpaper() {
@@ -219,8 +84,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void viewScenes() {
         try {
-            Intent intent = new Intent(this, SceneListActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(this, SceneListActivity.class));
         } catch (Exception e) {
             TimberLog.e(TAG, "Error navigating to scenes: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to open scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -240,22 +104,25 @@ public class MainActivity extends AppCompatActivity {
 
     private void browseWebEditor() {
         try {
-            Intent intent = new Intent(this, ProjectBrowserActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(this, ProjectBrowserActivity.class));
         } catch (Exception e) {
             TimberLog.e(TAG, "Error opening web editor browser: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to open web editor browser: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
-    /**
-     * Initialize the persistent scenes folder by copying bundled scene files if needed.
-     * This runs on app startup to ensure the persistent folder is populated.
-     */
+    private void openSettings() {
+        try {
+            startActivity(new Intent(this, SettingsActivity.class));
+        } catch (Exception e) {
+            TimberLog.e(TAG, "Error opening settings: " + e.getMessage(), e);
+            Toast.makeText(this, "Failed to open settings: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void initializePersistentScenes() {
         try {
             SceneFileManager sceneFileManager = new SceneFileManager(this, null);
-            // Call loadAvailableSceneFiles which will populate the folder if empty
             String[] sceneFiles = sceneFileManager.loadAvailableSceneFiles();
             TimberLog.d(TAG, "Persistent scenes initialized with " + sceneFiles.length + " scene files");
         } catch (Exception e) {

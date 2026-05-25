@@ -3,141 +3,41 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:gravity="center_horizontal">
 
-    <!-- Top third: Set Wallpaper Button -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical">
+    <Button
+        android:id="@+id/btn_set_wallpaper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/set_wallpaper"
+        android:layout_marginBottom="16dp" />
 
-        <Button
-            android:id="@+id/btn_set_wallpaper"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/set_wallpaper"
-            android:layout_marginBottom="16dp" />
+    <Button
+        android:id="@+id/btn_view_scenes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/view_scenes"
+        android:layout_marginBottom="16dp" />
 
-        <Button
-            android:id="@+id/btn_view_scenes"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/view_scenes"
-            android:layout_marginBottom="16dp" />
+    <Button
+        android:id="@+id/btn_reload_scenes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/reload_scenes"
+        android:layout_marginBottom="16dp" />
 
-        <Button
-            android:id="@+id/btn_reload_scenes"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/reload_scenes" />
+    <Button
+        android:id="@+id/btn_browse_web_editor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/browse_web_editor"
+        android:layout_marginBottom="16dp" />
 
-        <Button
-            android:id="@+id/btn_browse_web_editor"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/browse_web_editor" />
-    </LinearLayout>
-
-    <!-- Middle/Bottom: Motion Controls + Settings -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
-        android:orientation="vertical"
-        android:gravity="top">
-
-        <!-- Scroll Motion Switch -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="24dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Scroll Motion"
-                android:textSize="16sp" />
-
-            <Switch
-                android:id="@+id/toggle_scroll_motion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <!-- Gyro Motion Switch -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="24dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Gyro Motion"
-                android:textSize="16sp" />
-
-            <Switch
-                android:id="@+id/toggle_gyro_motion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <!-- Time of Day Override Spinner -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="24dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/time_of_day_override"
-                android:textSize="16sp" />
-
-            <Spinner
-                android:id="@+id/spinner_time_override"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <!-- API Server URL -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="API Server URL"
-                android:textSize="16sp" />
-
-            <EditText
-                android:id="@+id/edit_api_server_url"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:hint="https://example.com"
-                android:inputType="textUri"
-                android:singleLine="true"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-    </LinearLayout>
+    <Button
+        android:id="@+id/btn_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Settings" />
 
 </LinearLayout>
-
