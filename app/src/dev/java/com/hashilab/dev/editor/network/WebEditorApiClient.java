@@ -26,9 +26,11 @@ public class WebEditorApiClient {
     public static class Project {
         public final String id;
         public final String name;
-        public Project(String id, String name) {
+        public final String version;
+        public Project(String id, String name, String version) {
             this.id = id;
             this.name = name;
+            this.version = version != null ? version : "";
         }
         @Override
         public String toString() { return name; }
@@ -62,7 +64,10 @@ public class WebEditorApiClient {
             JSONArray arr = new JSONArray(json);
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject obj = arr.getJSONObject(i);
-                projects.add(new Project(obj.getString("id"), obj.getString("name")));
+                projects.add(new Project(
+                        obj.getString("id"),
+                        obj.getString("name"),
+                        obj.optString("version", "")));
             }
         } catch (Exception e) {
             throw new IOException("Failed to parse projects response: " + e.getMessage(), e);

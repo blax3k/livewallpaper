@@ -39,6 +39,15 @@
         android:layout_marginStart="8dp" />
 
     <Button
+        android:id="@+id/btn_update_project"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Update"
+        android:textSize="13sp"
+        android:visibility="gone"
+        android:layout_marginStart="8dp" />
+
+    <Button
         android:id="@+id/btn_download_project"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

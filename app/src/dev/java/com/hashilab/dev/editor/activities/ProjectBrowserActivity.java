@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.livewallpaper.R;
@@ -105,6 +106,23 @@ public class ProjectBrowserActivity extends AppCompatActivity {
 
         setProjectsView();
 
+        // Handle back: when the scenes view is showing, return to the projects list
+        // rather than finishing the activity. Uses OnBackPressedDispatcher so it works
+        // correctly on all API levels (the deprecated onBackPressed() override is not
+        // reliably called on API 33+ with predictive-back navigation enabled).
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (viewState == ViewState.SCENES) {
+                    setProjectsView();
+                } else {
+                    // Let the system handle it (finish the activity).
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+
         // Auto-load projects using the stored server URL
         loadProjects();
     }
@@ -189,7 +207,11 @@ public class ProjectBrowserActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     projectRows.clear();
                     for (WebEditorApiClient.Project p : fetched) {
-                        projectRows.add(new ProjectRow(p, isProjectDownloaded(p.id)));
+                        boolean downloaded = isProjectDownloaded(p.id);
+                        boolean needsUpdate = downloaded
+                                && !p.version.isEmpty()
+                                && !p.version.equals(getLocalProjectVersion(p.id));
+                        projectRows.add(new ProjectRow(p, downloaded, needsUpdate));
                     }
                     projectAdapter.notifyDataSetChanged();
                     setProjectsView();
@@ -413,6 +435,7 @@ public class ProjectBrowserActivity extends AppCompatActivity {
             for (ProjectRow row : projectRows) {
                 if (row.project.id.equals(project.id)) {
                     row.isDownloaded = allOk;
+                    if (allOk) row.needsUpdate = false;
                 }
             }
             projectAdapter.notifyDataSetChanged();
@@ -448,6 +471,7 @@ public class ProjectBrowserActivity extends AppCompatActivity {
             JSONObject manifest = new JSONObject();
             manifest.put("id", project.id);
             manifest.put("name", project.name);
+            manifest.put("version", project.version);
             JSONArray arr = new JSONArray();
             for (WebEditorApiClient.SceneInfo s : scenes) {
                 JSONObject obj = new JSONObject();
@@ -458,9 +482,23 @@ public class ProjectBrowserActivity extends AppCompatActivity {
             }
             manifest.put("scenes", arr);
             writeFile(getManifestFile(project.id), manifest.toString().getBytes("UTF-8"));
-            TimberLog.d(TAG, "Saved project manifest for: " + project.name);
+            TimberLog.d(TAG, "Saved project manifest for: " + project.name + " version: " + project.version);
         } catch (Exception e) {
             TimberLog.e(TAG, "Failed to save project manifest", e);
+        }
+    }
+
+    /** Returns the version stored in the local manifest, or an empty string if not found. */
+    private String getLocalProjectVersion(String projectId) {
+        File f = getManifestFile(projectId);
+        if (!f.exists()) return "";
+        try {
+            byte[] bytes = readBytesFromFile(f);
+            JSONObject manifest = new JSONObject(new String(bytes, "UTF-8"));
+            return manifest.optString("version", "");
+        } catch (Exception e) {
+            TimberLog.e(TAG, "Failed to read version from manifest for: " + projectId, e);
+            return "";
         }
     }
 
@@ -545,9 +583,11 @@ public class ProjectBrowserActivity extends AppCompatActivity {
     private static class ProjectRow {
         final WebEditorApiClient.Project project;
         boolean isDownloaded;
-        ProjectRow(WebEditorApiClient.Project project, boolean isDownloaded) {
+        boolean needsUpdate;
+        ProjectRow(WebEditorApiClient.Project project, boolean isDownloaded, boolean needsUpdate) {
             this.project = project;
             this.isDownloaded = isDownloaded;
+            this.needsUpdate = needsUpdate;
         }
     }
 
@@ -570,19 +610,35 @@ public class ProjectBrowserActivity extends AppCompatActivity {
             TextView nameView    = convertView.findViewById(R.id.text_project_name);
             TextView statusView  = convertView.findViewById(R.id.text_project_status);
             TextView badgeView   = convertView.findViewById(R.id.text_downloaded_badge);
+            Button   updateBtn   = convertView.findViewById(R.id.btn_update_project);
             Button   downloadBtn = convertView.findViewById(R.id.btn_download_project);
 
             nameView.setText(row.project.name);
-            statusView.setText(row.isDownloaded ? "Tap to view scenes" : "Not downloaded");
 
-            if (row.isDownloaded) {
-                badgeView.setVisibility(View.VISIBLE);
-                downloadBtn.setVisibility(View.GONE);
-                downloadBtn.setOnClickListener(null);
-            } else {
+            if (!row.isDownloaded) {
+                // Not on device yet
+                statusView.setText("Not downloaded");
                 badgeView.setVisibility(View.GONE);
+                updateBtn.setVisibility(View.GONE);
                 downloadBtn.setVisibility(View.VISIBLE);
                 downloadBtn.setOnClickListener(v -> onProjectRowDownloadClicked(row));
+                updateBtn.setOnClickListener(null);
+            } else if (row.needsUpdate) {
+                // Downloaded but a newer version exists on the server
+                statusView.setText("Update available");
+                badgeView.setVisibility(View.VISIBLE);
+                updateBtn.setVisibility(View.VISIBLE);
+                downloadBtn.setVisibility(View.GONE);
+                updateBtn.setOnClickListener(v -> onProjectRowDownloadClicked(row));
+                downloadBtn.setOnClickListener(null);
+            } else {
+                // Downloaded and up to date
+                statusView.setText("Tap to view scenes");
+                badgeView.setVisibility(View.VISIBLE);
+                updateBtn.setVisibility(View.GONE);
+                downloadBtn.setVisibility(View.GONE);
+                updateBtn.setOnClickListener(null);
+                downloadBtn.setOnClickListener(null);
             }
 
             return convertView;
