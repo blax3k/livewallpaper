@@ -12,7 +12,7 @@
         </activity>
 
         <activity
-            android:name="com.hashilab.dev.editor.activities.SceneListActivity"
+            android:name="com.hashilab.dev.editor.activities.ProjectsActivity"
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper" />
 

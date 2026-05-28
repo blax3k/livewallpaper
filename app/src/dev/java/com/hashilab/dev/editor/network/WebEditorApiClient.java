@@ -27,11 +27,15 @@ public class WebEditorApiClient {
         public final String id;
         public final String name;
         public final String version;
-        public Project(String id, String name, String version) {
+        public final List<String> sceneNames;
+
+        public Project(String id, String name, String version, List<String> sceneNames) {
             this.id = id;
             this.name = name;
             this.version = version != null ? version : "";
+            this.sceneNames = sceneNames != null ? sceneNames : new ArrayList<>();
         }
+
         @Override
         public String toString() { return name; }
     }
@@ -64,10 +68,20 @@ public class WebEditorApiClient {
             JSONArray arr = new JSONArray(json);
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject obj = arr.getJSONObject(i);
+                
+                JSONArray scenesArr = obj.optJSONArray("scene_names");
+                List<String> sceneNames = new ArrayList<>();
+                if (scenesArr != null) {
+                    for (int j = 0; j < scenesArr.length(); j++) {
+                        sceneNames.add(scenesArr.getString(j));
+                    }
+                }
+
                 projects.add(new Project(
                         obj.getString("id"),
                         obj.getString("name"),
-                        obj.optString("version", "")));
+                        obj.optString("version", ""),
+                        sceneNames));
             }
         } catch (Exception e) {
             throw new IOException("Failed to parse projects response: " + e.getMessage(), e);

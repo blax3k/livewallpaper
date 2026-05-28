@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
             Button viewScenesButton = findViewById(R.id.btn_view_scenes);
             if (viewScenesButton != null) {
-                viewScenesButton.setOnClickListener(v -> viewScenes());
+                viewScenesButton.setOnClickListener(v -> viewProjects());
             } else {
                 TimberLog.e(TAG, "View Scenes button not found!");
             }
@@ -75,9 +75,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void viewScenes() {
+    private void viewProjects() {
         try {
-            startActivity(new Intent(this, SceneListActivity.class));
+            startActivity(new Intent(this, ProjectsActivity.class));
         } catch (Exception e) {
             TimberLog.e(TAG, "Error navigating to scenes: " + e.getMessage(), e);
             Toast.makeText(this, "Failed to open scenes: " + e.getMessage(), Toast.LENGTH_SHORT).show();
