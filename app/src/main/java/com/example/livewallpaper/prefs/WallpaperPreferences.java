@@ -16,17 +16,24 @@ public class WallpaperPreferences {
     private static final String PREFS_NAME          = "WallpaperConfig";
     private static final String KEY_ACTIVE_SCENES   = "active_scenes_dir";
     private static final String KEY_ACTIVE_TEXTURES = "active_textures_dir";
+    private static final String KEY_CURRENT_PROJECT_ID = "current_project_id";
 
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
     }
 
-    /** Persist the scenes and textures directory paths for the active project. */
-    public static void setActiveProjectDirs(Context context, String scenesDir, String texturesDir) {
+    /** Persist active project data used by the wallpaper service and dev UI. */
+    public static void setActiveProject(Context context, String projectId, String scenesDir, String texturesDir) {
         getPrefs(context).edit()
                 .putString(KEY_ACTIVE_SCENES, scenesDir)
                 .putString(KEY_ACTIVE_TEXTURES, texturesDir)
+                .putString(KEY_CURRENT_PROJECT_ID, projectId)
                 .apply();
+    }
+
+    /** Returns the project ID currently configured for the live wallpaper. */
+    public static String getCurrentProjectId(Context context) {
+        return getPrefs(context).getString(KEY_CURRENT_PROJECT_ID, null);
     }
 
     /**

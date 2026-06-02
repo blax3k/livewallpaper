@@ -1,6 +1,8 @@
 package com.hashilab.dev.editor.viewmodels;
 
 import android.app.Application;
+import android.app.WallpaperManager;
+import android.content.ComponentName;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -32,6 +34,37 @@ import java.util.concurrent.Executors;
 public class ProjectViewModel extends AndroidViewModel {
 
     private static final String TAG = "ProjectViewModel";
+
+    public boolean isCurrentWallpaperMine() {
+        android.app.WallpaperInfo info = WallpaperManager.getInstance(getApplication()).getWallpaperInfo();
+        if (info == null) return false;
+        ComponentName myService = new ComponentName(
+                getApplication(),
+                com.example.livewallpaper.gl.GLWallpaperService.class);
+        return myService.getPackageName().equals(info.getPackageName())
+                && myService.getClassName().equals(info.getServiceName());
+    }
+
+    public boolean isCurrentProjectMine(String projectId) {
+        if (!isCurrentWallpaperMine()) return false;
+        String currentProjectId = WallpaperPreferences.getCurrentProjectId(getApplication());
+        return projectId != null && projectId.equals(currentProjectId);
+    }
+
+    public void unsetWallpaper(String projectId) {
+        executor.execute(() -> {
+            if (!isCurrentProjectMine(projectId)) return;
+            WallpaperPreferences.setActiveProject(getApplication(), null, null, null);
+            try {
+                WallpaperManager.getInstance(getApplication()).clear();
+            } catch (IOException e) {
+                TimberLog.e(TAG, "Failed to clear wallpaper", e);
+                error.postValue("Failed to clear wallpaper: " + e.getMessage());
+            }
+        });
+    }
+
+
 
     // ── State enum ─────────────────────────────────────────────────────────────
 
@@ -225,8 +258,9 @@ public class ProjectViewModel extends AndroidViewModel {
                 error.postValue("Project folder not found — try re-downloading.");
                 return;
             }
-            WallpaperPreferences.setActiveProjectDirs(
+            WallpaperPreferences.setActiveProject(
                     getApplication(),
+                    projectId,
                     new File(dir, "scenes").getAbsolutePath(),
                     new File(dir, "textures").getAbsolutePath());
             // If the wallpaper is already running, post a GL-thread-safe reload request.

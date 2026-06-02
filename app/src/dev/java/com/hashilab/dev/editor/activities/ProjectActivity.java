@@ -70,10 +70,18 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
 
         downloadProjectButton.setOnClickListener(v ->
                 viewModel.downloadProject(projectId, projectName));
-        setProjectAsWallpaperButton.setOnClickListener(v ->
-                viewModel.activateProject(projectId));
+        setProjectAsWallpaperButton.setOnClickListener(v -> {
+            if(viewModel.isCurrentWallpaperMine())
+            {
+                Toast.makeText(this, "Setting as wallpaper", Toast.LENGTH_SHORT).show();
+            }
+            viewModel.activateProject(projectId);
+        });
         deleteWallpaperButton.setOnClickListener(v ->
-                viewModel.deleteProject(projectId));
+                {
+                    viewModel.deleteProject(projectId);
+                    viewModel.unsetWallpaper(projectId);
+                });
 
         RecyclerView recyclerView = findViewById(R.id.sceneGridRecyclerView);
         sceneList = new ArrayList<>();
