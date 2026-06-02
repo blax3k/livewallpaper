@@ -118,6 +118,26 @@ public class WebEditorApiClient {
         return getBytes("/uploads/" + filename);
     }
 
+    /**
+     * Returns the Content-Length of a remote path via a HEAD request, or -1 if unknown.
+     * Use this to preflight file sizes before downloading.
+     */
+    public long getRemoteFileSize(String path) throws IOException {
+        String urlString = baseUrl + path;
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(urlString);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
+            conn.setReadTimeout(READ_TIMEOUT_MS);
+            conn.setRequestMethod("HEAD");
+            conn.connect();
+            return conn.getContentLengthLong();
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+    }
+
     // -------------------------------------------------------------------------
 
     private String get(String path) throws IOException {

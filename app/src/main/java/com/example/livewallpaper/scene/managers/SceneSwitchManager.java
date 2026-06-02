@@ -234,6 +234,13 @@ public class SceneSwitchManager {
      * @param sceneFileManager the SceneFileManager to load scene files from
      */
     public void reloadAvailableScenes(SceneFileManager sceneFileManager) {
+        // Update the loader paths so the new project's files are found correctly.
+        String persistentPath = sceneFileManager.getPersistentScenesDirectoryPath();
+        if (persistentPath != null) {
+            sceneLoader.setPersistentScenesPath(persistentPath);
+        }
+        sceneLoader.setTexturesPath(sceneFileManager.getFallbackTexturesDirectoryPath());
+
         this.sceneFiles = sceneFileManager.loadAvailableSceneFiles();
 
         // Clear and reload all scenes into memory

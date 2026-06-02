@@ -17,6 +17,7 @@ import com.example.livewallpaper.managers.SceneFileManager;
 public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWallpaperRenderer {
     private SceneSwitchManager sceneSwitchManager;
     private volatile boolean sceneSwitchRequested = false;
+    private volatile boolean projectReloadRequested = false;
     private static final long SCENE_CYCLE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
     private long lastSceneChangeTimeMs = System.currentTimeMillis();
 
@@ -136,6 +137,15 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
             if (sceneSwitchManager == null) {
                 return;
+            }
+
+            // If a project switch was requested, reload the scene list on the GL thread
+            // so it doesn't race with the render loop, then immediately request a switch.
+            if (projectReloadRequested) {
+                projectReloadRequested = false;
+                SceneFileManager sfm = new SceneFileManager(context, null);
+                sceneSwitchManager.reloadAvailableScenes(sfm);
+                sceneSwitchRequested = true;
             }
 
             // Check if scene switch was requested (from UI thread) and perform it here on GL thread
@@ -273,7 +283,18 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
     public void refreshSceneList(SceneFileManager sceneFileManager) {
         if (sceneSwitchManager != null) {
             sceneSwitchManager.reloadAvailableScenes(sceneFileManager);
-            TimberLog.d(TAG, "Scene list refreshed in renderer");
+            sceneSwitchRequested = true;
+            TimberLog.d(TAG, "Scene list refreshed in renderer, scene switch requested");
         }
+    }
+
+    /**
+     * Request that the scene list be reloaded from WallpaperPreferences paths and a scene
+     * switch be triggered — all on the GL thread, avoiding races with the render loop.
+     * Use this when switching between downloaded projects.
+     */
+    public void requestProjectReload() {
+        projectReloadRequested = true;
+        TimberLog.d(TAG, "Project reload requested — will execute on GL thread");
     }
 }

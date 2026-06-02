@@ -9,6 +9,7 @@ import android.widget.Toast;
 import androidx.documentfile.provider.DocumentFile;
 
 import com.example.livewallpaper.logging.TimberLog;
+import com.example.livewallpaper.prefs.WallpaperPreferences;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.SceneData;
 import com.example.livewallpaper.scene.managers.BaseSceneManager;
@@ -202,6 +203,15 @@ public class SceneFileManager {
      * @return the fallback scenes directory
      */
     public File getFallbackScenesDirectory() {
+        // If a project has been set as the active wallpaper, use its scenes folder.
+        String override = WallpaperPreferences.getActiveScenesDir(context);
+        if (override != null) {
+            File overrideDir = new File(override);
+            if (overrideDir.exists()) {
+                return overrideDir;
+            }
+        }
+
         File externalFilesDir = context.getExternalFilesDir("scenes");
         if (externalFilesDir == null) {
             File cacheDir = context.getExternalCacheDir();
@@ -322,6 +332,15 @@ public class SceneFileManager {
      * @return the textures directory
      */
     public File getFallbackTexturesDirectory() {
+        // If a project has been set as the active wallpaper, use its textures folder.
+        String override = WallpaperPreferences.getActiveTexturesDir(context);
+        if (override != null) {
+            File overrideDir = new File(override);
+            if (overrideDir.exists()) {
+                return overrideDir;
+            }
+        }
+
         File dir = context.getExternalFilesDir("textures");
         if (dir == null) {
             dir = new File(context.getCacheDir(), "textures");
@@ -348,9 +367,7 @@ public class SceneFileManager {
      * or the fallback directory when in fallback mode.
      *
      * @return the absolute path to the persistent scenes directory
-     * @deprecated Use {@link #getFallbackScenesDirectoryPath()} for fallback mode
      */
-    @Deprecated
     public String getPersistentScenesDirectoryPath() {
         return getFallbackScenesDirectoryPath();
     }

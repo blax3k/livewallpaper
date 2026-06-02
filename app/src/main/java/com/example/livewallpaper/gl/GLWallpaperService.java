@@ -72,6 +72,20 @@ public class GLWallpaperService extends WallpaperService {
         }
     }
 
+    /**
+     * Request a full project reload on the GL thread — use this when the active project
+     * has changed via WallpaperPreferences. The reload and scene switch both execute on
+     * the GL render thread, avoiding races with the render loop.
+     */
+    public static void requestProjectReload() {
+        if (currentRenderer != null) {
+            currentRenderer.requestProjectReload();
+            TimberLog.d(TAG, "Project reload requested on GL renderer");
+        } else {
+            TimberLog.d(TAG, "Wallpaper not running — project reload will apply on next start");
+        }
+    }
+
     private class GLWallpaperEngine extends Engine implements SurfaceHolder.Callback {
         private volatile boolean running = false;
         private Thread renderThread;

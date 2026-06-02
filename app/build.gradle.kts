@@ -80,6 +80,13 @@ dependencies {
     // Timber for logging
     implementation("com.jakewharton.timber:timber:5.0.1")
 
+    // Image loading
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    // ViewModel and LiveData
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")
+
     // File logging with Timber
     implementation("com.orhanobut:logger:2.2.0")
     implementation(libs.androidx.cardview)
