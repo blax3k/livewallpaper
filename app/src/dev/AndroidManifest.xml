@@ -3,6 +3,11 @@
     <application>
         <activity
             android:name="com.hashilab.dev.editor.activities.MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Livewallpaper" />
+
+        <activity
+            android:name="com.hashilab.dev.editor.activities.ProjectsActivity"
             android:exported="true"
             android:theme="@style/Theme.Livewallpaper">
             <intent-filter>
@@ -10,11 +15,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name="com.hashilab.dev.editor.activities.ProjectsActivity"
-            android:exported="false"
-            android:theme="@style/Theme.Livewallpaper" />
 
         <activity
             android:name="com.hashilab.dev.editor.activities.EditSceneActivity"
