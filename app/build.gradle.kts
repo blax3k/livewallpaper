@@ -91,6 +91,7 @@ dependencies {
     implementation("com.orhanobut:logger:2.2.0")
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.recyclerview)
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     testImplementation(libs.junit)
     testImplementation("org.robolectric:robolectric:4.11.1")

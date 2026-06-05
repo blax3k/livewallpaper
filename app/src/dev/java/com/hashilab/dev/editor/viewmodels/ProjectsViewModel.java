@@ -23,6 +23,7 @@ public class ProjectsViewModel extends AndroidViewModel {
 
     private final MutableLiveData<List<Project>> projects = new MutableLiveData<>();
     private final MutableLiveData<String> error = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> loading = new MutableLiveData<>();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public ProjectsViewModel(@NonNull Application application) {
@@ -32,8 +33,10 @@ public class ProjectsViewModel extends AndroidViewModel {
 
     public LiveData<List<Project>> getProjects() { return projects; }
     public LiveData<String> getError() { return error; }
+    public LiveData<Boolean> getLoading() { return loading; }
 
     public void loadProjects() {
+        loading.postValue(true);
         String url = AppPreferences.getServerUrl(getApplication());
         executor.execute(() -> {
             try {
@@ -47,6 +50,8 @@ public class ProjectsViewModel extends AndroidViewModel {
             } catch (Exception e) {
                 TimberLog.e(TAG, "Failed to load projects", e);
                 error.postValue(e.getMessage());
+            } finally {
+                loading.postValue(false);
             }
         });
     }

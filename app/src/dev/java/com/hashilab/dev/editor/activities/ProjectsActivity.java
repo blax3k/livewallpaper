@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
 import com.example.livewallpaper.R;
@@ -50,6 +51,7 @@ public class ProjectsActivity extends AppCompatActivity {
         adapter = new ProjectAdapter(projectList);
         recyclerView.setAdapter(adapter);
 
+        SwipeRefreshLayout swipeRefresh = findViewById(R.id.swipeRefreshLayout);
         viewModel = new ViewModelProvider(this).get(ProjectsViewModel.class);
         viewModel.getProjects().observe(this, projects -> {
             projectList.clear();
@@ -59,6 +61,9 @@ public class ProjectsActivity extends AppCompatActivity {
         viewModel.getError().observe(this, err -> {
             if (err != null) Toast.makeText(this, "Failed to load projects: " + err, Toast.LENGTH_LONG).show();
         });
+        viewModel.getLoading().observe(this, swipeRefresh::setRefreshing);
+
+        swipeRefresh.setOnRefreshListener(viewModel::loadProjects);
     }
 
     @Override
