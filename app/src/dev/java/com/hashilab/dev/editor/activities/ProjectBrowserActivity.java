@@ -478,6 +478,7 @@ public class ProjectBrowserActivity extends AppCompatActivity {
                 obj.put("id", s.id);
                 obj.put("name", s.name);
                 obj.put("label", s.label != null ? s.label : s.name);
+                obj.put("updatedAt", s.updatedAt);
                 arr.put(obj);
             }
             manifest.put("scenes", arr);
@@ -517,7 +518,8 @@ public class ProjectBrowserActivity extends AppCompatActivity {
                     scenes.add(new WebEditorApiClient.SceneInfo(
                             obj.optString("id"),
                             obj.optString("name"),
-                            obj.optString("label")));
+                            obj.optString("label"),
+                            obj.optString("updatedAt")));
                 }
             }
         } catch (Exception e) {

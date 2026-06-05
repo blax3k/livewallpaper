@@ -44,10 +44,12 @@ public class WebEditorApiClient {
         public final String id;
         public final String name;
         public final String label;
-        public SceneInfo(String id, String name, String label) {
+        public final String updatedAt;
+        public SceneInfo(String id, String name, String label, String updatedAt) {
             this.id = id;
             this.name = name;
             this.label = label;
+            this.updatedAt = updatedAt != null ? updatedAt : "";
         }
         @Override
         public String toString() { return label != null ? label : name; }
@@ -100,7 +102,8 @@ public class WebEditorApiClient {
                 String id = obj.optString("id", "");
                 String name = obj.optString("name", "");
                 String label = obj.optString("label", name);
-                scenes.add(new SceneInfo(id, name, label));
+                String updatedAt = obj.optString("updated_at", "");
+                scenes.add(new SceneInfo(id, name, label, updatedAt));
             }
         } catch (Exception e) {
             throw new IOException("Failed to parse scenes response: " + e.getMessage(), e);

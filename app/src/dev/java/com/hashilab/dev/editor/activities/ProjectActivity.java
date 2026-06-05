@@ -4,6 +4,7 @@ import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,8 +17,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.signature.ObjectKey;
 import com.example.livewallpaper.R;
 import com.hashilab.dev.editor.network.WebEditorApiClient;
 import com.hashilab.dev.editor.utils.AppPreferences;
@@ -28,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
+
+    private static final String TAG = "ProjectActivity";
 
     public static final String EXTRA_PROJECT_NAME = "project_name";
     public static final String EXTRA_PROJECT_ID   = "project_id";
@@ -88,6 +93,8 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
         adapter = new SceneAdapter(sceneList);
         recyclerView.setAdapter(adapter);
 
+        SwipeRefreshLayout swipeRefresh = findViewById(R.id.swipeRefreshLayout);
+
         viewModel = new ViewModelProvider(this).get(ProjectViewModel.class);
 
         viewModel.getScenes().observe(this, scenes -> {
@@ -109,6 +116,9 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
         viewModel.getError().observe(this, err -> {
             if (err != null) Toast.makeText(this, err, Toast.LENGTH_LONG).show();
         });
+        viewModel.getLoading().observe(this, swipeRefresh::setRefreshing);
+
+        swipeRefresh.setOnRefreshListener(() -> viewModel.refreshScenes(projectId));
         viewModel.getWallpaperActivated().observe(this, activated -> {
             if (activated == null || !activated) return;
             ComponentName glService = new ComponentName(
@@ -175,8 +185,11 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
             WebEditorApiClient.SceneInfo scene = scenes.get(position);
             holder.sceneName.setText(scene.label != null ? scene.label : scene.name);
             String baseUrl = AppPreferences.getServerUrl(ProjectActivity.this);
+            String cacheKey = scene.updatedAt.isEmpty() ? scene.id : scene.updatedAt;
+            String thumbnailUrl = baseUrl + "/thumbnails/" + scene.id + ".jpg";
             Glide.with(ProjectActivity.this)
-                    .load(baseUrl + "/thumbnails/" + scene.id + ".jpg")
+                    .load(thumbnailUrl)
+                    .signature(new ObjectKey(cacheKey))
                     .into(holder.thumb);
         }
 

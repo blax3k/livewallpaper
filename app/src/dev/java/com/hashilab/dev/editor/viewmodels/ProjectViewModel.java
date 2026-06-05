@@ -107,6 +107,7 @@ public class ProjectViewModel extends AndroidViewModel {
     private final MutableLiveData<DownloadProgress> downloadProgress = new MutableLiveData<>();
     private final MutableLiveData<String> error = new MutableLiveData<>();
     private final MutableLiveData<Boolean> wallpaperActivated = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> loading = new MutableLiveData<>();
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -119,6 +120,7 @@ public class ProjectViewModel extends AndroidViewModel {
     public LiveData<DownloadProgress> getDownloadProgress() { return downloadProgress; }
     public LiveData<String> getError() { return error; }
     public LiveData<Boolean> getWallpaperActivated() { return wallpaperActivated; }
+    public LiveData<Boolean> getLoading() { return loading; }
 
     // ── Scene loading ──────────────────────────────────────────────────────────
 
@@ -128,6 +130,16 @@ public class ProjectViewModel extends AndroidViewModel {
             checkDownloadState(projectId);
             return;
         }
+        fetchScenes(projectId);
+    }
+
+    /** Forces a re-fetch from the server regardless of cached state. */
+    public void refreshScenes(String projectId) {
+        fetchScenes(projectId);
+    }
+
+    private void fetchScenes(String projectId) {
+        loading.postValue(true);
         String url = AppPreferences.getServerUrl(getApplication());
         executor.execute(() -> {
             try {
@@ -138,6 +150,8 @@ public class ProjectViewModel extends AndroidViewModel {
             } catch (Exception e) {
                 TimberLog.e(TAG, "Failed to load scenes", e);
                 error.postValue(e.getMessage());
+            } finally {
+                loading.postValue(false);
             }
         });
     }
