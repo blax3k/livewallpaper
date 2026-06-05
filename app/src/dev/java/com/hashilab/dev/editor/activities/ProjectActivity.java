@@ -176,7 +176,7 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
             holder.sceneName.setText(scene.label != null ? scene.label : scene.name);
             String baseUrl = AppPreferences.getServerUrl(ProjectActivity.this);
             Glide.with(ProjectActivity.this)
-                    .load(baseUrl + "/thumbnails/" + scene.name + ".jpg")
+                    .load(baseUrl + "/thumbnails/" + scene.id + ".jpg")
                     .into(holder.thumb);
         }
 
