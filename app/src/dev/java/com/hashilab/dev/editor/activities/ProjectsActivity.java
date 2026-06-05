@@ -83,11 +83,11 @@ public class ProjectsActivity extends AppCompatActivity {
             });
 
             String baseUrl = AppPreferences.getServerUrl(ProjectsActivity.this);
-            List<String> sceneNames = project.sceneNames;
+            List<String> thumbnailUrls = project.sceneThumbnailUrls;
             for (int i = 0; i < 4; i++) {
-                if (i < sceneNames.size()) {
+                if (i < thumbnailUrls.size()) {
                     Glide.with(ProjectsActivity.this)
-                            .load(baseUrl + "/thumbnails/" + sceneNames.get(i) + ".jpg")
+                            .load(baseUrl + thumbnailUrls.get(i))
                             .into(holder.thumbs[i]);
                 } else {
                     Glide.with(ProjectsActivity.this).clear(holder.thumbs[i]);

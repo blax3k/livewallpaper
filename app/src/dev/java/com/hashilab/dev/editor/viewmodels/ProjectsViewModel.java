@@ -41,7 +41,7 @@ public class ProjectsViewModel extends AndroidViewModel {
                 List<WebEditorApiClient.Project> fetched = client.fetchProjects();
                 List<Project> result = new ArrayList<>();
                 for (WebEditorApiClient.Project p : fetched) {
-                    result.add(new Project(p.id, p.name, p.version, p.sceneNames));
+                    result.add(new Project(p.id, p.name, p.version, p.sceneThumbnailUrls));
                 }
                 projects.postValue(result);
             } catch (Exception e) {
