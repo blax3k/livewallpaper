@@ -183,7 +183,7 @@ public class ProjectViewModel extends AndroidViewModel {
                 Map<String, String> sceneJsonMap = new LinkedHashMap<>();
                 Set<String> allTextureFilenames = new HashSet<>();
                 for (WebEditorApiClient.SceneInfo scene : scenesToDownload) {
-                    String json = client.fetchSceneData(scene.name);
+                    String json = client.fetchSceneData(scene.id);
                     sceneJsonMap.put(scene.name, json);
                     allTextureFilenames.addAll(extractTextureFilenames(json));
                 }
