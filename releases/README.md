@@ -8,10 +8,14 @@ This document contains information about all released versions of LiveWallpaper.
 
 ### Downloads
 
-| Version | Variant | Size | Download |
-|---------|---------|------|----------|
-| 1.0 | User | 50 MB | [livewallpaper-user-v1.0.apk](./livewallpaper-user-v1.0.apk) |
-| 1.0 | Developer | 44 MB | [livewallpaper-dev-v1.0.apk](./livewallpaper-dev-v1.0.apk) |
+APKs are distributed via **GitHub Releases** — not stored in this repository.
+
+👉 **[Download from GitHub Releases](https://github.com/blax3k/livewallpaper/releases)**
+
+| Version | Variant | Description |
+|---------|---------|-------------|
+| 1.0 | User | Clean, end-user build |
+| 1.0 | Developer | Full editor and debug tools |
 
 ### What's Included
 
@@ -72,8 +76,8 @@ This document contains information about all released versions of LiveWallpaper.
    - Enable "Unknown Sources" or "Install from Unknown Sources"
 
 2. **Download the APK**
-   - Choose User or Developer version
-   - Click the download link above
+   - Go to [GitHub Releases](https://github.com/blax3k/livewallpaper/releases)
+   - Choose the User or Developer APK from the latest release assets
 
 3. **Install the APK**
    - Open file manager and navigate to Downloads folder
@@ -195,5 +199,5 @@ We'd love to hear your feedback:
 
 **Enjoy your LiveWallpaper! 🎨**
 
-*Last Updated: April 6, 2026*
+*Last Updated: June 8, 2026*
 
