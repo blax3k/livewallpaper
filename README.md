@@ -26,18 +26,7 @@ A sophisticated Android live wallpaper application that brings dynamic, interact
 
 ## Download 📲
 
-You can download the pre-built APK files from the [Releases](./releases/) folder:
-
-- **[livewallpaper-user-v1.0.apk](./releases/livewallpaper-user-v1.0.apk)** - Standard user version
-  - Clean UI focused on enjoying the wallpaper
-  - Smaller installation footprint
-  - Perfect for end-users
-
-- **[livewallpaper-dev-v1.0.apk](./releases/livewallpaper-dev-v1.0.apk)** - Developer/Editor version
-  - Full scene and sprite editing capabilities
-  - Debugging tools and logging
-  - Perfect for customization and development
-  - Size: ~44 MB
+You can download the pre-built APK files from 👉 **[Download from GitHub Releases](https://github.com/blax3k/livewallpaper/releases)**
 
 ### Installation Steps
 1. Enable "Unknown Sources" in your device's security settings
@@ -127,7 +116,7 @@ livewallpaper/
 ## Technical Stack 🛠️
 
 ### Core Technologies
-- **Language**: Java & Kotlin
+- **Language**: Java
 - **UI Framework**: Jetpack Compose (for future UI updates)
 - **Graphics**: OpenGL ES
 - **Build System**: Gradle with Kotlin DSL
