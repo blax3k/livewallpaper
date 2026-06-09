@@ -37,6 +37,21 @@
         app:layout_constraintHeight_percent="0.25">
 
         <!-- NOT_DOWNLOADED state -->
+
+        <ImageButton
+            android:id="@+id/refreshButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_circle_button"
+            android:padding="12dp"
+            android:layout_margin="12dp"
+            app:srcCompat="@drawable/ic_refresh"
+            app:tint="@android:color/white"
+            app:layout_constraintLeft_toRightOf="@+id/setProjectAsWallpaperButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/deleteWallpaperButton"
+            android:visibility="gone"/>
+
         <Button
             android:id="@+id/downloadProjectButton"
             android:layout_width="wrap_content"
@@ -54,22 +69,23 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Set as Wallpaper"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@+id/deleteWallpaperButton"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:visibility="gone"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible" />
 
         <Button
             android:id="@+id/deleteWallpaperButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Delete"
-            app:layout_constraintTop_toBottomOf="@+id/setProjectAsWallpaperButton"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:visibility="gone"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/setProjectAsWallpaperButton"
+            tools:visibility="visible" />
 
         <!-- DOWNLOADING state -->
         <ProgressBar

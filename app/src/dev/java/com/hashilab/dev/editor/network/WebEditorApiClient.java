@@ -111,6 +111,21 @@ public class WebEditorApiClient {
         return scenes;
     }
 
+    /** Fetch a single project by ID. */
+    public Project fetchProject(String projectId) throws IOException {
+        String json = get("/api/projects/" + projectId);
+        try {
+            JSONObject obj = new JSONObject(json);
+            return new Project(
+                    obj.getString("id"),
+                    obj.getString("name"),
+                    obj.optString("version", ""),
+                    new ArrayList<>());
+        } catch (Exception e) {
+            throw new IOException("Failed to parse project response: " + e.getMessage(), e);
+        }
+    }
+
     /** Fetch the full JSON data for a scene by its name. Returns the raw JSON string. */
     public String fetchSceneData(String sceneName) throws IOException {
         return get("/api/scenes/" + sceneName);

@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -49,8 +50,13 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
     private Button downloadProjectButton;
     private Button setProjectAsWallpaperButton;
     private Button deleteWallpaperButton;
+    private ImageButton refreshButton;
     private ProgressBar downloadProgressBar;
     private TextView downloadSizeText;
+
+    // ── State ──────────────────────────────────────────────────────────────────
+
+    private ProjectState currentState = ProjectState.NOT_DOWNLOADED;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -70,11 +76,14 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
         downloadProjectButton      = findViewById(R.id.downloadProjectButton);
         setProjectAsWallpaperButton = findViewById(R.id.setProjectAsWallpaperButton);
         deleteWallpaperButton       = findViewById(R.id.deleteWallpaperButton);
+        refreshButton               = findViewById(R.id.refreshButton);
         downloadProgressBar         = findViewById(R.id.downloadProgressBar);
         downloadSizeText            = findViewById(R.id.downloadSizeText);
 
         downloadProjectButton.setOnClickListener(v ->
                 viewModel.downloadProject(projectId, projectName));
+        refreshButton.setOnClickListener(v ->
+                viewModel.downloadProjectUpdate(projectId, projectName));
         setProjectAsWallpaperButton.setOnClickListener(v -> {
             if(viewModel.isCurrentWallpaperMine())
             {
@@ -117,6 +126,7 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
             if (err != null) Toast.makeText(this, err, Toast.LENGTH_LONG).show();
         });
         viewModel.getLoading().observe(this, swipeRefresh::setRefreshing);
+        viewModel.getUpdateAvailable().observe(this, available -> updateRefreshButtonVisibility());
 
         swipeRefresh.setOnRefreshListener(() -> viewModel.refreshScenes(projectId));
         viewModel.getWallpaperActivated().observe(this, activated -> {
@@ -141,7 +151,7 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
     // ── State ──────────────────────────────────────────────────────────────────
 
     private void setState(ProjectState state) {
-        // Hide everything first, then show what's relevant.
+        currentState = state;
         downloadProjectButton.setVisibility(View.GONE);
         setProjectAsWallpaperButton.setVisibility(View.GONE);
         deleteWallpaperButton.setVisibility(View.GONE);
@@ -161,6 +171,14 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
                 deleteWallpaperButton.setVisibility(View.VISIBLE);
                 break;
         }
+        updateRefreshButtonVisibility();
+    }
+
+    private void updateRefreshButtonVisibility() {
+        Boolean available = viewModel.getUpdateAvailable().getValue();
+        boolean show = currentState == ProjectState.DOWNLOADED
+                && available != null && available;
+        refreshButton.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     // ── Adapter ────────────────────────────────────────────────────────────────
