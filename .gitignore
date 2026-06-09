@@ -16,3 +16,4 @@ local.properties
 
 # APKs are distributed via GitHub Releases, not committed to the repo
 releases/*.apk
+/.idea/claudeCodeEditorTabs.xml

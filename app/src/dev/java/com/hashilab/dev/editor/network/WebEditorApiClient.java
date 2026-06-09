@@ -64,7 +64,7 @@ public class WebEditorApiClient {
 
     /** Fetch the list of all projects. */
     public List<Project> fetchProjects() throws IOException {
-        String json = get("/api/projects");
+        String json = get("/api/projects?activeOnly=true");
         List<Project> projects = new ArrayList<>();
         try {
             JSONArray arr = new JSONArray(json);
