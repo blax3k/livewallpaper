@@ -38,15 +38,18 @@ public class ProjectsViewModel extends AndroidViewModel {
     public void loadProjects() {
         loading.postValue(true);
         String url = AppPreferences.getServerUrl(getApplication());
+        String cookie = AppPreferences.getSessionCookie(getApplication());
         executor.execute(() -> {
             try {
-                WebEditorApiClient client = new WebEditorApiClient(url);
+                WebEditorApiClient client = new WebEditorApiClient(url, cookie);
                 List<WebEditorApiClient.Project> fetched = client.fetchProjects();
                 List<Project> result = new ArrayList<>();
                 for (WebEditorApiClient.Project p : fetched) {
                     result.add(new Project(p.id, p.name, p.version, p.sceneThumbnailUrls));
                 }
                 projects.postValue(result);
+            } catch (WebEditorApiClient.AuthException e) {
+                error.postValue("UNAUTHORIZED");
             } catch (Exception e) {
                 TimberLog.e(TAG, "Failed to load projects", e);
                 error.postValue(e.getMessage());

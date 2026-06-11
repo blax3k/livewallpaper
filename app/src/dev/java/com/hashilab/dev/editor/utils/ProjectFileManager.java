@@ -54,12 +54,14 @@ public class ProjectFileManager {
     }
 
     /** Fetches the server version and returns true if it differs from the locally stored version. */
-    public boolean checkVersionNeedsUpdate(String projectId) {
+    public boolean checkVersionNeedsUpdate(String projectId) throws WebEditorApiClient.AuthException {
         try {
             if (!isProjectDownloaded(projectId)) return false;
             WebEditorApiClient.Project project = buildClient().fetchProject(projectId);
             if (project.version.isEmpty()) return false;
             return !project.version.equals(getLocalProjectVersion(projectId));
+        } catch (WebEditorApiClient.AuthException e) {
+            throw e;
         } catch (Exception e) {
             TimberLog.w(TAG, "Failed to check project version: " + e.getMessage());
             return false;
@@ -139,6 +141,8 @@ public class ProjectFileManager {
         String serverVersion = "";
         try {
             serverVersion = client.fetchProject(projectId).version;
+        } catch (WebEditorApiClient.AuthException e) {
+            throw e;
         } catch (Exception e) {
             TimberLog.w(TAG, "Could not fetch project version: " + e.getMessage());
         }
@@ -224,7 +228,9 @@ public class ProjectFileManager {
     // ── Private helpers ────────────────────────────────────────────────────────
 
     private WebEditorApiClient buildClient() {
-        return new WebEditorApiClient(AppPreferences.getServerUrl(application));
+        return new WebEditorApiClient(
+                AppPreferences.getServerUrl(application),
+                AppPreferences.getSessionCookie(application));
     }
 
     private File getProjectsRoot() {
@@ -243,7 +249,7 @@ public class ProjectFileManager {
     }
 
     private void saveProjectManifest(File projectDir, String projectId, String projectName,
-                                     List<WebEditorApiClient.SceneInfo> sceneList, String version) {
+                                     List<WebEditorApiClient.SceneInfo> sceneList, String version) throws IOException {
         try {
             JSONObject manifest = new JSONObject();
             manifest.put("id", projectId);
@@ -259,8 +265,10 @@ public class ProjectFileManager {
             }
             manifest.put("scenes", arr);
             writeFile(new File(projectDir, "manifest.json"), manifest.toString().getBytes("UTF-8"));
+        } catch (IOException e) {
+            throw e;
         } catch (Exception e) {
-            TimberLog.e(TAG, "Failed to save project manifest", e);
+            throw new IOException("Failed to save project manifest", e);
         }
     }
 

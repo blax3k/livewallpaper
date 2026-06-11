@@ -41,6 +41,12 @@ public class ProjectsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (AppPreferences.getSessionCookie(this) == null) {
+            AuthNavigation.signOut(this);
+            return;
+        }
+
         setContentView(R.layout.activity_projects);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -59,7 +65,11 @@ public class ProjectsActivity extends AppCompatActivity {
             adapter.notifyDataSetChanged();
         });
         viewModel.getError().observe(this, err -> {
-            if (err != null) Toast.makeText(this, "Failed to load projects: " + err, Toast.LENGTH_LONG).show();
+            if ("UNAUTHORIZED".equals(err)) {
+                AuthNavigation.signOut(this);
+            } else if (err != null) {
+                Toast.makeText(this, "Failed to load projects: " + err, Toast.LENGTH_LONG).show();
+            }
         });
         viewModel.getLoading().observe(this, swipeRefresh::setRefreshing);
 
@@ -76,6 +86,10 @@ public class ProjectsActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        }
+        if (item.getItemId() == R.id.action_logout) {
+            AuthNavigation.signOut(this);
             return true;
         }
         return super.onOptionsItemSelected(item);

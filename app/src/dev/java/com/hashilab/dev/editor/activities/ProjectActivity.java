@@ -123,7 +123,11 @@ public class ProjectActivity extends androidx.appcompat.app.AppCompatActivity {
             downloadSizeText.setText(progress.format());
         });
         viewModel.getError().observe(this, err -> {
-            if (err != null) Toast.makeText(this, err, Toast.LENGTH_LONG).show();
+            if ("UNAUTHORIZED".equals(err)) {
+                AuthNavigation.signOut(this);
+            } else if (err != null) {
+                Toast.makeText(this, err, Toast.LENGTH_LONG).show();
+            }
         });
         viewModel.getLoading().observe(this, swipeRefresh::setRefreshing);
         viewModel.getUpdateAvailable().observe(this, available -> updateRefreshButtonVisibility());

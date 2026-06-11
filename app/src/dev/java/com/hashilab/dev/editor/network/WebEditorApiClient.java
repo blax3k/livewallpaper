@@ -8,10 +8,12 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Minimal HTTP client for talking to the Live Wallpaper Web Editor backend.
@@ -22,6 +24,10 @@ public class WebEditorApiClient {
     private static final String TAG = "WebEditorApiClient";
     private static final int CONNECT_TIMEOUT_MS = 5_000;
     private static final int READ_TIMEOUT_MS = 30_000;
+
+    public static class AuthException extends IOException {
+        public AuthException(String message) { super(message); }
+    }
 
     public static class Project {
         public final String id;
@@ -56,10 +62,97 @@ public class WebEditorApiClient {
     }
 
     private final String baseUrl;
+    private final String sessionCookie;
 
     public WebEditorApiClient(String baseUrl) {
-        // Strip trailing slash for consistent URL construction
-        this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        this(baseUrl, null);
+    }
+
+    public WebEditorApiClient(String baseUrl, String sessionCookie) {
+        this.baseUrl = stripTrailingSlash(baseUrl);
+        this.sessionCookie = sessionCookie;
+    }
+
+    /**
+     * Authenticate with the server. Returns the raw session cookie value to store and pass back
+     * to the constructor. Throws {@link AuthException} for invalid credentials.
+     */
+    public static String login(String baseUrl, String email, String password) throws IOException {
+        String urlString = stripTrailingSlash(baseUrl) + "/api/auth/login";
+        TimberLog.d(TAG, "POST " + urlString);
+
+        byte[] body = buildLoginBody(email, password);
+        HttpURLConnection conn = null;
+        try {
+            conn = openPostConnection(urlString, body);
+            int status = conn.getResponseCode();
+            if (status == 401 || status == 400) throw parseAuthError(conn);
+            if (status < 200 || status >= 300) throw new IOException("HTTP " + status + " for " + urlString);
+            String cookie = extractSidCookie(conn);
+            if (cookie == null) throw new IOException("No session cookie returned from login");
+            return cookie;
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+    }
+
+    private static byte[] buildLoginBody(String email, String password) throws IOException {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("email", email);
+            body.put("password", password);
+            return body.toString().getBytes("UTF-8");
+        } catch (Exception e) {
+            throw new IOException("Failed to build login request", e);
+        }
+    }
+
+    private static HttpURLConnection openPostConnection(String urlString, byte[] body) throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
+        conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
+        conn.setReadTimeout(READ_TIMEOUT_MS);
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setRequestProperty("Accept", "application/json");
+        conn.setDoOutput(true);
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(body);
+        }
+        return conn;
+    }
+
+    private static AuthException parseAuthError(HttpURLConnection conn) {
+        String message = "Invalid email or password";
+        InputStream errStream = conn.getErrorStream();
+        if (errStream != null) {
+            try {
+                String errBody = new String(readStream(errStream), "UTF-8");
+                String msg = new JSONObject(errBody).optString("message", "");
+                if (!msg.isEmpty()) message = msg;
+            } catch (Exception ignored) {}
+        }
+        return new AuthException(message);
+    }
+
+    /** Returns the sid cookie value from Set-Cookie headers, or null if absent. */
+    private static String extractSidCookie(HttpURLConnection conn) {
+        for (Map.Entry<String, List<String>> entry : conn.getHeaderFields().entrySet()) {
+            if (!"set-cookie".equalsIgnoreCase(entry.getKey()) || entry.getValue() == null) continue;
+            for (String c : entry.getValue()) {
+                if (!c.startsWith("sid=")) 
+                {
+                    continue;
+                }
+                String value = c.substring("sid=".length());
+                int semi = value.indexOf(';');
+                return semi >= 0 ? value.substring(0, semi) : value;
+            }
+        }
+        return null;
+    }
+
+    private static String stripTrailingSlash(String url) {
+        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
     /** Fetch the list of all projects. */
@@ -149,6 +242,9 @@ public class WebEditorApiClient {
             conn.setConnectTimeout(CONNECT_TIMEOUT_MS);
             conn.setReadTimeout(READ_TIMEOUT_MS);
             conn.setRequestMethod("HEAD");
+            if (sessionCookie != null) {
+                conn.setRequestProperty("Cookie", "sid=" + sessionCookie);
+            }
             conn.connect();
             return conn.getContentLengthLong();
         } finally {
@@ -175,8 +271,12 @@ public class WebEditorApiClient {
             conn.setReadTimeout(READ_TIMEOUT_MS);
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json, */*");
+            if (sessionCookie != null) {
+                conn.setRequestProperty("Cookie", "sid=" + sessionCookie);
+            }
 
             int status = conn.getResponseCode();
+            if (status == 401) throw new AuthException("Session expired — please sign in again");
             if (status < 200 || status >= 300) {
                 throw new IOException("HTTP " + status + " for " + urlString);
             }

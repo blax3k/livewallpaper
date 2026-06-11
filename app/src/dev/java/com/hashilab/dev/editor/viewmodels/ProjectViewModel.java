@@ -107,13 +107,16 @@ public class ProjectViewModel extends AndroidViewModel {
     private void fetchScenes(String projectId) {
         loading.postValue(true);
         String url = AppPreferences.getServerUrl(getApplication());
+        String cookie = AppPreferences.getSessionCookie(getApplication());
         executor.execute(() -> {
             try {
-                WebEditorApiClient client = new WebEditorApiClient(url);
+                WebEditorApiClient client = new WebEditorApiClient(url, cookie);
                 List<WebEditorApiClient.SceneInfo> fetched = client.fetchScenesForProject(projectId);
                 scenes.postValue(fetched);
                 postDownloadState(projectId);
                 updateAvailable.postValue(fileManager.checkVersionNeedsUpdate(projectId));
+            } catch (WebEditorApiClient.AuthException e) {
+                error.postValue("UNAUTHORIZED");
             } catch (Exception e) {
                 TimberLog.e(TAG, "Failed to load scenes", e);
                 error.postValue(e.getMessage());
@@ -151,6 +154,9 @@ public class ProjectViewModel extends AndroidViewModel {
                 fileManager.downloadProject(projectId, projectName, snapshot,
                         (downloaded, total) -> downloadProgress.postValue(new DownloadProgress(downloaded, total)));
                 state.postValue(ProjectState.DOWNLOADED);
+            } catch (WebEditorApiClient.AuthException e) {
+                error.postValue("UNAUTHORIZED");
+                state.postValue(ProjectState.NOT_DOWNLOADED);
             } catch (Exception e) {
                 TimberLog.e(TAG, "Download failed", e);
                 error.postValue("Download failed: " + e.getMessage());
@@ -187,6 +193,9 @@ public class ProjectViewModel extends AndroidViewModel {
                         GLWallpaperService.requestProjectReload();
                     }
                 }
+            } catch (WebEditorApiClient.AuthException e) {
+                error.postValue("UNAUTHORIZED");
+                state.postValue(ProjectState.DOWNLOADED);
             } catch (Exception e) {
                 TimberLog.e(TAG, "Project update failed", e);
                 error.postValue("Update failed: " + e.getMessage());

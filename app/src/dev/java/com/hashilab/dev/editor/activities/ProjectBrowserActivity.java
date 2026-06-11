@@ -3,6 +3,8 @@ package com.hashilab.dev.editor.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,10 +22,12 @@ import com.example.livewallpaper.R;
 import com.example.livewallpaper.logging.TimberLog;
 import com.example.livewallpaper.managers.SceneFileManager;
 import com.hashilab.dev.editor.network.WebEditorApiClient;
+import com.hashilab.dev.editor.utils.AppPreferences;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -81,9 +85,32 @@ public class ProjectBrowserActivity extends AppCompatActivity {
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
+    private static final int MENU_SIGN_OUT = 1;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0, MENU_SIGN_OUT, 0, "Sign Out");
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == MENU_SIGN_OUT) {
+            AuthNavigation.signOut(this);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (AppPreferences.getSessionCookie(this) == null) {
+            AuthNavigation.signOut(this);
+            return;
+        }
+
         setContentView(R.layout.activity_project_browser);
 
         textHeader         = findViewById(R.id.text_header);
@@ -201,7 +228,7 @@ public class ProjectBrowserActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                WebEditorApiClient client = new WebEditorApiClient(url);
+                WebEditorApiClient client = buildClient(url);
                 List<WebEditorApiClient.Project> fetched = client.fetchProjects();
 
                 runOnUiThread(() -> {
@@ -222,6 +249,8 @@ public class ProjectBrowserActivity extends AppCompatActivity {
                         showStatus("No projects found on this server.");
                     }
                 });
+            } catch (WebEditorApiClient.AuthException e) {
+                runOnUiThread(() -> AuthNavigation.signOut(this));
             } catch (Exception e) {
                 TimberLog.e(TAG, "Failed to fetch projects", e);
                 runOnUiThread(() -> {
@@ -265,6 +294,8 @@ public class ProjectBrowserActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 downloadProject(url, project, scenes);
+            } catch (WebEditorApiClient.AuthException e) {
+                runOnUiThread(() -> AuthNavigation.signOut(this));
             } catch (Exception e) {
                 TimberLog.e(TAG, "Download failed", e);
                 runOnUiThread(() -> {
@@ -308,7 +339,7 @@ public class ProjectBrowserActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                WebEditorApiClient client = new WebEditorApiClient(url);
+                WebEditorApiClient client = buildClient(url);
                 List<WebEditorApiClient.SceneInfo> scenes = client.fetchScenesForProject(project.id);
 
                 runOnUiThread(() -> {
@@ -330,6 +361,8 @@ public class ProjectBrowserActivity extends AppCompatActivity {
                         new Thread(() -> {
                             try {
                                 downloadProject(url, project, scenes);
+                            } catch (WebEditorApiClient.AuthException ex) {
+                                runOnUiThread(() -> AuthNavigation.signOut(this));
                             } catch (Exception ex) {
                                 TimberLog.e(TAG, "Download failed", ex);
                                 runOnUiThread(() -> {
@@ -345,6 +378,8 @@ public class ProjectBrowserActivity extends AppCompatActivity {
                         setScenesView(project, scenes, downloaded);
                     }
                 });
+            } catch (WebEditorApiClient.AuthException e) {
+                runOnUiThread(() -> AuthNavigation.signOut(this));
             } catch (Exception e) {
                 TimberLog.e(TAG, "Failed to fetch scenes", e);
                 runOnUiThread(() -> {
@@ -361,7 +396,7 @@ public class ProjectBrowserActivity extends AppCompatActivity {
     private void downloadProject(String serverUrl,
                                  WebEditorApiClient.Project project,
                                  List<WebEditorApiClient.SceneInfo> scenes) throws IOException {
-        WebEditorApiClient client = new WebEditorApiClient(serverUrl);
+        WebEditorApiClient client = buildClient(serverUrl);
         SceneFileManager sceneFileManager = new SceneFileManager(this, null);
         File scenesDir   = sceneFileManager.getFallbackScenesDirectory();
         File texturesDir = sceneFileManager.getFallbackTexturesDirectory();
@@ -561,12 +596,17 @@ public class ProjectBrowserActivity extends AppCompatActivity {
     }
 
     private static byte[] readBytesFromFile(File file) throws IOException {
-        byte[] data = new byte[(int) file.length()];
+        ByteArrayOutputStream bos = new ByteArrayOutputStream((int) file.length());
         try (FileInputStream fis = new FileInputStream(file)) {
-            //noinspection ResultOfMethodCallIgnored
-            fis.read(data);
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = fis.read(buf)) != -1) bos.write(buf, 0, n);
         }
-        return data;
+        return bos.toByteArray();
+    }
+
+    private WebEditorApiClient buildClient(String url) {
+        return new WebEditorApiClient(url, AppPreferences.getSessionCookie(this));
     }
 
     // ── Prefs ──────────────────────────────────────────────────────────────────

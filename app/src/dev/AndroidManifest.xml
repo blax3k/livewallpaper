@@ -45,5 +45,10 @@
             android:name="com.hashilab.dev.editor.activities.SettingsActivity"
             android:exported="false"
             android:theme="@style/Theme.Livewallpaper" />
+
+        <activity
+            android:name="com.hashilab.dev.editor.activities.LoginActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Livewallpaper" />
     </application>
 </manifest>
