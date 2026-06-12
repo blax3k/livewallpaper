@@ -182,15 +182,17 @@ public class SceneLoader {
         if (spriteData.textureResource.startsWith("/uploads/") && texturesPath != null) {
             String filename = spriteData.textureResource.substring("/uploads/".length());
             java.io.File textureFile = new java.io.File(texturesPath, filename);
-            if (textureFile.exists()) {
-                spriteData.textureResourceId = -1; // Marker: resolve via file path
-                spriteData.textureResource = textureFile.getAbsolutePath();
-                spriteData.name = filename;
-                return new Sprite(spriteData);
-            } else {
-                TimberLog.w(TAG, "Downloaded texture file not found: " + textureFile.getAbsolutePath() + ". Skipping sprite.");
-                return null;
+            // Always include the sprite even if the file isn't accessible right now (e.g. at
+            // boot before credential storage is unlocked). The async texture loader will fail
+            // gracefully with texId=0 (sprite invisible), and reloadTextures() on the next
+            // visibility change will retry once storage is available.
+            if (!textureFile.exists()) {
+                TimberLog.w(TAG, "Downloaded texture file not found at load time: " + textureFile.getAbsolutePath() + ". Will retry on next surface creation.");
             }
+            spriteData.textureResourceId = -1; // Marker: resolve via file path
+            spriteData.textureResource = textureFile.getAbsolutePath();
+            spriteData.name = filename;
+            return new Sprite(spriteData);
         }
 
         int resourceId = getDrawableResourceId(spriteData.textureResource);
