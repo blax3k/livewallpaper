@@ -19,6 +19,13 @@ public class SpriteData implements Parcelable {
     public float positionY;
     public float[] texCoordinates;  // The ONLY texture state that matters
 
+    /**
+     * Condition blocks that may override this sprite's visibility, texture, or position
+     * based on active flags. Evaluated in order; first matching block wins.
+     * Null means no conditions — sprite always renders with base configuration.
+     */
+    public SpriteConditionData[] conditions;
+
     // Set after resource resolution
     public int textureResourceId;
     public String name;
@@ -36,6 +43,9 @@ public class SpriteData implements Parcelable {
         texCoordinates = in.createFloatArray();
         textureResourceId = in.readInt();
         name = in.readString();
+        // conditions is intentionally not parceled — it is only used by the live wallpaper
+        // renderer, which loads SpriteData from JSON. The editor passes SpriteData via
+        // Parcel but never reads or writes conditions, so null here is correct.
     }
 
     public static final Creator<SpriteData> CREATOR = new Creator<SpriteData>() {
