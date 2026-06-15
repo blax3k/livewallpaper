@@ -71,6 +71,10 @@ public class Sprite implements Parcelable {
     // Used when editing texture in EditTextureActivity
     private boolean positionAtZero = false;
 
+    // Condition-driven overrides (evaluated each frame by SpriteConditionApplicator)
+    private SpriteConditionData[] conditions;
+    private boolean hidden = false;
+
     /**
      * Constructor using a SpriteConfig object for cleaner initialization.
      * This is the primary constructor; all other initialization paths delegate here.
@@ -82,7 +86,7 @@ public class Sprite implements Parcelable {
                 config.parallaxMultiplier, config.positionX, config.positionY, 1.0f, config.textureResource,
                 config.texCoordinates != null ? config.texCoordinates.clone() : null);
 
-        // Initialize texture edit state to default (scale/offset will be derived from texture coordinates if needed)
+        this.conditions = config.conditions;
     }
 
     /**
@@ -756,6 +760,50 @@ public class Sprite implements Parcelable {
     public void setPositionAtZero(boolean positionAtZero) {
         this.positionAtZero = positionAtZero;
         updateVertexBuffer();
+    }
+
+    // ==================== Condition override API (SpriteConditionApplicator) ====================
+
+    public SpriteConditionData[] getConditions() {
+        return conditions;
+    }
+
+    public boolean isHidden() {
+        return hidden;
+    }
+
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
+    }
+
+    /** Override position without touching originalPositionX/Y. */
+    public void applyConditionPosition(float x, float y) {
+        this.positionX = x;
+        this.positionY = y;
+        updateVertexBuffer();
+    }
+
+    /** Override tex coords without touching originalTexCoordinates. */
+    public void applyConditionTexCoords(float[] coords) {
+        if (coords == null || coords.length != 8 || texCoordBuffer == null) return;
+        texCoordBuffer.position(0);
+        texCoordBuffer.put(coords);
+        texCoordBuffer.position(0);
+    }
+
+    /** Restore base values. Called by SpriteConditionApplicator before re-evaluating conditions. */
+    public void resetConditionOverrides() {
+        this.hidden = false;
+        if (this.positionX != originalPositionX || this.positionY != originalPositionY) {
+            this.positionX = originalPositionX;
+            this.positionY = originalPositionY;
+            updateVertexBuffer();
+        }
+        if (originalTexCoordinates != null && texCoordBuffer != null) {
+            texCoordBuffer.position(0);
+            texCoordBuffer.put(originalTexCoordinates);
+            texCoordBuffer.position(0);
+        }
     }
 
     /**

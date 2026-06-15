@@ -32,6 +32,8 @@ public class SpriteRenderer {
     }
 
     public void drawSprite(Sprite sprite) {
+        if (sprite.isHidden()) return;
+
         int textureId = sprite.getTextureId();
         if (textureId == 0) {
             TimberLog.w(TAG, "Attempted to draw sprite with textureId=0. This sprite will not render.");

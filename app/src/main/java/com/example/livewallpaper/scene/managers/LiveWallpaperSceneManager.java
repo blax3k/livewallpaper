@@ -13,6 +13,7 @@ import com.example.livewallpaper.sensors.ConfigManager;
 import com.example.livewallpaper.managers.SceneFileManager;
 import com.example.livewallpaper.world.PackLoader;
 import com.example.livewallpaper.world.RulesEvaluator;
+import com.example.livewallpaper.world.SpriteConditionApplicator;
 import com.example.livewallpaper.world.WorldStateManager;
 
 import java.util.Collections;
@@ -31,7 +32,11 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     private final WorldStateManager worldState;
     private final RulesEvaluator rulesEvaluator;
+    private final SpriteConditionApplicator spriteConditionApplicator;
     private final List<RuleData> loadedRules;
+    // Set to true whenever flags change so conditions are re-applied on the next draw
+    private volatile boolean conditionsDirty = false;
+    private String lastAppliedConditionsScene = null;
 
     /**
      * Constructor for wallpaper mode that enables scene switching and cycling.
@@ -56,8 +61,10 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         // before the first scene is selected. Bypasses the 5-minute debounce here
         // since the app was just launched — we want correct flags right away.
         rulesEvaluator = new RulesEvaluator(worldState);
+        spriteConditionApplicator = new SpriteConditionApplicator(worldState);
         rulesEvaluator.evaluate(loadedRules);
         worldState.recordEvaluation();
+        conditionsDirty = true; // apply conditions once the first scene is loaded
 
         // Initialize scene manager for wallpaper mode
         try {
@@ -192,6 +199,14 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
                 }
             }
 
+            // Apply sprite conditions when the scene changes or flags have been updated
+            String currentSceneName = currentScene != null ? currentScene.getSceneName() : null;
+            if (conditionsDirty || !java.util.Objects.equals(currentSceneName, lastAppliedConditionsScene)) {
+                spriteConditionApplicator.applyToScene(currentScene);
+                lastAppliedConditionsScene = currentSceneName;
+                conditionsDirty = false;
+            }
+
             // Common rendering logic
             performRenderFrame();
         } catch (Exception e) {
@@ -237,6 +252,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
             TimberLog.d(TAG, "Running rules evaluation");
             rulesEvaluator.evaluate(loadedRules);
             worldState.recordEvaluation();
+            conditionsDirty = true;
         }
 
         // Cycle to the next scene if enough time has elapsed
