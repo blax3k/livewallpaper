@@ -147,12 +147,17 @@ public class SceneLoader {
     }
 
     /**
-     * Apply scene-level settings like xFocus and time range.
+     * Apply scene-level settings like xFocus, flag declarations, and legacy time range.
      */
     private void applySceneSettings(Scene scene, SceneData sceneData) {
         if (sceneData.xFocus >= 0.0f && sceneData.xFocus <= 1.0f) {
             scene.setXFocus(sceneData.xFocus);
         }
+        // Flag declarations drive scene selection. May be null for legacy scenes — ScenePicker
+        // treats null as "always eligible, score 0" for backward compatibility.
+        scene.setFlagDeclarations(sceneData.flags);
+
+        // Legacy time fields — kept for backward compat but no longer used by ScenePicker.
         scene.setStartTime(sceneData.startTime);
         scene.setEndTime(sceneData.endTime);
     }

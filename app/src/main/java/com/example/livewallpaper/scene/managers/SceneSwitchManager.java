@@ -8,6 +8,7 @@ import com.example.livewallpaper.scene.SceneLoader;
 import com.example.livewallpaper.scene.ScenePicker;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.managers.SceneFileManager;
+import com.example.livewallpaper.world.WorldStateManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +24,9 @@ public class SceneSwitchManager {
     private final Context context;
     private final SceneLoader sceneLoader;
     private final SceneTransitionManager transitionManager;
+    private final WorldStateManager worldState;
     // Dynamically loaded list of available scene files
     private String[] sceneFiles;
-
 
     // Reference to the current scene (updated externally)
     private Scene currentScene;
@@ -33,7 +34,7 @@ public class SceneSwitchManager {
     // Callback for gyro scaling application
     private GyroScalingCallback gyroCallback;
 
-    // Scene picker for time-of-day based scene selection
+    // Scene picker for flag-based scene selection
     private ScenePicker scenePicker;
     private List<Scene> loadedScenes;
 
@@ -48,6 +49,7 @@ public class SceneSwitchManager {
         this.context = context;
         this.sceneLoader = new SceneLoader(context);
         this.transitionManager = new SceneTransitionManager();
+        this.worldState = WorldStateManager.get(context);
         this.sceneFiles = sceneFileManager.loadAvailableSceneFiles();
         this.loadedScenes = new ArrayList<>();
 
@@ -61,8 +63,8 @@ public class SceneSwitchManager {
         // Preload all scene files into memory
         loadAllScenes();
 
-        // Initialize scene picker with all loaded scenes
-        this.scenePicker = new ScenePicker(this.loadedScenes);
+        // Initialize scene picker with all loaded scenes and world state
+        this.scenePicker = new ScenePicker(this.loadedScenes, worldState);
         TimberLog.d(TAG, "SceneSwitchManager initialized with " + loadedScenes.size() + " scenes");
     }
 
@@ -95,10 +97,11 @@ public class SceneSwitchManager {
             throw new RuntimeException("No scene files found in assets/scenes");
         }
 
-        // Create a dummy scene that won't match any real scene
-        // This allows scenePicker to select any valid scene for the current time of day
+        // Use a dummy placeholder as "current" so ScenePicker can pick any eligible scene.
         Scene dummyScene = new Scene("__DUMMY__");
-        return scenePicker.getNextScene(dummyScene);
+        Scene selected = scenePicker.getNextScene(dummyScene);
+        worldState.recordSceneShown(selected.getSceneName());
+        return selected;
     }
 
     /**
@@ -154,10 +157,11 @@ public class SceneSwitchManager {
         this.currentScene = currentScene;
         Scene newScene = scenePicker.getNextScene(currentScene);
 
-        if(newScene.getSceneName().equals(currentScene.getSceneName()))
-        {
+        if (newScene.getSceneName().equals(currentScene.getSceneName())) {
             return;
         }
+
+        worldState.recordSceneShown(newScene.getSceneName());
 
         // Reset the preloaded scene so textures can be re-initialized
         newScene.resetForReuse();
@@ -247,8 +251,8 @@ public class SceneSwitchManager {
         loadedScenes.clear();
         loadAllScenes();
 
-        // Update ScenePicker with the newly loaded scenes
-        this.scenePicker = new ScenePicker(this.loadedScenes);
+        // Update ScenePicker with the newly loaded scenes and world state
+        this.scenePicker = new ScenePicker(this.loadedScenes, worldState);
 
         TimberLog.d(TAG, "Reloaded " + sceneFiles.length + " scene files and refreshed " + loadedScenes.size() + " scenes in memory");
     }

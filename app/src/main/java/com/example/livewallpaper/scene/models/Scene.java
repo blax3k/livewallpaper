@@ -23,8 +23,15 @@ public class Scene implements Parcelable {
     private boolean isInitialized = false;
     private boolean isGyroScaled = false;
     private float xFocus = 0.5f; // Default to center; represents the x-position to focus on (0.0 = left, 0.5 = center, 1.0 = right)
-    private int startTime = 0;    // Start time as minutes-of-day (0–1439) when this scene is available
-    private int endTime = 1439;   // End time as minutes-of-day (0–1439, inclusive) when this scene is available
+    private int startTime = 0;    // Deprecated — use flagDeclarations with time-of-day flags instead
+    private int endTime = 1439;   // Deprecated — see startTime
+
+    /**
+     * Flag-based declarations for scene selection. Null means no flags configured —
+     * scene is always eligible and scores 0 (backward compat with legacy scenes).
+     * Not parceled: only needed by ScenePicker during selection, not by editor activities.
+     */
+    private SceneFlagDeclarations flagDeclarations;
 
     public Scene(String sceneName) {
         this.sceneName = sceneName;
@@ -80,6 +87,16 @@ public class Scene implements Parcelable {
      */
     public void setEndTime(int endTime) {
         this.endTime = Math.max(0, Math.min(1439, endTime));
+    }
+
+    /** Returns the flag declarations controlling this scene's eligibility and score, or null if unset. */
+    public SceneFlagDeclarations getFlagDeclarations() {
+        return flagDeclarations;
+    }
+
+    /** Sets the flag declarations for this scene. Called by SceneLoader after parsing JSON. */
+    public void setFlagDeclarations(SceneFlagDeclarations flagDeclarations) {
+        this.flagDeclarations = flagDeclarations;
     }
 
     /**

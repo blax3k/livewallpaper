@@ -1,0 +1,22 @@
+[
+  {
+    "id": "morning",
+    "name": "Morning",
+    "defaultActive": false
+  },
+  {
+    "id": "afternoon",
+    "name": "Afternoon",
+    "defaultActive": false
+  },
+  {
+    "id": "evening",
+    "name": "Evening",
+    "defaultActive": false
+  },
+  {
+    "id": "night",
+    "name": "Night",
+    "defaultActive": false
+  }
+]
