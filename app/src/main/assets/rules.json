@@ -1,0 +1,70 @@
+[
+  {
+    "id": "set_morning",
+    "name": "Set Morning Flag (06:00–12:00)",
+    "conditions": {
+      "operator": "AND",
+      "checks": [
+        { "type": "time_of_day", "startHour": 6, "endHour": 12 }
+      ]
+    },
+    "actions": [
+      { "type": "activate_flag",   "flagId": "morning"   },
+      { "type": "deactivate_flag", "flagId": "afternoon" },
+      { "type": "deactivate_flag", "flagId": "evening"   },
+      { "type": "deactivate_flag", "flagId": "night"     }
+    ],
+    "oneShot": false
+  },
+  {
+    "id": "set_afternoon",
+    "name": "Set Afternoon Flag (12:00–18:00)",
+    "conditions": {
+      "operator": "AND",
+      "checks": [
+        { "type": "time_of_day", "startHour": 12, "endHour": 18 }
+      ]
+    },
+    "actions": [
+      { "type": "deactivate_flag", "flagId": "morning"   },
+      { "type": "activate_flag",   "flagId": "afternoon" },
+      { "type": "deactivate_flag", "flagId": "evening"   },
+      { "type": "deactivate_flag", "flagId": "night"     }
+    ],
+    "oneShot": false
+  },
+  {
+    "id": "set_evening",
+    "name": "Set Evening Flag (18:00–22:00)",
+    "conditions": {
+      "operator": "AND",
+      "checks": [
+        { "type": "time_of_day", "startHour": 18, "endHour": 22 }
+      ]
+    },
+    "actions": [
+      { "type": "deactivate_flag", "flagId": "morning"   },
+      { "type": "deactivate_flag", "flagId": "afternoon" },
+      { "type": "activate_flag",   "flagId": "evening"   },
+      { "type": "deactivate_flag", "flagId": "night"     }
+    ],
+    "oneShot": false
+  },
+  {
+    "id": "set_night",
+    "name": "Set Night Flag (22:00–06:00)",
+    "conditions": {
+      "operator": "AND",
+      "checks": [
+        { "type": "time_of_day", "startHour": 22, "endHour": 6 }
+      ]
+    },
+    "actions": [
+      { "type": "deactivate_flag", "flagId": "morning"   },
+      { "type": "deactivate_flag", "flagId": "afternoon" },
+      { "type": "deactivate_flag", "flagId": "evening"   },
+      { "type": "activate_flag",   "flagId": "night"     }
+    ],
+    "oneShot": false
+  }
+]
