@@ -137,7 +137,19 @@ public class ProjectFileManager {
             if (callback != null) callback.onProgress(downloadedBytes, finalTotal);
         }
 
-        // Phase 5: Fetch server version and write manifest
+        // Phase 5: Download flags.json and rules.json
+        try {
+            writeFile(new File(projectDir, "flags.json"), client.fetchProjectFlags(projectId).getBytes("UTF-8"));
+        } catch (Exception e) {
+            TimberLog.w(TAG, "Could not fetch project flags: " + e.getMessage());
+        }
+        try {
+            writeFile(new File(projectDir, "rules.json"), client.fetchProjectRules(projectId).getBytes("UTF-8"));
+        } catch (Exception e) {
+            TimberLog.w(TAG, "Could not fetch project rules: " + e.getMessage());
+        }
+
+        // Phase 6: Fetch server version and write manifest
         String serverVersion = "";
         try {
             serverVersion = client.fetchProject(projectId).version;
@@ -208,10 +220,22 @@ public class ProjectFileManager {
                 if (callback != null) callback.onProgress(downloadedBytes, finalTotal);
             }
 
-            // Phase 5: Write manifest with server version
+            // Phase 5: Download flags.json and rules.json
+            try {
+                writeFile(new File(tempDir, "flags.json"), client.fetchProjectFlags(projectId).getBytes("UTF-8"));
+            } catch (Exception e) {
+                TimberLog.w(TAG, "Could not fetch project flags: " + e.getMessage());
+            }
+            try {
+                writeFile(new File(tempDir, "rules.json"), client.fetchProjectRules(projectId).getBytes("UTF-8"));
+            } catch (Exception e) {
+                TimberLog.w(TAG, "Could not fetch project rules: " + e.getMessage());
+            }
+
+            // Phase 6: Write manifest with server version
             saveProjectManifest(tempDir, projectId, projectName, scenes, project.version);
 
-            // Phase 6: Atomically replace existing project dir
+            // Phase 7: Atomically replace existing project dir
             replaceProjectDir(projectDir, tempDir);
 
         } catch (Exception e) {

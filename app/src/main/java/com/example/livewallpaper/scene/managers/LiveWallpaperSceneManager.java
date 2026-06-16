@@ -11,11 +11,13 @@ import com.example.livewallpaper.scene.models.RuleData;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.sensors.ConfigManager;
 import com.example.livewallpaper.managers.SceneFileManager;
+import com.example.livewallpaper.prefs.WallpaperPreferences;
 import com.example.livewallpaper.world.PackLoader;
 import com.example.livewallpaper.world.RulesEvaluator;
 import com.example.livewallpaper.world.SpriteConditionApplicator;
 import com.example.livewallpaper.world.WorldStateManager;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,8 +51,16 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
         this.worldState = WorldStateManager.get(context);
 
-        // Load pack-level flag and rule definitions from assets.
-        PackLoader packLoader = new PackLoader(context);
+        // Resolve pack directory: use the parent of the active project's scenes dir when available.
+        File packDir = null;
+        String activeScenesDir = WallpaperPreferences.getActiveScenesDir(context);
+        if (activeScenesDir != null) {
+            File scenesDir = new File(activeScenesDir);
+            if (scenesDir.isDirectory()) packDir = scenesDir.getParentFile();
+        }
+
+        // Load pack-level flag and rule definitions; prefer downloaded project files over assets.
+        PackLoader packLoader = new PackLoader(context, packDir);
         List<FlagData> loadedFlags = packLoader.loadFlags();
         this.loadedRules = packLoader.loadRules();
 

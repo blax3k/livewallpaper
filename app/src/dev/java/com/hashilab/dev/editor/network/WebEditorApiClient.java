@@ -224,6 +224,16 @@ public class WebEditorApiClient {
         return get("/api/scenes/" + sceneName);
     }
 
+    /** Fetch the flags JSON array for a project. Returns the raw JSON string. */
+    public String fetchProjectFlags(String projectId) throws IOException {
+        return get("/api/projects/" + projectId + "/flags");
+    }
+
+    /** Fetch the rules JSON array for a project. Returns the raw JSON string. */
+    public String fetchProjectRules(String projectId) throws IOException {
+        return get("/api/projects/" + projectId + "/rules");
+    }
+
     /** Download a binary file (uploaded image) and return its bytes. */
     public byte[] downloadUpload(String filename) throws IOException {
         return getBytes("/uploads/" + filename);
