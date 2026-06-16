@@ -77,7 +77,7 @@ public class PackLoader {
             File file = new File(packDir, filename);
             if (file.exists()) {
                 try (InputStream is = new FileInputStream(file);
-                     InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
+                        InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
                     T[] items = gson.fromJson(reader, type);
                     if (items == null) return Collections.emptyList();
                     TimberLog.d(TAG, "Loaded " + items.length + " " + label + " definitions from " + file.getAbsolutePath());

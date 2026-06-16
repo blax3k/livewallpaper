@@ -10,6 +10,8 @@ package com.example.livewallpaper.scene.models;
  * "texture"              textureResource
  * "texture_coordinates"  texCoordinates  (8 floats, UV quad)
  * "position"             positionX, positionY
+ * "parallax"             parallaxMultiplier
+ * "size"                 width, height
  * </pre>
  *
  * Multiple modifications can be listed in one condition block and are all applied together.
@@ -34,4 +36,13 @@ public class SpriteModificationData {
 
     /** Replacement world-space Y position. Used by: position. */
     public float positionY;
+
+    /** Replacement parallax multiplier (1.0 = full scroll). Used by: parallax. */
+    public float parallaxMultiplier;
+
+    /** Replacement width in world units. Used by: size. */
+    public float width;
+
+    /** Replacement height in world units. Used by: size. */
+    public float height;
 }

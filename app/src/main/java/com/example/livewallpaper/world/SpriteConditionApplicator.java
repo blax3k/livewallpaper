@@ -25,10 +25,12 @@ import java.util.List;
  * Before applying, sprite state is always reset to its base values so modifications from a
  * previous evaluation cycle don't accumulate.
  *
- * <h3>Supported modifications (v1)</h3>
+ * <h3>Supported modifications</h3>
  * <ul>
  *   <li>{@code visible}            — show or hide the sprite entirely.</li>
  *   <li>{@code position}           — override world-space X/Y position.</li>
+ *   <li>{@code parallax}           — override parallax multiplier.</li>
+ *   <li>{@code size}               — override width and height in world units.</li>
  *   <li>{@code texture_coordinates}— override UV coordinates (8 floats).</li>
  *   <li>{@code texture}            — texture resource swap (not yet implemented; requires
  *       async GL texture loading — planned for a future stage).</li>
@@ -100,6 +102,14 @@ public class SpriteConditionApplicator {
 
             case "position":
                 sprite.applyConditionPosition(mod.positionX, mod.positionY);
+                break;
+
+            case "parallax":
+                sprite.applyConditionParallax(mod.parallaxMultiplier);
+                break;
+
+            case "size":
+                sprite.applyConditionSize(mod.width, mod.height);
                 break;
 
             case "texture_coordinates":

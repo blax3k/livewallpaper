@@ -43,11 +43,12 @@ public class Sprite implements Parcelable {
     // Wipe animation handling
     private final SpriteWipe spriteWipe = new SpriteWipe();
 
-    // Store original dimensions and positions for scaling
+    // Store original dimensions, positions, and parallax for condition reset
     private float originalWidth;
     private float originalHeight;
     private float originalPositionX;
     private float originalPositionY;
+    private float originalParallaxMultiplier;
 
     // Store texture editing baseline dimensions (reference dimensions for texture coordinate calculations)
     // These are set once when entering a texture editing session and remain fixed during editing
@@ -116,6 +117,7 @@ public class Sprite implements Parcelable {
         this.textureEditingBaselineWidth = width;
         this.textureEditingBaselineHeight = height;
         this.parallaxMultiplier = parallaxMultiplier;
+        this.originalParallaxMultiplier = parallaxMultiplier;
         this.positionX = positionX;
         this.positionY = positionY;
         this.originalPositionX = positionX;
@@ -783,6 +785,18 @@ public class Sprite implements Parcelable {
         updateVertexBuffer();
     }
 
+    /** Override parallax multiplier without touching originalParallaxMultiplier. */
+    public void applyConditionParallax(float multiplier) {
+        setParallaxMultiplier(multiplier);
+    }
+
+    /** Override width/height without touching originalWidth/originalHeight. */
+    public void applyConditionSize(float width, float height) {
+        this.width = width;
+        this.height = height;
+        updateVertexBuffer();
+    }
+
     /** Override tex coords without touching originalTexCoordinates. */
     public void applyConditionTexCoords(float[] coords) {
         if (coords == null || coords.length != 8 || texCoordBuffer == null) return;
@@ -794,10 +808,22 @@ public class Sprite implements Parcelable {
     /** Restore base values. Called by SpriteConditionApplicator before re-evaluating conditions. */
     public void resetConditionOverrides() {
         this.hidden = false;
+
+        boolean needsVertexUpdate = false;
         if (this.positionX != originalPositionX || this.positionY != originalPositionY) {
             this.positionX = originalPositionX;
             this.positionY = originalPositionY;
-            updateVertexBuffer();
+            needsVertexUpdate = true;
+        }
+        if (this.width != originalWidth || this.height != originalHeight) {
+            this.width = originalWidth;
+            this.height = originalHeight;
+            needsVertexUpdate = true;
+        }
+        if (needsVertexUpdate) updateVertexBuffer();
+
+        if (this.parallaxMultiplier != originalParallaxMultiplier) {
+            setParallaxMultiplier(originalParallaxMultiplier);
         }
         if (originalTexCoordinates != null && texCoordBuffer != null) {
             texCoordBuffer.position(0);
@@ -857,6 +883,7 @@ public class Sprite implements Parcelable {
         originalHeight = in.readFloat();
         originalPositionX = in.readFloat();
         originalPositionY = in.readFloat();
+        originalParallaxMultiplier = in.readFloat();
         textureEditingBaselineWidth = in.readFloat();
         textureEditingBaselineHeight = in.readFloat();
 
@@ -895,6 +922,7 @@ public class Sprite implements Parcelable {
         dest.writeFloat(originalHeight);
         dest.writeFloat(originalPositionX);
         dest.writeFloat(originalPositionY);
+        dest.writeFloat(originalParallaxMultiplier);
         dest.writeFloat(textureEditingBaselineWidth);
         dest.writeFloat(textureEditingBaselineHeight);
 
