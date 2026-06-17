@@ -192,6 +192,14 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
                 sceneSwitchRequested = false;
                 sceneSwitchManager.cycleToNextScene(currentScene);
                 lastSceneChangeTimeMs = System.currentTimeMillis();
+                // Pre-apply conditions to the incoming scene so its sprites already hold their
+                // final values when beginFade() copies positions for the wipe animation.
+                // Without this, sprites transition from default values and snap to their
+                // condition-modified state only after the transition completes.
+                Scene incomingScene = sceneSwitchManager.getTransitioningScene();
+                if (incomingScene != null) {
+                    spriteConditionApplicator.applyToScene(incomingScene);
+                }
             }
 
             // Update scene transition (handles texture preload, crossfade, and scene switching)
