@@ -31,6 +31,12 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
     private volatile boolean projectReloadRequested = false;
     private static final long SCENE_CYCLE_INTERVAL_MS = 5 * 60 * 1000;
     private long lastSceneChangeTimeMs = System.currentTimeMillis();
+    private int debugFrameCounter = 0;
+
+    // Pending surface dimensions to apply on the GL thread (glViewport must be called there).
+    // Written by surfaceChanged (main thread), consumed by onDrawFrame (GL thread).
+    private volatile int pendingViewportWidth = 0;
+    private volatile int pendingViewportHeight = 0;
 
     private final WorldStateManager worldState;
     private final RulesEvaluator rulesEvaluator;
@@ -120,9 +126,10 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
             // Set up gyro scaling callback
             if (sceneSwitchManager != null) {
                 sceneSwitchManager.setGyroScalingCallback((newScene) -> {
-                    if (spritesScaledForGyro) {
-                        gyroProcessor.applyGyroScalingToNewScene(newScene);
-                    }
+                    // Always attempt to scale — applyGyroScalingToNewScene is a no-op when
+                    // gyro is disabled, so no guard on spritesScaledForGyro is needed here.
+                    // isLandscape is read at callback-invoke time (GL thread).
+                    gyroProcessor.applyGyroScalingToNewScene(newScene, isLandscape);
                 });
             }
 
@@ -146,16 +153,44 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     @Override
     public void onSurfaceChanged(int width, int height) {
-        TimberLog.d(TAG, "onSurfaceChanged: " + width + "x" + height);
+        // glViewport MUST be called on the GL thread (EGL context owner).
+        // Store the dimensions here and apply them at the top of onDrawFrame.
+        pendingViewportWidth = width;
+        pendingViewportHeight = height;
+    }
 
+    private void applyPendingViewport(int width, int height) {
         GLES20.glViewport(0, 0, width, height);
         float aspectRatio = (float) width / (float) height;
 
-        float halfWorldH = WORLD_HEIGHT * 0.5f;
-        float halfWorldW = halfWorldH * aspectRatio;
+        boolean wasLandscape = isLandscape;
+        isLandscape = width > height;
+
+        if (isLandscape != wasLandscape) {
+            // Orientation changed: zero X scroll and force gyro scaling re-application with the
+            // correct orientation coefficient (portrait=0.1, landscape=0.15).
+            scrollOffsetProcessor.setScrollOffsetImmediate(0f);
+            spritesScaledForGyro = false;
+        }
+
+        float halfWorldW, halfWorldH;
+        if (isLandscape) {
+            // Landscape: fix world WIDTH = WORLD_HEIGHT (mirrors portrait fixing world HEIGHT).
+            // The full 10-unit horizontal extent is always visible; yFocus scrolls vertically.
+            halfWorldW = WORLD_HEIGHT * 0.5f;
+            halfWorldH = halfWorldW / aspectRatio;
+        } else {
+            // Portrait: fix world HEIGHT so the full vertical extent is always visible.
+            halfWorldH = WORLD_HEIGHT * 0.5f;
+            halfWorldW = halfWorldH * aspectRatio;
+        }
 
         Matrix.orthoM(projectionMatrix, 0, -halfWorldW, halfWorldW, halfWorldH, -halfWorldH, -1f, 1f);
-        TimberLog.d(TAG, "Surface changed for wallpaper: " + width + "x" + height);
+        TimberLog.d(TAG, "LANDSCAPE_DEBUG: applied viewport " + width + "x" + height
+                + " aspect=" + aspectRatio
+                + " isLandscape=" + isLandscape
+                + " halfWorldW=" + halfWorldW
+                + " halfWorldH=" + halfWorldH);
     }
 
     /**
@@ -169,6 +204,15 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         }
 
         try {
+            // Apply any pending surface-size change on the GL thread (glViewport must be here).
+            int pw = pendingViewportWidth;
+            int ph = pendingViewportHeight;
+            if (pw > 0 && ph > 0) {
+                pendingViewportWidth = 0;
+                pendingViewportHeight = 0;
+                applyPendingViewport(pw, ph);
+            }
+
             if (textureManager != null) {
                 textureManager.processPendingUploads();
             }
@@ -204,16 +248,27 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
             // Update scene transition (handles texture preload, crossfade, and scene switching)
             if (sceneSwitchManager.isTransitioning()) {
+                Scene previousScene = currentScene;
                 currentScene = sceneSwitchManager.updateTransition(textureManager);
+                if (currentScene != previousScene) {
+                    // New scene is now active — force gyro scaling re-application so the new
+                    // scene gets the correct orientation coefficient on this very frame.
+                    spritesScaledForGyro = false;
+                }
             }
 
-            // Apply xFocus offset when scroll motion is disabled
-            if (!ConfigManager.isScrollMotionEnabled()) {
-                Scene transitioningScene = sceneSwitchManager.getTransitioningScene();
-                if (transitioningScene != null) {
-                    scrollOffsetProcessor.setScrollTargetFromXFocus(transitioningScene.getXFocus());
-                } else if (currentScene != null) {
-                    scrollOffsetProcessor.setScrollTargetFromXFocus(currentScene.getXFocus());
+            if (isLandscape) {
+                // Landscape: full width is always visible — lock horizontal scroll to center
+                // and drive vertical position from yFocus.
+                scrollOffsetProcessor.setScrollTargetFromXFocus(0.5f);
+
+                float yFocus = sceneSwitchManager.getYFocus();
+                verticalScrollOffsetProcessor.setScrollTargetFromYFocus(yFocus);
+            } else {
+                // Portrait: apply xFocus offset when scroll motion is disabled.
+                if (!ConfigManager.isScrollMotionEnabled()) {
+                    float xFocus = sceneSwitchManager.getXFocus();
+                    scrollOffsetProcessor.setScrollTargetFromXFocus(xFocus);
                 }
             }
 
@@ -252,6 +307,9 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
     @Override
     public void onScrollOffsetChanged(float offsetX) {
+        if (isLandscape) {
+            return;
+        }
         if (ConfigManager.isScrollMotionEnabled()) {
             scrollOffsetProcessor.setScrollTarget(offsetX);
         }
@@ -263,6 +321,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
 
         gyroProcessor.resume();
         scrollOffsetProcessor.onRendererResume();
+        verticalScrollOffsetProcessor.onRendererResume();
 
         // Evaluate rules before cycling scenes so updated flags influence scene selection.
         // The 5-minute debounce prevents redundant evaluations on rapid screen on/off cycles.
@@ -289,6 +348,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         TimberLog.d(TAG, "onRendererPause called");
         gyroProcessor.pause();
         scrollOffsetProcessor.onRendererPause();
+        verticalScrollOffsetProcessor.onRendererPause();
     }
 
     @Override
@@ -296,6 +356,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         TimberLog.d(TAG, "onRendererSuspend called");
         gyroProcessor.pause();
         scrollOffsetProcessor.onRendererPause();
+        verticalScrollOffsetProcessor.onRendererPause();
         TimberLog.d(TAG, "Renderer suspended — gyro tracking paused");
     }
 

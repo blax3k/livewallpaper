@@ -153,6 +153,9 @@ public class SceneLoader {
         if (sceneData.xFocus >= 0.0f && sceneData.xFocus <= 1.0f) {
             scene.setXFocus(sceneData.xFocus);
         }
+        if (sceneData.yFocus >= 0.0f && sceneData.yFocus <= 1.0f) {
+            scene.setYFocus(sceneData.yFocus);
+        }
         // Flag declarations drive scene selection. May be null for legacy scenes — ScenePicker
         // treats null as "always eligible, score 0" for backward compatibility.
         scene.setFlagDeclarations(sceneData.flags);

@@ -94,23 +94,19 @@ public class EditSceneManager extends BaseSceneManager implements GLSurfaceView.
         // Initialize PhoneGuide after scene is loaded
         phoneGuide = new PhoneGuide();
         if (currentScene != null) {
-            // Calculate xOffset based on the scene's xFocus (0.0 to 1.0)
-            // The phone guide's rectangle has width of about 4.76 units (9.99 * 9/21)
-            // For a 1:1 viewport with world height of 10, the visible world is -5 to +5
-            // We need to position the center line based on xFocus:
-            // xFocus 0.0 (left) -> center line at -5
-            // xFocus 0.5 (center) -> center line at 0
-            // xFocus 1.0 (right) -> center line at +5
             float xFocus = currentScene.getXFocus();
-            float guideWidth = 9.99f * (9f / 21f);  // width = height * aspect ratio
+            float yFocus = currentScene.getYFocus();
+
+            float guideWidth = 9.99f * (9f / 21f);
             float xOffset = -guideWidth/2f + (xFocus * guideWidth);
             phoneGuide.setXOffset(xOffset);
 
-            // Also initialize the scroll offset processor with the same xFocus value
-            // This ensures the scene renders with the correct scroll offset immediately
-            // rather than starting at the default (0) and jumping when the slider is first moved
+            // Initialise both focus processors so the scene renders at the correct position
+            // immediately rather than snapping on the first slider interaction.
             updateScrollOffsetFromXFocus(xFocus);
-            TimberLog.d(TAG, "PhoneGuide created and positioned with xOffset: " + xOffset + " (xFocus: " + xFocus + ")");
+            updateScrollOffsetFromYFocus(yFocus);
+            TimberLog.d(TAG, "PhoneGuide positioned with xOffset: " + xOffset
+                    + " (xFocus: " + xFocus + ", yFocus: " + yFocus + ")");
         } else {
             TimberLog.d(TAG, "PhoneGuide created with default position");
         }
@@ -127,12 +123,19 @@ public class EditSceneManager extends BaseSceneManager implements GLSurfaceView.
         GLES20.glViewport(0, 0, width, height);
         float aspectRatio = (float) width / (float) height;
 
-        // Compute projection matrix
-        float halfWorldH = WORLD_HEIGHT * 0.5f;
-        float halfWorldW = halfWorldH * aspectRatio;
+        isLandscape = width > height;
+
+        float halfWorldW, halfWorldH;
+        if (isLandscape) {
+            halfWorldW = WORLD_HEIGHT * 0.5f;
+            halfWorldH = halfWorldW / aspectRatio;
+        } else {
+            halfWorldH = WORLD_HEIGHT * 0.5f;
+            halfWorldW = halfWorldH * aspectRatio;
+        }
 
         Matrix.orthoM(projectionMatrix, 0, -halfWorldW, halfWorldW, halfWorldH, -halfWorldH, -1f, 1f);
-        TimberLog.d(TAG, "Projection matrix set");
+        TimberLog.d(TAG, "Projection matrix set (landscape=" + isLandscape + ")");
     }
 
     /**
@@ -172,16 +175,23 @@ public class EditSceneManager extends BaseSceneManager implements GLSurfaceView.
     }
 
     /**
-     * Update the scene's scroll offset based on the xFocus value.
-     * Called whenever the focus slider changes. The phone guide is no longer affected
-     * and remains static and centered at all times.
+     * Update the scene's horizontal scroll offset based on the xFocus value.
+     * Called whenever the X-focus slider changes.
      *
      * @param xFocus the new focus point value (0.0 to 1.0)
      */
     public void updatePhoneGuidePosition(float xFocus) {
-        // Phone guide is now static and always centered, so we no longer update its position
-        // Just update the scroll offset to affect the sprites
         updateScrollOffsetFromXFocus(xFocus);
+    }
+
+    /**
+     * Update the scene's vertical scroll offset based on the yFocus value.
+     * Called whenever the Y-focus slider changes (landscape mode).
+     *
+     * @param yFocus the new focus point value (0.0 = top, 0.5 = center, 1.0 = bottom)
+     */
+    public void updateYFocusPosition(float yFocus) {
+        updateScrollOffsetFromYFocus(yFocus);
     }
 }
 

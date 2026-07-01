@@ -206,10 +206,7 @@ public class SceneSwitchManager {
         return sceneToRender;
     }
 
-    public float getXFocus()
-    {
-        // If we're in a transition, smoothly transition to the next scene's xFocus
-        // Otherwise, use the current scene's xFocus
+    public float getXFocus() {
         if (transitionManager.isTransitioning()) {
             Scene transitioningScene = transitionManager.getNewScene();
             if (transitioningScene != null) {
@@ -217,6 +214,16 @@ public class SceneSwitchManager {
             }
         }
         return currentScene.getXFocus();
+    }
+
+    public float getYFocus() {
+        if (transitionManager.isTransitioning()) {
+            Scene transitioningScene = transitionManager.getNewScene();
+            if (transitioningScene != null) {
+                return transitioningScene.getYFocus();
+            }
+        }
+        return currentScene.getYFocus();
     }
 
     /**

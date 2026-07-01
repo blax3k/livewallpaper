@@ -8,6 +8,7 @@ public class SceneData {
     public String sceneName;
     public SpriteData[] sprites;
     public float xFocus = 0.5f; // Default to center if not specified in JSON
+    public float yFocus = 0.5f; // Default to center if not specified in JSON
 
     /**
      * Flag-based declarations controlling when this scene is eligible and how it scores.

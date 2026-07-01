@@ -685,6 +685,7 @@ public class SceneFileManager {
         // Create SceneData object with current sprite values
         SceneData sceneData = new SceneData();
         sceneData.xFocus = scene.getXFocus();
+        sceneData.yFocus = scene.getYFocus();
         sceneData.startTime = scene.getStartTime();
         sceneData.endTime = scene.getEndTime();
 
@@ -750,6 +751,7 @@ public class SceneFileManager {
         // Create SceneData object with current sprite values
         SceneData sceneData = new SceneData();
         sceneData.xFocus = scene.getXFocus();
+        sceneData.yFocus = scene.getYFocus();
         sceneData.startTime = scene.getStartTime();
         sceneData.endTime = scene.getEndTime();
 

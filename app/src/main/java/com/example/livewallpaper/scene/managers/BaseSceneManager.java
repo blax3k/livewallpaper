@@ -17,6 +17,7 @@ import com.example.livewallpaper.scene.models.SpriteData;
 import com.example.livewallpaper.sensors.GyroSensorProcessor;
 import com.example.livewallpaper.sensors.ConfigManager;
 import com.example.livewallpaper.sensors.ScrollOffsetProcessor;
+import com.example.livewallpaper.sensors.VerticalScrollOffsetProcessor;
 import com.example.livewallpaper.managers.SceneFileManager;
 
 import java.util.ArrayList;
@@ -40,8 +41,11 @@ public abstract class BaseSceneManager {
     protected TextureManager textureManager;
     protected final GyroSensorProcessor gyroProcessor;
     protected final ScrollOffsetProcessor scrollOffsetProcessor = new ScrollOffsetProcessor();
+    protected final VerticalScrollOffsetProcessor verticalScrollOffsetProcessor = new VerticalScrollOffsetProcessor();
     protected final float[] projectionMatrix = new float[16];
+    protected volatile boolean isLandscape = false;
     protected boolean spritesScaledForGyro = false;
+    private int renderDebugCounter = 0;
     protected volatile boolean shouldResortSprites = false;
     protected Sprite selectedSprite = null;
     protected String selectedSpriteName = null;
@@ -188,8 +192,14 @@ public abstract class BaseSceneManager {
          // Set scroll offset uniform (applied by all sprites with their own multiplier)
          GLES20.glUniform1f(handles.scrollOffsetHandle, currentScrollOffset);
 
+         // Vertical scroll offset: active only in landscape; zero in portrait
+         float currentScrollOffsetY = isLandscape
+                 ? verticalScrollOffsetProcessor.updateAndGetCurrentOffset()
+                 : 0f;
+         GLES20.glUniform1f(handles.scrollOffsetYHandle, currentScrollOffsetY);
+
          // Update gyro offsets and apply uniforms
-         spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, spritesScaledForGyro);
+         spritesScaledForGyro = gyroProcessor.updateAndApplyGyroUniforms(handles, currentScene, spritesScaledForGyro, isLandscape);
 
          // Draw all sprites in the scene
          try {
@@ -300,6 +310,7 @@ public abstract class BaseSceneManager {
     public void resume() {
         gyroProcessor.resume();
         scrollOffsetProcessor.onRendererResume();
+        verticalScrollOffsetProcessor.onRendererResume();
     }
 
     /**
@@ -308,6 +319,7 @@ public abstract class BaseSceneManager {
     public void pause() {
         gyroProcessor.pause();
         scrollOffsetProcessor.onRendererPause();
+        verticalScrollOffsetProcessor.onRendererPause();
     }
 
     /**
@@ -348,6 +360,20 @@ public abstract class BaseSceneManager {
         scrollOffsetProcessor.setScrollOffsetImmediate(scrollOffset);
         TimberLog.d(TAG, "Scroll offset updated immediately from xFocus: " + xFocus +
               " (scroll scale: " + SCROLL_SCALE + ", offset: " + scrollOffset + ")");
+    }
+
+    /**
+     * Update the vertical scroll offset processor based on the yFocus value.
+     * Used in landscape orientation to set the initial vertical position immediately.
+     *
+     * @param yFocus the focus point value (0.0 = top, 0.5 = center, 1.0 = bottom)
+     */
+    public void updateScrollOffsetFromYFocus(float yFocus) {
+        float SCROLL_SCALE = 5.0f;
+        float scrollOffsetY = (0.5f - yFocus) * SCROLL_SCALE;
+        verticalScrollOffsetProcessor.setOffsetImmediate(scrollOffsetY);
+        TimberLog.d(TAG, "Vertical scroll offset updated immediately from yFocus: " + yFocus +
+              " (offset: " + scrollOffsetY + ")");
     }
 
     /**

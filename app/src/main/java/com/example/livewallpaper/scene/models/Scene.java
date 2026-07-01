@@ -23,6 +23,7 @@ public class Scene implements Parcelable {
     private boolean isInitialized = false;
     private boolean isGyroScaled = false;
     private float xFocus = 0.5f; // Default to center; represents the x-position to focus on (0.0 = left, 0.5 = center, 1.0 = right)
+    private float yFocus = 0.5f; // Default to center; represents the y-position to focus on in landscape (0.0 = top, 0.5 = center, 1.0 = bottom)
     private int startTime = 0;    // Deprecated — use flagDeclarations with time-of-day flags instead
     private int endTime = 1439;   // Deprecated — see startTime
 
@@ -59,6 +60,21 @@ public class Scene implements Parcelable {
      */
     public void setXFocus(float xFocus) {
         this.xFocus = xFocus;
+    }
+
+    /**
+     * Get the y-focus position for this scene (0.0 = top, 0.5 = center, 1.0 = bottom).
+     * Used in landscape orientation to control the vertical position shown.
+     */
+    public float getYFocus() {
+        return yFocus;
+    }
+
+    /**
+     * Set the y-focus position for this scene.
+     */
+    public void setYFocus(float yFocus) {
+        this.yFocus = yFocus;
     }
 
     /**
@@ -278,23 +294,39 @@ public class Scene implements Parcelable {
      * relative positioning with other sprites: newPosition = oldPosition * scaleFactor
      */
     public void applyGyroScaling() {
+        applyGyroScaling(false);
+    }
+
+    /**
+     * Apply gyro scaling using an orientation-appropriate coefficient.
+     *
+     * In portrait the viewport is 4.5 world-units wide vs a 10-unit sprite, so the 0.1
+     * coefficient already carries a comfortable 0.25-unit buffer against sensor noise.
+     * In landscape the viewport spans the FULL 10 world-units, leaving zero inherent
+     * buffer.  Using 0.15 restores the same ~0.25-unit buffer in landscape so the sprite
+     * edge never flashes black during gyro motion.
+     */
+    public void applyGyroScaling(boolean isLandscape) {
         if (!isGyroScaled) {
             TimberLog.d(TAG, "Gyro scaling not enabled for scene '" + sceneName + "'");
             return;
         }
 
+        // coefficient = motionOffsetLimit / halfViewportWidth = 0.5 / 5.0 = 0.1
+        // Gives scaledHalfWidth = originalHalf + motionOffsetLimit*parallax, so the sprite
+        // edge exactly reaches the viewport edge at max tilt — no gap, no overshoot.
+        // This holds for both orientations: portrait halfViewportWidth ≈ 2.25 but sprites
+        // are much wider (5.0) so the same 0.1 already provides ample natural buffer there.
+        float coefficient = 0.1f;
+
         for (Sprite sprite : sprites) {
-            // Calculate the gyro scale factor based on parallax multiplier
-            // Formula: scale = 1.0 + parallaxMultiplier * 0.1
-            // This means:
-            // - parallaxMultiplier=1.0 -> scale=1.1 (10% increase)
-            // - parallaxMultiplier=0.5 -> scale=1.05 (5% increase)
-            // - parallaxMultiplier=0.0 -> scale=1.0 (no change, fully parallaxed)
             float parallaxMultiplier = sprite.getParallaxMultiplier();
-            float spriteGyroScaleFactor = 1.0f + (parallaxMultiplier * 0.1f);
+            float spriteGyroScaleFactor = 1.0f + (parallaxMultiplier * coefficient);
 
             // Scale the sprite size based on its parallax multiplier
             sprite.scaleFromOriginal(spriteGyroScaleFactor);
+            // Record the factor so resetConditionOverrides restores the gyro-scaled base.
+            sprite.setGyroScaleFactor(spriteGyroScaleFactor);
 
             // Scale the position away from center to maintain relative positioning
             float originalX = sprite.getOriginalPositionX();
@@ -330,6 +362,7 @@ public class Scene implements Parcelable {
     public void disableGyroScaling() {
         for (Sprite sprite : sprites) {
             sprite.setGyroScaled(false);
+            sprite.setGyroScaleFactor(1.0f); // clear so resetConditionOverrides uses raw JSON base
             sprite.resetScale();
             sprite.resetPosition();
         }
@@ -407,6 +440,7 @@ public class Scene implements Parcelable {
     protected Scene(Parcel in) {
         this.sceneName = in.readString();
         this.xFocus = in.readFloat();
+        this.yFocus = in.readFloat();
         // Use readInt instead of readBoolean for API 24 compatibility (readBoolean requires API 29)
         this.isInitialized = in.readInt() != 0;
         this.isGyroScaled = in.readInt() != 0;
@@ -425,6 +459,7 @@ public class Scene implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(sceneName);
         dest.writeFloat(xFocus);
+        dest.writeFloat(yFocus);
         // Use writeInt instead of writeBoolean for API 24 compatibility (writeBoolean requires API 29)
         dest.writeInt(isInitialized ? 1 : 0);
         dest.writeInt(isGyroScaled ? 1 : 0);

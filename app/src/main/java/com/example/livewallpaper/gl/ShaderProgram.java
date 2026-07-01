@@ -79,6 +79,7 @@ public class ShaderProgram {
     public static String getVertexShaderCode() {
         return "uniform mat4 projectionMatrix;"
                 + "uniform float scrollOffset;"
+                + "uniform float scrollOffsetY;"
                 + "uniform float gyroOffsetX;"
                 + "uniform float gyroOffsetY;"
                 + "attribute vec4 vPosition;"
@@ -91,7 +92,7 @@ public class ShaderProgram {
                 + "void main() {"
                 + "  vec4 position = vPosition;"
                 + "  position.x += scrollOffset * parallaxMultiplier + gyroOffsetX * parallaxMultiplier;"
-                + "  position.y += gyroOffsetY * parallaxMultiplier;"
+                + "  position.y += scrollOffsetY * parallaxMultiplier + gyroOffsetY * parallaxMultiplier;"
                 + "  gl_Position = projectionMatrix * position;"
                 + "  texCoord = vTexCoord;"
                 + "  normalizedPosition = vNormalizedPosition;"

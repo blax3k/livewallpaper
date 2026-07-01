@@ -64,6 +64,9 @@ public class Sprite implements Parcelable {
 
     // Track gyro scaling state
     private boolean isGyroScaled = false;
+    // Per-sprite gyro scale factor (1.0 = no scaling). Stored so resetConditionOverrides
+    // can restore the gyro-scaled base rather than the raw JSON dimensions.
+    private float gyroScaleFactor = 1.0f;
 
     // Edge highlight toggle for debug/edit view
     private boolean showEdgeHighlight = false;
@@ -455,6 +458,18 @@ public class Sprite implements Parcelable {
     }
 
     /**
+     * Store the per-sprite gyro scale factor so that resetConditionOverrides restores the
+     * gyro-enlarged base size rather than the raw JSON dimensions.
+     */
+    public void setGyroScaleFactor(float factor) {
+        this.gyroScaleFactor = factor;
+    }
+
+    public float getGyroScaleFactor() {
+        return gyroScaleFactor;
+    }
+
+    /**
      * Reset sprite size back to its original dimensions.
      */
     public void resetScale() {
@@ -809,15 +824,22 @@ public class Sprite implements Parcelable {
     public void resetConditionOverrides() {
         this.hidden = false;
 
+        // Reset to gyro-scaled base, not raw JSON values. If no gyro scaling is active
+        // (gyroScaleFactor == 1.0) this is identical to the old behaviour.
+        float baseX = originalPositionX * gyroScaleFactor;
+        float baseY = originalPositionY * gyroScaleFactor;
+        float baseW = originalWidth * gyroScaleFactor;
+        float baseH = originalHeight * gyroScaleFactor;
+
         boolean needsVertexUpdate = false;
-        if (this.positionX != originalPositionX || this.positionY != originalPositionY) {
-            this.positionX = originalPositionX;
-            this.positionY = originalPositionY;
+        if (this.positionX != baseX || this.positionY != baseY) {
+            this.positionX = baseX;
+            this.positionY = baseY;
             needsVertexUpdate = true;
         }
-        if (this.width != originalWidth || this.height != originalHeight) {
-            this.width = originalWidth;
-            this.height = originalHeight;
+        if (this.width != baseW || this.height != baseH) {
+            this.width = baseW;
+            this.height = baseH;
             needsVertexUpdate = true;
         }
         if (needsVertexUpdate) updateVertexBuffer();
@@ -906,6 +928,7 @@ public class Sprite implements Parcelable {
         isGyroScaled = in.readInt() != 0;
         showEdgeHighlight = in.readInt() != 0;
         positionAtZero = in.readInt() != 0;
+        gyroScaleFactor = in.readFloat();
     }
 
     @Override
@@ -940,6 +963,7 @@ public class Sprite implements Parcelable {
         dest.writeInt(isGyroScaled ? 1 : 0);
         dest.writeInt(showEdgeHighlight ? 1 : 0);
         dest.writeInt(positionAtZero ? 1 : 0);
+        dest.writeFloat(gyroScaleFactor);
     }
 
     @Override

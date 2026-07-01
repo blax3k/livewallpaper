@@ -12,6 +12,7 @@ public class Handles {
     public int samplerHandle;
     public int projectionMatrixHandle;
     public int scrollOffsetHandle;
+    public int scrollOffsetYHandle;
     public int parallaxMultiplierHandle;
     public int gyroOffsetXHandle;
     public int gyroOffsetYHandle;
@@ -38,6 +39,9 @@ public class Handles {
 
         scrollOffsetHandle = GLES20.glGetUniformLocation(program, "scrollOffset");
         TimberLog.d(TAG, "scrollOffsetHandle: " + scrollOffsetHandle);
+
+        scrollOffsetYHandle = GLES20.glGetUniformLocation(program, "scrollOffsetY");
+        TimberLog.d(TAG, "scrollOffsetYHandle: " + scrollOffsetYHandle);
 
         parallaxMultiplierHandle = GLES20.glGetAttribLocation(program, "parallaxMultiplier");
         TimberLog.d(TAG, "parallaxMultiplierHandle: " + parallaxMultiplierHandle);

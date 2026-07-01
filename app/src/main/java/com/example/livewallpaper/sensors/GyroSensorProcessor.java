@@ -244,7 +244,8 @@ public class GyroSensorProcessor {
      */
     public boolean updateAndApplyGyroUniforms(com.example.livewallpaper.gl.Handles handles,
                                                Scene scene,
-                                               boolean spritesScaledForGyro) {
+                                               boolean spritesScaledForGyro,
+                                               boolean isLandscape) {
         if (ConfigManager.isGyroMotionEnabled()) {
             float gyroOffsetX = updateAndGetCurrentOffsetX();
             float gyroOffsetY = updateAndGetCurrentOffsetY();
@@ -254,7 +255,7 @@ public class GyroSensorProcessor {
             // Apply sprite scaling for gyro motion if not already scaled
             if (!spritesScaledForGyro) {
                 scene.enableGyroScaling();
-                scene.applyGyroScaling();
+                scene.applyGyroScaling(isLandscape);
                 spritesScaledForGyro = true;
             }
         } else {
@@ -273,15 +274,15 @@ public class GyroSensorProcessor {
 
     /**
      * Apply gyro scaling to a new scene during transitions.
-     * Enables gyro scaling for the scene based on current gyro motion state.
      *
      * @param newScene the scene to apply gyro scaling to
+     * @param isLandscape current display orientation (affects scale coefficient)
      */
-    public void applyGyroScalingToNewScene(Scene newScene) {
+    public void applyGyroScalingToNewScene(Scene newScene, boolean isLandscape) {
         if (ConfigManager.isGyroMotionEnabled()) {
             newScene.enableGyroScaling();
-            newScene.applyGyroScaling();
-            TimberLog.d(TAG, "New scene initialized with gyro scaling applied");
+            newScene.applyGyroScaling(isLandscape);
+            TimberLog.d(TAG, "New scene initialized with gyro scaling applied (landscape=" + isLandscape + ")");
         }
     }
 }
