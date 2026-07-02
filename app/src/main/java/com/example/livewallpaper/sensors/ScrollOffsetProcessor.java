@@ -146,6 +146,16 @@ public class ScrollOffsetProcessor {
     }
 
     /**
+     * Get the current displayed scroll offset without advancing the frame timer.
+     * Used by the scene manager to detect whether a viewport change (e.g. a foldable
+     * unfolding) has shrunk the legal range out from under the current offset, so it can
+     * snap back to center before the offset would otherwise reveal a sprite's edge.
+     */
+    public float getCurrentOffset() {
+        return currentScrollOffset;
+    }
+
+    /**
      * Disable scroll motion and smoothly interpolate to neutral position.
      * The sprites will smoothly animate back to their centered position using the existing interpolation.
      */

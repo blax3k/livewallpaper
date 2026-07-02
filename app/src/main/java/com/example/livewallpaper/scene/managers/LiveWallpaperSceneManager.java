@@ -205,8 +205,22 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         float halfWorldContent = WORLD_HEIGHT * 0.5f;
         float slackX = Math.max(0f, halfWorldContent - halfWorldW - GYRO_BUFFER);
         float slackY = Math.max(0f, halfWorldContent - halfWorldH - GYRO_BUFFER);
-        scrollOffsetProcessor.setMaxScrollOffset(Math.min(MAX_FOCUS_PAN_OFFSET, slackX));
-        verticalScrollOffsetProcessor.setMaxScrollOffset(Math.min(MAX_FOCUS_PAN_OFFSET, slackY));
+        float newMaxScrollX = Math.min(MAX_FOCUS_PAN_OFFSET, slackX);
+        float newMaxScrollY = Math.min(MAX_FOCUS_PAN_OFFSET, slackY);
+
+        // A sudden aspect-ratio change (e.g. a foldable unfolding/folding) can shrink the legal
+        // pan range faster than the ~1s eased xFocus/yFocus interpolation can catch up, which
+        // would otherwise reveal a sprite's edge for that whole second. If the current offset
+        // already exceeds the new range, snap to center immediately; the normal xFocus/yFocus
+        // interpolation then smoothly animates back out from center on the next frame.
+        if (Math.abs(scrollOffsetProcessor.getCurrentOffset()) > newMaxScrollX) {
+            scrollOffsetProcessor.setScrollOffsetImmediate(0f);
+        }
+        if (Math.abs(verticalScrollOffsetProcessor.getCurrentOffset()) > newMaxScrollY) {
+            verticalScrollOffsetProcessor.setOffsetImmediate(0f);
+        }
+        scrollOffsetProcessor.setMaxScrollOffset(newMaxScrollX);
+        verticalScrollOffsetProcessor.setMaxScrollOffset(newMaxScrollY);
 
         TimberLog.d(TAG, "LANDSCAPE_DEBUG: applied viewport " + width + "x" + height
                 + " aspect=" + aspectRatio

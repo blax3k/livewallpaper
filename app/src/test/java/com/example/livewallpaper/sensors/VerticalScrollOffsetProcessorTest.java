@@ -98,4 +98,12 @@ public class VerticalScrollOffsetProcessorTest {
         float offset = converge(200);
         assertEquals("Default max offset should match historical behavior", 2.5f, offset, EPSILON);
     }
+
+    // ==================== Get Current Offset Tests ====================
+
+    @Test
+    public void getCurrentOffset_MatchesLastUpdatedValue() {
+        processor.setOffsetImmediate(1.75f);
+        assertEquals("getCurrentOffset should reflect the immediate value", 1.75f, processor.getCurrentOffset(), EPSILON);
+    }
 }

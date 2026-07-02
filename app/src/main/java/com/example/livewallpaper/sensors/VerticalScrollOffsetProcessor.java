@@ -98,4 +98,14 @@ public class VerticalScrollOffsetProcessor {
     public void setMaxScrollOffset(float maxScrollOffset) {
         this.maxScrollOffset = Math.max(0f, maxScrollOffset);
     }
+
+    /**
+     * Get the current displayed vertical offset without advancing the frame timer.
+     * Used by the scene manager to detect whether a viewport change (e.g. a foldable
+     * unfolding) has shrunk the legal range out from under the current offset, so it can
+     * snap back to center before the offset would otherwise reveal a sprite's edge.
+     */
+    public float getCurrentOffset() {
+        return currentOffset;
+    }
 }

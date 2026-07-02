@@ -396,6 +396,25 @@ public class ScrollOffsetProcessorTest {
         float offset = converge(200);
         assertEquals("Default max offset should match historical behavior", 2.5f, offset, EPSILON);
     }
+
+    // ==================== Get Current Offset Tests ====================
+
+    @Test
+    public void getCurrentOffset_MatchesLastUpdatedValue() {
+        processor.setScrollOffsetImmediate(1.75f);
+        assertEquals("getCurrentOffset should reflect the immediate value", 1.75f, processor.getCurrentOffset(), EPSILON);
+    }
+
+    @Test
+    public void getCurrentOffset_DoesNotAdvanceFrameTimer() {
+        // Calling getCurrentOffset() should be a pure read: it must not perturb the
+        // interpolation state used by updateAndGetCurrentOffset(), unlike that method
+        // which advances the frame timer as a side effect.
+        processor.setScrollTarget(1.0f);
+        float before = processor.getCurrentOffset();
+        float again = processor.getCurrentOffset();
+        assertEquals("Repeated reads should be stable", before, again, 0.0001f);
+    }
 }
 
 
