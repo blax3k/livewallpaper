@@ -338,6 +338,64 @@ public class ScrollOffsetProcessorTest {
         float offset = processor.updateAndGetCurrentOffset();
         assertTrue("Deprecated method should work", !Float.isNaN(offset));
     }
+
+    // ==================== Max Scroll Offset (Aspect Ratio Clamping) Tests ====================
+
+    /**
+     * Drive updateAndGetCurrentOffset() for a fixed number of synthetic 1/60s frames.
+     * Forcing a resume before each call keeps dt constant regardless of real wall-clock
+     * time elapsed between test statements, so eased convergence is deterministic.
+     */
+    private float converge(int frames) {
+        float offset = 0f;
+        for (int i = 0; i < frames; i++) {
+            processor.onRendererResume();
+            offset = processor.updateAndGetCurrentOffset();
+        }
+        return offset;
+    }
+
+    @Test
+    public void setMaxScrollOffset_ZeroLocksOffsetAtCenter() {
+        // A square screen has zero slack: no amount of xFocus should move the offset.
+        processor.setMaxScrollOffset(0f);
+        processor.setScrollTargetFromXFocus(0.0f);
+        float offset = converge(200);
+        assertEquals("Zero max offset should keep the scroll centered", 0.0f, offset, EPSILON);
+    }
+
+    @Test
+    public void setMaxScrollOffset_ClampsFullyLeftTarget() {
+        processor.setMaxScrollOffset(1.0f);
+        processor.setScrollTargetFromXFocus(0.0f);  // fully left
+        float offset = converge(200);
+        assertEquals("Offset should converge to the configured max", 1.0f, offset, EPSILON);
+    }
+
+    @Test
+    public void setMaxScrollOffset_ClampsFullyRightTarget() {
+        processor.setMaxScrollOffset(1.0f);
+        processor.setScrollTargetFromXFocus(1.0f);  // fully right
+        float offset = converge(200);
+        assertEquals("Offset should converge to the negative configured max", -1.0f, offset, EPSILON);
+    }
+
+    @Test
+    public void setMaxScrollOffset_NegativeValueTreatedAsZero() {
+        processor.setMaxScrollOffset(-2.0f);
+        processor.setScrollTargetFromXFocus(0.0f);
+        float offset = converge(200);
+        assertEquals("Negative max offset should be clamped to zero", 0.0f, offset, EPSILON);
+    }
+
+    @Test
+    public void setMaxScrollOffset_DefaultMatchesHistoricalScale() {
+        // Default max should reproduce the pre-existing fixed SCROLL_SCALE=5.0 behavior
+        // (i.e. offsetX=0.0 converges to +2.5) so unmigrated call sites are unaffected.
+        processor.setScrollTargetFromXFocus(0.0f);
+        float offset = converge(200);
+        assertEquals("Default max offset should match historical behavior", 2.5f, offset, EPSILON);
+    }
 }
 
 

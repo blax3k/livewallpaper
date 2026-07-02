@@ -30,6 +30,13 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
     private volatile boolean sceneSwitchRequested = false;
     private volatile boolean projectReloadRequested = false;
     private static final long SCENE_CYCLE_INTERVAL_MS = 5 * 60 * 1000;
+    // Historical design max for xFocus/yFocus pan (world units), calibrated against a typical
+    // narrow phone. Never exceeded even when a screen's aspect ratio would otherwise allow more.
+    private static final float MAX_FOCUS_PAN_OFFSET = 2.5f;
+    // Reserved slack (world units) held back from panning so simultaneous gyro-driven parallax
+    // doesn't reveal a sprite's edge. Matches the ~0.25-unit buffer already implied by the
+    // original SCROLL_SCALE calibration (portrait slack 2.75 - pan 2.5 = 0.25).
+    private static final float GYRO_BUFFER = 0.25f;
     private long lastSceneChangeTimeMs = System.currentTimeMillis();
     private int debugFrameCounter = 0;
 
@@ -186,6 +193,21 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
         }
 
         Matrix.orthoM(projectionMatrix, 0, -halfWorldW, halfWorldW, halfWorldH, -halfWorldH, -1f, 1f);
+
+        // Sprites are authored to fill the full WORLD_HEIGHT square (+/-5 world units). Panning
+        // via xFocus/yFocus shifts sprite positions under the fixed viewport window, so the pan
+        // magnitude must never exceed the slack between that window and the sprite's edge — the
+        // "slack" on the axis whose extent is derived from the device's aspect ratio rather than
+        // clamped to WORLD_HEIGHT. A perfectly square screen has zero slack on both axes (the
+        // viewport exactly fills the sprite bounds), so no panning is possible; narrower/wider
+        // screens get proportionally more room, capped at the original design max of 2.5 units
+        // (with GYRO_BUFFER held back so simultaneous gyro parallax doesn't reveal sprite edges).
+        float halfWorldContent = WORLD_HEIGHT * 0.5f;
+        float slackX = Math.max(0f, halfWorldContent - halfWorldW - GYRO_BUFFER);
+        float slackY = Math.max(0f, halfWorldContent - halfWorldH - GYRO_BUFFER);
+        scrollOffsetProcessor.setMaxScrollOffset(Math.min(MAX_FOCUS_PAN_OFFSET, slackX));
+        verticalScrollOffsetProcessor.setMaxScrollOffset(Math.min(MAX_FOCUS_PAN_OFFSET, slackY));
+
         TimberLog.d(TAG, "LANDSCAPE_DEBUG: applied viewport " + width + "x" + height
                 + " aspect=" + aspectRatio
                 + " isLandscape=" + isLandscape

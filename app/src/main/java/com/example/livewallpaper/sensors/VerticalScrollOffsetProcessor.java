@@ -15,8 +15,12 @@ public class VerticalScrollOffsetProcessor {
     private float currentOffset = 0f;
     // Target vertical offset we will smoothly approach over several frames.
     private float targetOffset = 0f;
-    // Scale for converting yFocus [0..1] into world units — matches ScrollOffsetProcessor.
-    private static final float SCROLL_SCALE = 5.0f;
+    // Maximum magnitude (world units) that yFocus may push the offset to. Defaults to the
+    // historical fixed value (half of the old constant SCROLL_SCALE=5.0) so behavior is
+    // unchanged until the owning scene manager calls setMaxScrollOffset() with a viewport-aware
+    // value — mirrors ScrollOffsetProcessor's maxScrollOffset. See
+    // LiveWallpaperSceneManager.applyPendingViewport().
+    private float maxScrollOffset = 2.5f;
     // Transition duration synchronized with ScrollOffsetProcessor.XFOCUS_SMOOTHING_DURATION.
     private static final float YFOCUS_SMOOTHING_DURATION = 1.0f;
     // Last frame timestamp (nanoseconds) for delta-time computation.
@@ -80,6 +84,18 @@ public class VerticalScrollOffsetProcessor {
      * yFocus < 0.5 moves content down (positive) — mirrors ScrollOffsetProcessor's X logic.
      */
     private float calculateOffset(float yFocus) {
-        return (0.5f - yFocus) * SCROLL_SCALE;
+        return (0.5f - yFocus) * 2f * maxScrollOffset;
+    }
+
+    /**
+     * Set the maximum offset magnitude (world units) that a yFocus target may reach.
+     * Called whenever the viewport's aspect ratio changes so panning never exceeds the slack
+     * available around the fixed axis of the projection (e.g. a square screen has zero slack
+     * and must not pan at all).
+     *
+     * @param maxScrollOffset the max magnitude in world units; must be &gt;= 0
+     */
+    public void setMaxScrollOffset(float maxScrollOffset) {
+        this.maxScrollOffset = Math.max(0f, maxScrollOffset);
     }
 }

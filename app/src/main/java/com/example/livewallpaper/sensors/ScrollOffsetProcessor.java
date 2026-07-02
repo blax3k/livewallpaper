@@ -12,8 +12,14 @@ public class ScrollOffsetProcessor {
     private float currentScrollOffset = 0f;
     // Target scroll offset we will smoothly approach over several frames.
     private float targetScrollOffset = 0f;
-    // Scale for converting wallpaper offset [0..1] into world units
-    private static final float SCROLL_SCALE = 5.0f;
+    // Maximum magnitude (world units) that xFocus/user scroll may push the offset to. Defaults to
+    // the historical fixed value (half of the old constant SCROLL_SCALE=5.0) so behavior is
+    // unchanged until the owning scene manager calls setMaxScrollOffset() with a viewport-aware
+    // value. Must be kept in sync with the available "slack" around the current viewport's
+    // non-clamped axis so panning never reveals background beyond a sprite's edge — see
+    // LiveWallpaperSceneManager.applyPendingViewport().
+    private float maxScrollOffset = 2.5f;
+
     // Time-based smoothing: duration in seconds over which we'll reach the target. Default ~120ms for user input.
     private float scrollSmoothingDuration = 0.05f;
     // Duration for xFocus transitions: synchronized with scene transition duration (800ms = 0.8 seconds)
@@ -124,7 +130,19 @@ public class ScrollOffsetProcessor {
      * offset=0.5 is centered (returns 0). offset > 0.5 moves left (negative), offset < 0.5 moves right (positive).
      */
     private float calculateScrollOffset(float offsetX) {
-        return (0.5f - offsetX) * SCROLL_SCALE;
+        return (0.5f - offsetX) * 2f * maxScrollOffset;
+    }
+
+    /**
+     * Set the maximum offset magnitude (world units) that a scroll/xFocus target may reach.
+     * Called whenever the viewport's aspect ratio changes so panning never exceeds the slack
+     * available around the fixed axis of the projection (e.g. a square screen has zero slack
+     * and must not pan at all).
+     *
+     * @param maxScrollOffset the max magnitude in world units; must be &gt;= 0
+     */
+    public void setMaxScrollOffset(float maxScrollOffset) {
+        this.maxScrollOffset = Math.max(0f, maxScrollOffset);
     }
 
     /**
