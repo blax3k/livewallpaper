@@ -73,7 +73,7 @@ public class SceneTransitionManager {
         this.context = context;
         this.state = TransitionState.WAITING_FOR_TEXTURES;
 
-        TimberLog.d(TAG, "Started transition: " + oldScene.getSceneName() + " -> " + newScene.getSceneName());
+        TimberLog.d(TAG, "Started transition: " + oldScene.getSceneId() + " -> " + newScene.getSceneId());
     }
 
     /**

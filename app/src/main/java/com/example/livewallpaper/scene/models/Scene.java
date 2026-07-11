@@ -18,7 +18,8 @@ import java.util.Set;
  */
 public class Scene implements Parcelable {
     private static final String TAG = "Scene";
-    private final String sceneName;
+    /** Stable scene identifier (the DB id; on-device it is the scene's source filename without .json). */
+    private final String sceneId;
     private final List<Sprite> sprites;
     private boolean isInitialized = false;
     private boolean isGyroScaled = false;
@@ -34,17 +35,18 @@ public class Scene implements Parcelable {
      */
     private SceneFlagDeclarations flagDeclarations;
 
-    public Scene(String sceneName) {
-        this.sceneName = sceneName;
+    public Scene(String sceneId) {
+        this.sceneId = sceneId;
         // Use Collections.synchronizedList to make the list thread-safe
         // This prevents ConcurrentModificationException when sprites are added from UI thread while rendering
         this.sprites = Collections.synchronizedList(new ArrayList<>());
     }
     /**
-     * Get the name of this scene.
+     * Get the stable id of this scene. On-device this is the source filename (minus .json),
+     * which the web export names by the scene's DB id.
      */
-    public String getSceneName() {
-        return sceneName;
+    public String getSceneId() {
+        return sceneId;
     }
 
     /**
@@ -201,10 +203,10 @@ public class Scene implements Parcelable {
      */
     public void initialize(Context context, TextureManager textureManager) {
         if (isInitialized) {
-            TimberLog.d(TAG, "Scene '" + sceneName + "' already initialized");
+            TimberLog.d(TAG, "Scene '" + sceneId + "' already initialized");
             return;
         }
-        TimberLog.d(TAG, "Initializing scene '" + sceneName + "' with " + sprites.size() + " sprites");
+        TimberLog.d(TAG, "Initializing scene '" + sceneId + "' with " + sprites.size() + " sprites");
 
         // Load textures and apply gyro scaling in a single pass
         for (Sprite sprite : sprites) {
@@ -212,7 +214,7 @@ public class Scene implements Parcelable {
         }
 
         isInitialized = true;
-        TimberLog.d(TAG, "Scene '" + sceneName + "' initialized successfully");
+        TimberLog.d(TAG, "Scene '" + sceneId + "' initialized successfully");
     }
 
     /**
@@ -223,13 +225,13 @@ public class Scene implements Parcelable {
      * @param textureManager the texture manager for loading textures
      */
     public void reloadTextures(Context context, TextureManager textureManager) {
-        TimberLog.d(TAG, "Reloading textures for scene '" + sceneName + "' with " + sprites.size() + " sprites");
+        TimberLog.d(TAG, "Reloading textures for scene '" + sceneId + "' with " + sprites.size() + " sprites");
 
         for (Sprite sprite : sprites) {
             loadSpriteTexture(context, textureManager, sprite);
         }
 
-        TimberLog.d(TAG, "Textures reloaded for scene '" + sceneName + "'");
+        TimberLog.d(TAG, "Textures reloaded for scene '" + sceneId + "'");
     }
 
     /**
@@ -238,7 +240,7 @@ public class Scene implements Parcelable {
      * This should be called before using a scene from the preloaded pool.
      */
     public void resetForReuse() {
-        TimberLog.d(TAG, "Resetting scene '" + sceneName + "' for reuse");
+        TimberLog.d(TAG, "Resetting scene '" + sceneId + "' for reuse");
         isInitialized = false;
         for (Sprite sprite : sprites) {
             sprite.setTextureId(0);
@@ -308,7 +310,7 @@ public class Scene implements Parcelable {
      */
     public void applyGyroScaling(boolean isLandscape) {
         if (!isGyroScaled) {
-            TimberLog.d(TAG, "Gyro scaling not enabled for scene '" + sceneName + "'");
+            TimberLog.d(TAG, "Gyro scaling not enabled for scene '" + sceneId + "'");
             return;
         }
 
@@ -342,7 +344,7 @@ public class Scene implements Parcelable {
                     ", newPosition=(" + scaledX + ", " + scaledY + ")");
         }
 
-        TimberLog.d(TAG, "Scene '" + sceneName + "' gyro scaling applied to all sprites");
+        TimberLog.d(TAG, "Scene '" + sceneId + "' gyro scaling applied to all sprites");
     }
 
     /**
@@ -367,7 +369,7 @@ public class Scene implements Parcelable {
             sprite.resetPosition();
         }
         this.isGyroScaled = false;
-        TimberLog.d(TAG, "Gyro scaling disabled for scene '" + sceneName + "', all sprites reset");
+        TimberLog.d(TAG, "Gyro scaling disabled for scene '" + sceneId + "', all sprites reset");
     }
 
     public void setEdgeHighlighted(boolean highlighted) {
@@ -384,7 +386,7 @@ public class Scene implements Parcelable {
         }
         sprites.clear();
         isInitialized = false;
-        TimberLog.d(TAG, "Scene '" + sceneName + "' destroyed");
+        TimberLog.d(TAG, "Scene '" + sceneId + "' destroyed");
     }
 
     /**
@@ -438,7 +440,7 @@ public class Scene implements Parcelable {
     // ==================== Parcelable Implementation ====================
 
     protected Scene(Parcel in) {
-        this.sceneName = in.readString();
+        this.sceneId = in.readString();
         this.xFocus = in.readFloat();
         this.yFocus = in.readFloat();
         // Use readInt instead of readBoolean for API 24 compatibility (readBoolean requires API 29)
@@ -457,7 +459,7 @@ public class Scene implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(sceneName);
+        dest.writeString(sceneId);
         dest.writeFloat(xFocus);
         dest.writeFloat(yFocus);
         // Use writeInt instead of writeBoolean for API 24 compatibility (writeBoolean requires API 29)

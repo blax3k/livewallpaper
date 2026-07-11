@@ -69,7 +69,7 @@ public class FullscreenPreviewActivity extends AppCompatActivity implements Sens
         // Check for preloaded scene data first (preferred for EditSceneActivity transitions)
         Scene preloadedScene = getIntent().getParcelableExtra(EXTRA_SCENE_DATA);
         if (preloadedScene != null) {
-            TimberLog.d(TAG, "Preloaded scene data found: " + preloadedScene.getSceneName());
+            TimberLog.d(TAG, "Preloaded scene data found: " + preloadedScene.getSceneId());
             setupSceneWithPreloadedData(preloadedScene);
         } else {
             // Fall back to loading from file (legacy behavior)

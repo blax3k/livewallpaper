@@ -63,7 +63,7 @@ public class SceneTransitionManagerTest {
         transitionManager.startTransition(oldScene, newScene, mockContext);
         Scene newSceneRef = transitionManager.getNewScene();
         assertNotNull("New scene should be stored", newSceneRef);
-        assertEquals("Should store the new scene", newScene.getSceneName(), newSceneRef.getSceneName());
+        assertEquals("Should store the new scene", newScene.getSceneId(), newSceneRef.getSceneId());
     }
     @Test
     public void updateTransition_ReturnsNullWhenNotTransitioning() {

@@ -101,14 +101,15 @@ public class SceneLoader {
 
         validateSceneData(sceneData, fileName);
 
-        // Derive scene name from filename (remove .json extension if present)
-        String sceneName = fileName.endsWith(".json") ? fileName.substring(0, fileName.length() - 5) : fileName;
+        // Derive scene id from filename (remove .json extension if present). The web export names
+        // each scene file by the scene's DB id, so this string is the scene's stable id.
+        String sceneId = fileName.endsWith(".json") ? fileName.substring(0, fileName.length() - 5) : fileName;
 
-        Scene scene = new Scene(sceneName);
+        Scene scene = new Scene(sceneId);
         applySceneSettings(scene, sceneData);
-        populateSprites(scene, sceneData, sceneName);
+        populateSprites(scene, sceneData, sceneId);
 
-        TimberLog.d(TAG, "Successfully loaded scene '" + scene.getSceneName() + "' with "
+        TimberLog.d(TAG, "Successfully loaded scene '" + scene.getSceneId() + "' with "
             + scene.getSprites().size() + " sprites");
 
         return scene;
@@ -168,9 +169,9 @@ public class SceneLoader {
     /**
      * Create and add sprites to the scene from sprite data.
      */
-    private void populateSprites(Scene scene, SceneData sceneData, String sceneName) {
+    private void populateSprites(Scene scene, SceneData sceneData, String sceneId) {
         for (SpriteData spriteData : sceneData.sprites) {
-            Sprite sprite = createSpriteFromData(spriteData, sceneName);
+            Sprite sprite = createSpriteFromData(spriteData, sceneId);
             if (sprite != null) {
                 scene.addSprite(sprite);
             }
@@ -180,9 +181,9 @@ public class SceneLoader {
     /**
      * Create a single sprite from SpriteData, or return null if creation fails.
      */
-    private Sprite createSpriteFromData(SpriteData spriteData, String sceneName) {
+    private Sprite createSpriteFromData(SpriteData spriteData, String sceneId) {
         if (spriteData.textureResource == null || spriteData.textureResource.isEmpty()) {
-            TimberLog.w(TAG, "Skipping sprite with missing textureResource in scene: " + sceneName);
+            TimberLog.w(TAG, "Skipping sprite with missing textureResource in scene: " + sceneId);
             return null;
         }
 

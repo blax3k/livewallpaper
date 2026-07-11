@@ -157,7 +157,7 @@ public class ScenePickerTest {
         Scene next = picker.getNextScene(singleScene);
 
         assertNotNull("Should return a scene", next);
-        assertEquals("Should return the only available scene", singleScene.getSceneName(), next.getSceneName());
+        assertEquals("Should return the only available scene", singleScene.getSceneId(), next.getSceneId());
     }
 
     @Test
@@ -188,7 +188,7 @@ public class ScenePickerTest {
         java.util.Set<String> selectedNames = new java.util.HashSet<>();
         for (int i = 0; i < 20; i++) {
             Scene next = picker.getNextScene(scene1);
-            selectedNames.add(next.getSceneName());
+            selectedNames.add(next.getSceneId());
         }
 
         assertTrue("Should select scenes", selectedNames.size() >= 1);

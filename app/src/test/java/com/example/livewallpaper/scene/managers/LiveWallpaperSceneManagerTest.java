@@ -61,7 +61,7 @@ public class LiveWallpaperSceneManagerTest {
 
         Scene currentScene = manager.getCurrentScene();
         assertNotNull("Current scene should not be null", currentScene);
-        assertNotNull("Scene name should be set", currentScene.getSceneName());
+        assertNotNull("Scene name should be set", currentScene.getSceneId());
     }
 
     /**
@@ -73,7 +73,7 @@ public class LiveWallpaperSceneManagerTest {
 
         Scene currentScene = manager.getCurrentScene();
         assertNotNull("Scene should be loaded by sceneSwitchManager", currentScene);
-        assertNotNull("Scene name should be valid", currentScene.getSceneName());
+        assertNotNull("Scene name should be valid", currentScene.getSceneId());
     }
 
     // ==================== GL Lifecycle Tests ====================

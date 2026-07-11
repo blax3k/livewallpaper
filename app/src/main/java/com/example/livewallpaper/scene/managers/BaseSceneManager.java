@@ -100,7 +100,7 @@ public abstract class BaseSceneManager {
         this.currentScene = scene;
         this.gyroProcessor = new GyroSensorProcessor();
 
-        TimberLog.d(TAG, "SceneManager created with preloaded scene: " + scene.getSceneName());
+        TimberLog.d(TAG, "SceneManager created with preloaded scene: " + scene.getSceneId());
     }
 
     /**
@@ -217,7 +217,7 @@ public abstract class BaseSceneManager {
         try {
             // If a preloaded scene was provided, use it directly
             if (preloadedScene != null) {
-                TimberLog.d(TAG, "Using preloaded scene: " + preloadedScene.getSceneName());
+                TimberLog.d(TAG, "Using preloaded scene: " + preloadedScene.getSceneId());
                 currentScene = preloadedScene;
             } else {
                 // Otherwise load from file
@@ -246,7 +246,7 @@ public abstract class BaseSceneManager {
             // Disable edge highlights by default (they will be enabled when a sprite is selected)
             currentScene.setEdgeHighlighted(false);
 
-            TimberLog.d(TAG, "Successfully loaded and initialized scene: " + currentScene.getSceneName());
+            TimberLog.d(TAG, "Successfully loaded and initialized scene: " + currentScene.getSceneId());
         } catch (Exception e) {
             TimberLog.e(TAG, "Error loading scene: " + e.getMessage(), e);
             // Create an empty scene on error

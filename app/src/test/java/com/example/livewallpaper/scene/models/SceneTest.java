@@ -26,7 +26,7 @@ public class SceneTest {
     @Test
     public void constructor_InitializesWithCorrectSceneName() {
         Scene testScene = new Scene("MyScene");
-        assertEquals("MyScene", testScene.getSceneName());
+        assertEquals("MyScene", testScene.getSceneId());
     }
 
     @Test
@@ -46,15 +46,15 @@ public class SceneTest {
         assertEquals(1, testScene.getSprites().size());
     }
 
-    // ==================== Scene Name Tests ====================
+    // ==================== Scene Id Tests ====================
 
     @Test
-    public void getSceneName_ReturnsCorrectName() {
+    public void getSceneId_ReturnsCorrectId() {
         Scene scene1 = new Scene("Scene1");
-        assertEquals("Scene1", scene1.getSceneName());
+        assertEquals("Scene1", scene1.getSceneId());
 
         Scene scene2 = new Scene("DifferentScene");
-        assertEquals("DifferentScene", scene2.getSceneName());
+        assertEquals("DifferentScene", scene2.getSceneId());
     }
 
     // ==================== XFocus Property Tests ====================
@@ -280,8 +280,8 @@ public class SceneTest {
 
         assertEquals(1, scene1.getSprites().size());
         assertEquals(2, scene2.getSprites().size());
-        assertEquals("Scene1", scene1.getSceneName());
-        assertEquals("Scene2", scene2.getSceneName());
+        assertEquals("Scene1", scene1.getSceneId());
+        assertEquals("Scene2", scene2.getSceneId());
     }
 
     // ==================== Combined Property Tests ====================
@@ -300,7 +300,7 @@ public class SceneTest {
         scene.addSprite(sprite1);
         scene.addSprite(sprite2);
 
-        assertEquals("TestScene", scene.getSceneName());
+        assertEquals("TestScene", scene.getSceneId());
         assertEquals(0.3f, scene.getXFocus(), 0.001f);
         assertEquals(1080, scene.getStartTime());
         assertEquals(1439, scene.getEndTime());

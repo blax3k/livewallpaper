@@ -42,7 +42,7 @@ public class AvatarSceneManager extends BaseSceneManager {
     @Override
     protected void loadScene() {
         if (preloadedScene != null) {
-            TimberLog.d(TAG, "Using preloaded scene: " + preloadedScene.getSceneName());
+            TimberLog.d(TAG, "Using preloaded scene: " + preloadedScene.getSceneId());
             currentScene = preloadedScene;
         } else {
             try {
@@ -74,7 +74,7 @@ public class AvatarSceneManager extends BaseSceneManager {
             try {
                 currentScene.initialize(context, textureManager);
                 currentScene.setEdgeHighlighted(false);
-                TimberLog.d(TAG, "Scene loaded and initialized successfully: " + currentScene.getSceneName());
+                TimberLog.d(TAG, "Scene loaded and initialized successfully: " + currentScene.getSceneId());
             } catch (Exception e) {
                 TimberLog.e(TAG, "Error initializing scene: " + e.getMessage(), e);
                 // Keep the scene even if initialization fails

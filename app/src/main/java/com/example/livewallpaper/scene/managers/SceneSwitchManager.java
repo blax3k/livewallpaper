@@ -77,7 +77,7 @@ public class SceneSwitchManager {
             try {
                 Scene scene = sceneLoader.loadScene(sceneFile);
                 loadedScenes.add(scene);
-                TimberLog.d(TAG, "Preloaded scene: " + scene.getSceneName());
+                TimberLog.d(TAG, "Preloaded scene: " + scene.getSceneId());
             } catch (Exception e) {
                 TimberLog.e(TAG, "Failed to preload scene: " + sceneFile, e);
             }
@@ -100,7 +100,7 @@ public class SceneSwitchManager {
         // Use a dummy placeholder as "current" so ScenePicker can pick any eligible scene.
         Scene dummyScene = new Scene("__DUMMY__");
         Scene selected = scenePicker.getNextScene(dummyScene);
-        worldState.recordSceneShown(selected.getSceneName());
+        worldState.recordSceneShown(selected.getSceneId());
         return selected;
     }
 
@@ -110,13 +110,13 @@ public class SceneSwitchManager {
     public void initialize(Scene initialScene) {
         this.currentScene = initialScene;
         // Find the index of the current scene in the dynamically loaded list
-        String sceneName = initialScene.getSceneName();
+        String sceneId = initialScene.getSceneId();
         for (int i = 0; i < sceneFiles.length; i++) {
             String fileName = sceneFiles[i];
             String fileNameWithoutExtension = fileName.endsWith(".json") ?
                 fileName.substring(0, fileName.length() - 5) : fileName;
 
-            if (fileNameWithoutExtension.equals(sceneName)) {
+            if (fileNameWithoutExtension.equals(sceneId)) {
                 TimberLog.d(TAG, "Initialized scene manager at index " + i + " (" + fileName + ")");
                 break;
             }
@@ -157,16 +157,16 @@ public class SceneSwitchManager {
         this.currentScene = currentScene;
         Scene newScene = scenePicker.getNextScene(currentScene);
 
-        if (newScene.getSceneName().equals(currentScene.getSceneName())) {
+        if (newScene.getSceneId().equals(currentScene.getSceneId())) {
             return;
         }
 
-        worldState.recordSceneShown(newScene.getSceneName());
+        worldState.recordSceneShown(newScene.getSceneId());
 
         // Reset the preloaded scene so textures can be re-initialized
         newScene.resetForReuse();
 
-        TimberLog.d(TAG, "Cycling to next scene: " + newScene.getSceneName());
+        TimberLog.d(TAG, "Cycling to next scene: " + newScene.getSceneId());
 
         try {
             // Apply gyro scaling if callback is set and gyro is currently active
@@ -200,7 +200,7 @@ public class SceneSwitchManager {
         // If transition just finished, update our reference
         if (!transitionManager.isTransitioning() && sceneToRender != currentScene) {
             currentScene = sceneToRender;
-            TimberLog.d(TAG, "Scene switched successfully to: " + currentScene.getSceneName());
+            TimberLog.d(TAG, "Scene switched successfully to: " + currentScene.getSceneId());
         }
 
         return sceneToRender;

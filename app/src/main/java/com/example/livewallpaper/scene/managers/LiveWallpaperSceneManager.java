@@ -98,7 +98,7 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
             try {
                 this.currentScene = sceneSwitchManager.loadInitialScene();
                 if (this.currentScene != null) {
-                    TimberLog.d(TAG, "Loaded initial scene: " + currentScene.getSceneName());
+                    TimberLog.d(TAG, "Loaded initial scene: " + currentScene.getSceneId());
                 } else {
                     TimberLog.e(TAG, "loadInitialScene returned null");
                     this.currentScene = new Scene("DefaultScene");
@@ -309,10 +309,10 @@ public class LiveWallpaperSceneManager extends BaseSceneManager implements GLWal
             }
 
             // Apply sprite conditions when the scene changes or flags have been updated
-            String currentSceneName = currentScene != null ? currentScene.getSceneName() : null;
-            if (conditionsDirty || !java.util.Objects.equals(currentSceneName, lastAppliedConditionsScene)) {
+            String currentSceneId = currentScene != null ? currentScene.getSceneId() : null;
+            if (conditionsDirty || !java.util.Objects.equals(currentSceneId, lastAppliedConditionsScene)) {
                 spriteConditionApplicator.applyToScene(currentScene);
-                lastAppliedConditionsScene = currentSceneName;
+                lastAppliedConditionsScene = currentSceneId;
                 conditionsDirty = false;
             }
 

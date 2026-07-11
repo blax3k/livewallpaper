@@ -67,7 +67,7 @@ public class ScenePicker {
         if (eligible.isEmpty()) {
             TimberLog.w(TAG, "No scenes passed flag eligibility filter — relaxing constraints");
             for (Scene scene : scenes) {
-                if (!scene.getSceneName().equals(currentScene.getSceneName())) {
+                if (!scene.getSceneId().equals(currentScene.getSceneId())) {
                     eligible.add(scene);
                 }
             }
@@ -103,21 +103,21 @@ public class ScenePicker {
         // Step 4b: Tiebreaker — prefer the scene shown fewest times.
         int minCount = Integer.MAX_VALUE;
         for (Scene scene : topScorers) {
-            int count = worldState.getSceneShowCount(scene.getSceneName());
+            int count = worldState.getSceneShowCount(scene.getSceneId());
             if (count < minCount) minCount = count;
         }
 
         List<Scene> leastShown = new ArrayList<>();
         for (Scene scene : topScorers) {
-            if (worldState.getSceneShowCount(scene.getSceneName()) == minCount) {
+            if (worldState.getSceneShowCount(scene.getSceneId()) == minCount) {
                 leastShown.add(scene);
             }
         }
 
         // Step 4c: Still tied — pick randomly.
         Scene selected = leastShown.get(random.nextInt(leastShown.size()));
-        TimberLog.d(TAG, "Selected (tiebreak): " + selected.getSceneName()
-                + " (showCount=" + worldState.getSceneShowCount(selected.getSceneName()) + ")");
+        TimberLog.d(TAG, "Selected (tiebreak): " + selected.getSceneId()
+                + " (showCount=" + worldState.getSceneShowCount(selected.getSceneId()) + ")");
         return selected;
     }
 
@@ -132,7 +132,7 @@ public class ScenePicker {
     private List<Scene> buildEligibleList(Scene currentScene) {
         List<Scene> eligible = new ArrayList<>();
         for (Scene scene : scenes) {
-            if (scene.getSceneName().equals(currentScene.getSceneName())) continue;
+            if (scene.getSceneId().equals(currentScene.getSceneId())) continue;
             if (isEligible(scene)) eligible.add(scene);
         }
         return eligible;
@@ -151,7 +151,7 @@ public class ScenePicker {
         if (decl.excluded != null) {
             for (String flagId : decl.excluded) {
                 if (worldState.isFlagActive(flagId)) {
-                    TimberLog.d(TAG, "Scene '" + scene.getSceneName()
+                    TimberLog.d(TAG, "Scene '" + scene.getSceneId()
                             + "' excluded: flag '" + flagId + "' is active");
                     return false;
                 }
@@ -161,7 +161,7 @@ public class ScenePicker {
         if (decl.required != null) {
             for (String flagId : decl.required) {
                 if (!worldState.isFlagActive(flagId)) {
-                    TimberLog.d(TAG, "Scene '" + scene.getSceneName()
+                    TimberLog.d(TAG, "Scene '" + scene.getSceneId()
                             + "' excluded: required flag '" + flagId + "' is inactive");
                     return false;
                 }
@@ -191,14 +191,14 @@ public class ScenePicker {
     private void logSelection(List<Scene> eligible, int[] scores, int maxScore, List<Scene> topScorers) {
         if (topScorers.size() == 1) {
             TimberLog.d(TAG, "Selected (unique top score " + maxScore + "): "
-                    + topScorers.get(0).getSceneName());
+                    + topScorers.get(0).getSceneId());
         } else {
             StringBuilder sb = new StringBuilder("Tie at score " + maxScore + " between: ");
-            for (Scene s : topScorers) sb.append(s.getSceneName()).append(' ');
+            for (Scene s : topScorers) sb.append(s.getSceneId()).append(' ');
             TimberLog.d(TAG, sb.toString());
         }
         for (int i = 0; i < eligible.size(); i++) {
-            TimberLog.d(TAG, "  score=" + scores[i] + " scene=" + eligible.get(i).getSceneName());
+            TimberLog.d(TAG, "  score=" + scores[i] + " scene=" + eligible.get(i).getSceneId());
         }
     }
 }
