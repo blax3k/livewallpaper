@@ -57,7 +57,7 @@ public class ConditionEvaluator {
                 return !worldState.isFlagActive(c.flagId);
 
             case "time_of_day":
-                return isCurrentHourInRange(c.startHour, c.endHour);
+                return isCurrentTimeInRange(c.startHour, c.startMinute, c.endHour, c.endMinute);
 
             case "day_of_week":
                 return currentDayMatches(c.daysOfWeek);
@@ -83,15 +83,19 @@ public class ConditionEvaluator {
     }
 
     /**
-     * True if the current hour of day falls within [startHour, endHour).
-     * Handles overnight ranges where startHour > endHour (e.g., night: 22–6).
+     * True if the current time of day falls within the half-open window [start, end) on the
+     * minute-of-day. Handles overnight ranges where start > end (e.g., night: 22:00–06:00).
+     * Minutes default to 0, so whole-hour rules behave exactly as before.
      */
-    private boolean isCurrentHourInRange(int startHour, int endHour) {
-        int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
-        if (startHour <= endHour) {
-            return hour >= startHour && hour < endHour;
+    private boolean isCurrentTimeInRange(int startHour, int startMinute, int endHour, int endMinute) {
+        Calendar now = Calendar.getInstance();
+        int current = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+        int start = startHour * 60 + startMinute;
+        int end = endHour * 60 + endMinute;
+        if (start <= end) {
+            return current >= start && current < end;
         } else {
-            return hour >= startHour || hour < endHour;
+            return current >= start || current < end;
         }
     }
 

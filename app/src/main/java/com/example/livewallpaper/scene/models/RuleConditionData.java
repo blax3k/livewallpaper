@@ -9,7 +9,8 @@ package com.example.livewallpaper.scene.models;
  * ─────────────────────────── ────────────────────────────────────────────────────────────────
  * "flag_active"               flagId
  * "flag_inactive"             flagId
- * "time_of_day"               startHour, endHour  (0–23 inclusive; handles overnight wrap)
+ * "time_of_day"               startHour, endHour (+ optional startMinute, endMinute); window is
+ *                             [start, end) on the minute-of-day and wraps overnight when start > end
  * "day_of_week"               daysOfWeek  (0=Sunday … 6=Saturday)
  * "scene_count"               sceneId, operator, intValue
  * "install_duration_hours"    operator, intValue
@@ -39,11 +40,17 @@ public class RuleConditionData {
     /** Numeric value for comparison. Used by: scene_count, install_duration_hours, time_since_flag_change. */
     public int intValue;
 
-    /** Start of time-of-day window (0–23). Used by: time_of_day. */
+    /** Start hour of time-of-day window (0–23). Used by: time_of_day. */
     public int startHour;
 
-    /** End of time-of-day window (0–23, inclusive; wrap-around supported for e.g. 22–6). Used by: time_of_day. */
+    /** End hour of time-of-day window (0–23; end is exclusive, wrap-around supported for e.g. 22–6). Used by: time_of_day. */
     public int endHour;
+
+    /** Start minute within startHour (0–59; defaults to 0 when absent from JSON). Used by: time_of_day. */
+    public int startMinute;
+
+    /** End minute within endHour (0–59; defaults to 0 when absent from JSON). Used by: time_of_day. */
+    public int endMinute;
 
     /** Days of week to match (0=Sunday … 6=Saturday). Used by: day_of_week. */
     public int[] daysOfWeek;
