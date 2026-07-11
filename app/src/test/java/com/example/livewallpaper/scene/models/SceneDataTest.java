@@ -95,11 +95,11 @@ public class SceneDataTest {
 
         scene1.sceneName = "Scene1";
         scene1.xFocus = 0.3f;
-        scene1.startTime = 6;
-        scene1.endTime = 12;
         scene1.startTime = 360;   // 06:00
         scene1.endTime = 720;     // 12:00
 
+        scene2.sceneName = "Scene2";
+        scene2.xFocus = 0.7f;
         scene2.startTime = 1080;  // 18:00
         scene2.endTime = 1439;    // 23:59
 

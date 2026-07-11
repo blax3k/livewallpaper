@@ -49,6 +49,16 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            // Let Robolectric resolve app resources (e.g. R.bool.double_tap_to_change_scene_enabled).
+            isIncludeAndroidResources = true
+            all {
+                // Robolectric with resources is memory-hungry; give the test JVM more headroom.
+                it.maxHeapSize = "2g"
+            }
+        }
+    }
 }
 
 // Fix for ambiguous testDebugUnitTest task when using product flavors

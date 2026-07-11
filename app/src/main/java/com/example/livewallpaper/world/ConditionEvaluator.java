@@ -5,6 +5,7 @@ import com.example.livewallpaper.scene.models.RuleConditionData;
 import com.example.livewallpaper.scene.models.RuleConditionGroupData;
 
 import java.util.Calendar;
+import java.util.function.Supplier;
 
 /**
  * Evaluates {@link RuleConditionGroupData} condition trees against the current world state.
@@ -21,9 +22,17 @@ public class ConditionEvaluator {
     private static final String TAG = "ConditionEvaluator";
 
     private final WorldStateManager worldState;
+    /** Supplies "now" for time_of_day / day_of_week checks; injectable so tests are deterministic. */
+    private final Supplier<Calendar> calendarSupplier;
 
     public ConditionEvaluator(WorldStateManager worldState) {
+        this(worldState, Calendar::getInstance);
+    }
+
+    /** Visible for testing: inject a fixed calendar to evaluate time-based conditions deterministically. */
+    ConditionEvaluator(WorldStateManager worldState, Supplier<Calendar> calendarSupplier) {
         this.worldState = worldState;
+        this.calendarSupplier = calendarSupplier;
     }
 
     /**
@@ -88,7 +97,7 @@ public class ConditionEvaluator {
      * Minutes default to 0, so whole-hour rules behave exactly as before.
      */
     private boolean isCurrentTimeInRange(int startHour, int startMinute, int endHour, int endMinute) {
-        Calendar now = Calendar.getInstance();
+        Calendar now = calendarSupplier.get();
         int current = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
         int start = startHour * 60 + startMinute;
         int end = endHour * 60 + endMinute;
@@ -102,7 +111,7 @@ public class ConditionEvaluator {
     /** True if today (0=Sunday … 6=Saturday) appears in daysOfWeek. */
     private boolean currentDayMatches(int[] daysOfWeek) {
         if (daysOfWeek == null || daysOfWeek.length == 0) return false;
-        int today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1;
+        int today = calendarSupplier.get().get(Calendar.DAY_OF_WEEK) - 1;
         for (int d : daysOfWeek) {
             if (d == today) return true;
         }

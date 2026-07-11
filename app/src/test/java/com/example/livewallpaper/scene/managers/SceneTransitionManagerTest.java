@@ -3,6 +3,8 @@ import android.content.Context;
 import com.example.livewallpaper.gl.TextureManager;
 import com.example.livewallpaper.scene.models.Scene;
 import com.example.livewallpaper.scene.models.Sprite;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,14 +26,19 @@ public class SceneTransitionManagerTest {
     private TextureManager mockTextureManager;
     private Scene oldScene;
     private Scene newScene;
+    // Controllable clock backing the transition's fade timing, so completion is deterministic
+    // instead of depending on wall-clock elapsed time.
+    private long nowMs = 1_000L;
+    // Advance well past the (private) 800ms fade duration to force completion on the next update.
+    private static final long PAST_FADE_MS = 5_000L;
+
     @Before
     public void setUp() {
-        try (var closeable = MockitoAnnotations.openMocks(this)) {
-            // AutoCloseable resource opened
-        } catch (Exception e) {
-            // Continue with test setup
-        }
-        transitionManager = new SceneTransitionManager();
+        // NOTE: openMocks returns an AutoCloseable — do NOT close it here (try-with-resources would
+        // immediately tear the mocks down, leaving @Mock fields unusable during the tests).
+        MockitoAnnotations.openMocks(this);
+        // Inject the controllable clock and a synchronous executor so texture cleanup runs inline.
+        transitionManager = new SceneTransitionManager(() -> nowMs, Runnable::run);
         // Create test scenes
         oldScene = new Scene("old_scene");
         newScene = new Scene("new_scene");
@@ -73,19 +80,19 @@ public class SceneTransitionManagerTest {
     @Test
     public void updateTransition_FinishesTransitionAfterDuration() {
         transitionManager.startTransition(oldScene, newScene, mockContext);
-        for (int i = 0; i < 100; i++) {
-            transitionManager.updateTransition(mockTextureManager);
-            if (!transitionManager.isTransitioning()) {
-                break;
-            }
-        }
-        assertFalse("Transition should complete after updates", transitionManager.isTransitioning());
+        transitionManager.updateTransition(mockTextureManager); // begins the fade at nowMs
+        nowMs += PAST_FADE_MS;                                   // fade duration elapses
+        transitionManager.updateTransition(mockTextureManager); // completes on this frame
+        assertFalse("Transition should complete after the fade duration elapses", transitionManager.isTransitioning());
     }
     @Test
     public void startTransition_MarksOldSpritesForWipeOut() {
+        // Capture the original old sprites first: beginFade also adds the new scene's wiping-IN
+        // sprites into oldScene, so asserting over the combined list would wrongly include those.
+        List<Sprite> originalOldSprites = new ArrayList<>(oldScene.getSprites());
         transitionManager.startTransition(oldScene, newScene, mockContext);
         transitionManager.updateTransition(mockTextureManager);
-        for (Sprite sprite : oldScene.getSprites()) {
+        for (Sprite sprite : originalOldSprites) {
             assertTrue("Old sprite should be marked for wipeout", sprite.isWipingOut());
         }
     }
@@ -97,12 +104,8 @@ public class SceneTransitionManagerTest {
         int newSpriteCountDuring = oldScene.getSprites().size();
         assertTrue("Old scene should have new sprites during transition",
             newSpriteCountDuring > oldSpriteCountBefore);
-        for (int i = 0; i < 100; i++) {
-            transitionManager.updateTransition(mockTextureManager);
-            if (!transitionManager.isTransitioning()) {
-                break;
-            }
-        }
+        nowMs += PAST_FADE_MS;
+        transitionManager.updateTransition(mockTextureManager); // completes and removes added sprites
         int spriteCountAfter = oldScene.getSprites().size();
         assertEquals("Added sprites should be removed after transition",
             oldSpriteCountBefore, spriteCountAfter);
@@ -110,12 +113,9 @@ public class SceneTransitionManagerTest {
     @Test
     public void transitionCompletion_CleansUpUnusedTextures() {
         transitionManager.startTransition(oldScene, newScene, mockContext);
-        for (int i = 0; i < 100; i++) {
-            transitionManager.updateTransition(mockTextureManager);
-            if (!transitionManager.isTransitioning()) {
-                break;
-            }
-        }
+        transitionManager.updateTransition(mockTextureManager); // begins the fade
+        nowMs += PAST_FADE_MS;
+        transitionManager.updateTransition(mockTextureManager); // completes; cleanup runs on the (synchronous) executor
         verify(mockTextureManager, atLeastOnce()).unloadUnusedTextures(any(), any());
     }
     @Test
@@ -126,16 +126,16 @@ public class SceneTransitionManagerTest {
     @Test
     public void multipleTransitions_Sequential() {
         transitionManager.startTransition(oldScene, newScene, mockContext);
-        while (transitionManager.isTransitioning()) {
-            transitionManager.updateTransition(mockTextureManager);
-        }
+        transitionManager.updateTransition(mockTextureManager);
+        nowMs += PAST_FADE_MS;
+        transitionManager.updateTransition(mockTextureManager);
         assertFalse("First transition should complete", transitionManager.isTransitioning());
         Scene oldScene2 = newScene;
         Scene newScene2 = new Scene("new_scene_2");
         transitionManager.startTransition(oldScene2, newScene2, mockContext);
-        while (transitionManager.isTransitioning()) {
-            transitionManager.updateTransition(mockTextureManager);
-        }
+        transitionManager.updateTransition(mockTextureManager);
+        nowMs += PAST_FADE_MS;
+        transitionManager.updateTransition(mockTextureManager);
         assertFalse("Second transition should complete", transitionManager.isTransitioning());
     }
 }

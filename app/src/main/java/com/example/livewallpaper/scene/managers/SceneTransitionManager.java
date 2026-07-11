@@ -10,8 +10,9 @@ import com.example.livewallpaper.scene.models.Sprite;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.LongSupplier;
 
 /**
  * Manages smooth scene transitions with diagonal wipe effects.
@@ -44,12 +45,18 @@ public class SceneTransitionManager {
     // Sprites added to oldScene during transition (need to be removed when done)
     private final List<Sprite> addedSprites = new ArrayList<>();
 
-    // ExecutorService for background texture unloading
-    private final ExecutorService textureUnloadExecutor = Executors.newSingleThreadExecutor();
-
-    // Timing for frame performance measurement
+    // Time source (injectable for deterministic tests) and executor for background texture unloading.
+    private final LongSupplier clock;
+    private final Executor textureUnloadExecutor;
 
     public SceneTransitionManager() {
+        this(System::currentTimeMillis, Executors.newSingleThreadExecutor());
+    }
+
+    /** Visible for testing: inject a controllable clock and (e.g. synchronous) cleanup executor. */
+    SceneTransitionManager(LongSupplier clock, Executor textureUnloadExecutor) {
+        this.clock = clock;
+        this.textureUnloadExecutor = textureUnloadExecutor;
     }
 
     public boolean isTransitioning() {
@@ -112,7 +119,7 @@ public class SceneTransitionManager {
      * New sprites get a head start of half the transition duration.
      */
     private void beginFade() {
-        fadeStartTimeMs = System.currentTimeMillis();
+        fadeStartTimeMs = clock.getAsLong();
         addedSprites.clear();
 
         TimberLog.d(TAG, "=== BEGIN FADE - MARKING ALL SPRITES ===");
@@ -152,7 +159,7 @@ public class SceneTransitionManager {
     }
 
     private float calculateProgress() {
-        long elapsed = System.currentTimeMillis() - fadeStartTimeMs;
+        long elapsed = clock.getAsLong() - fadeStartTimeMs;
         return Math.min(1.0f, (float) elapsed / FADE_DURATION_MS);
     }
 

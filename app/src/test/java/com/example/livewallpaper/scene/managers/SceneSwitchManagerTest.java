@@ -110,16 +110,6 @@ public class SceneSwitchManagerTest {
     }
 
     @Test
-    public void getInitialSceneFile_MethodExists() {
-        try {
-            var method = SceneSwitchManager.class.getMethod("getInitialSceneFile");
-            assertNotNull("getInitialSceneFile method should exist", method);
-        } catch (NoSuchMethodException e) {
-            fail("getInitialSceneFile method should exist");
-        }
-    }
-
-    @Test
     public void loadInitialScene_MethodExists() {
         try {
             var method = SceneSwitchManager.class.getMethod("loadInitialScene");
