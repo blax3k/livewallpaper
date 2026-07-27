@@ -36,6 +36,20 @@ public class ConditionEvaluator {
     }
 
     /**
+     * Returns true if ANY of the given condition groups passes — the groups are OR'd together,
+     * matching the web editor's {@code evaluateConditions} (frontend/src/ruleEngine.ts).
+     * A null or empty array always passes (unconditional rule).
+     */
+    public boolean evaluateAny(RuleConditionGroupData[] groups) {
+        if (groups == null || groups.length == 0) return true;
+
+        for (RuleConditionGroupData group : groups) {
+            if (evaluate(group)) return true;
+        }
+        return false;
+    }
+
+    /**
      * Returns true if the condition group passes against the current world state.
      * A null group or a group with no checks always passes (unconditional).
      */

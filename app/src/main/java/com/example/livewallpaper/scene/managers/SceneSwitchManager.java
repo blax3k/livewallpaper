@@ -85,11 +85,11 @@ public class SceneSwitchManager {
     }
 
     /**
-     * Load the initial scene based on time-of-day logic.
-     * Filters scenes to those matching the current time period and selects one randomly.
-     * If no scenes match the current time period, returns a random scene from all scenes.
+     * Load the scene to show on startup, chosen by the flag-based picker against the current
+     * world state. Unlike {@link #cycleToNextScene(Scene)} this always yields a scene — the
+     * picker relaxes flag constraints rather than leaving the wallpaper blank.
      *
-     * @return the loaded Scene based on current time of day
+     * @return the selected Scene
      * @throws Exception if no scenes are available
      */
     public Scene loadInitialScene() throws Exception {
@@ -97,9 +97,7 @@ public class SceneSwitchManager {
             throw new RuntimeException("No scene files found in assets/scenes");
         }
 
-        // Use a dummy placeholder as "current" so ScenePicker can pick any eligible scene.
-        Scene dummyScene = new Scene("__DUMMY__");
-        Scene selected = scenePicker.getNextScene(dummyScene);
+        Scene selected = scenePicker.getInitialScene();
         worldState.recordSceneShown(selected.getSceneId());
         return selected;
     }
@@ -145,6 +143,9 @@ public class SceneSwitchManager {
      * Cycle to the next scene in the sequence.
      * Must be called on the GL thread.
      *
+     * No-op when the picker finds no eligible scene other than the current one — the wallpaper
+     * stays on the scene it is showing rather than switching to one the flags rule out.
+     *
      * @param currentScene The currently active scene to transition FROM
      */
     public void cycleToNextScene(Scene currentScene) {
@@ -158,6 +159,7 @@ public class SceneSwitchManager {
         Scene newScene = scenePicker.getNextScene(currentScene);
 
         if (newScene.getSceneId().equals(currentScene.getSceneId())) {
+            TimberLog.d(TAG, "No eligible next scene — staying on " + currentScene.getSceneId());
             return;
         }
 

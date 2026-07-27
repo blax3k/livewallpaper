@@ -56,7 +56,7 @@ public class RulesEvaluatorTest {
     public void appliesActionsFromMatchingRules_andSkipsFiredOneShotRules() {
         RuleData setMorning = rule("r1", false, null, action("activate_flag", "morning"));
         RuleData milestone = rule("r2", true,
-            group("AND", flag("flag_active", "morning")),
+            groups(group("AND", flag("flag_active", "morning"))),
             action("activate_flag", "milestone"));
 
         new RulesEvaluator(worldState).evaluate(List.of(setMorning, milestone));
@@ -78,7 +78,7 @@ public class RulesEvaluatorTest {
     public void laterRuleReactsToFlagAnEarlierRuleJustActivated() {
         RuleData setter = rule("setter", false, null, action("activate_flag", "a"));
         RuleData combo = rule("combo", false,
-            group("AND", flag("flag_active", "a")),
+            groups(group("AND", flag("flag_active", "a"))),
             action("activate_flag", "b"));
 
         new RulesEvaluator(worldState).evaluate(List.of(setter, combo));
@@ -93,15 +93,53 @@ public class RulesEvaluatorTest {
         assertTrue(activeFlags.contains("x"));
     }
 
+    @Test
+    public void ruleWithEmptyConditionsArray_alwaysFires() {
+        RuleData always = rule("always", false, new RuleConditionGroupData[0], action("activate_flag", "x"));
+        new RulesEvaluator(worldState).evaluate(List.of(always));
+        assertTrue(activeFlags.contains("x"));
+    }
+
+    // ── condition groups are OR'd (matches the editor's evaluateConditions) ───
+
+    @Test
+    public void firesWhenAnyConditionGroupMatches() {
+        activeFlags.add("b");
+
+        // Group 1 fails (flag "a" is inactive), group 2 passes — the rule still fires.
+        RuleData either = rule("either", false,
+            groups(group("AND", flag("flag_active", "a")), group("AND", flag("flag_active", "b"))),
+            action("activate_flag", "fired"));
+
+        new RulesEvaluator(worldState).evaluate(List.of(either));
+
+        assertTrue("a rule fires when any one of its groups matches", activeFlags.contains("fired"));
+    }
+
+    @Test
+    public void doesNotFireWhenEveryConditionGroupFails() {
+        RuleData either = rule("either", false,
+            groups(group("AND", flag("flag_active", "a")), group("AND", flag("flag_active", "b"))),
+            action("activate_flag", "fired"));
+
+        new RulesEvaluator(worldState).evaluate(List.of(either));
+
+        assertFalse("no group matched, so no action ran", activeFlags.contains("fired"));
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────────
 
-    private static RuleData rule(String id, boolean oneShot, RuleConditionGroupData conditions, RuleActionData... actions) {
+    private static RuleData rule(String id, boolean oneShot, RuleConditionGroupData[] conditions, RuleActionData... actions) {
         RuleData r = new RuleData();
         r.id = id;
         r.oneShot = oneShot;
         r.conditions = conditions;
         r.actions = actions;
         return r;
+    }
+
+    private static RuleConditionGroupData[] groups(RuleConditionGroupData... groups) {
+        return groups;
     }
 
     private static RuleActionData action(String type, String flagId) {

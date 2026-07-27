@@ -21,10 +21,15 @@ public class RuleData {
     public String name;
 
     /**
-     * Condition group that must pass for this rule to fire.
-     * May be null if the rule should always fire (e.g., a time-of-day setter with no preconditions).
+     * Condition groups the rule fires under. Checks within a group are combined by that group's
+     * operator; the groups themselves are OR'd against each other, so the rule fires as soon as
+     * any one group fully matches. Null or empty means the rule always fires (e.g., a time-of-day
+     * setter with no preconditions).
+     *
+     * This is an array to match the web editor's {@code RuleDefinition.conditions}
+     * (packages/types/src/index.ts) — the exact JSON the pack's rules.json carries.
      */
-    public RuleConditionGroupData conditions;
+    public RuleConditionGroupData[] conditions;
 
     /** Actions executed when conditions pass. */
     public RuleActionData[] actions;

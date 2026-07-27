@@ -22,8 +22,12 @@ import java.util.List;
  *
  * When a {@code packDir} is supplied (e.g. a downloaded project directory) the loader
  * reads from that directory first and falls back to the app bundle assets only if the
- * file is absent from the directory. This lets downloaded projects override the built-in
+ * file is <em>absent</em> from the directory. This lets downloaded projects override the built-in
  * flags/rules without requiring a new APK build.
+ *
+ * A file that is present in the pack dir but fails to parse yields an empty list rather than the
+ * bundled asset: once a pack declares its own rules, quietly substituting the built-in ones would
+ * run a completely different world simulation while looking healthy.
  *
  * Neither file is required to exist — missing files return empty lists so the wallpaper
  * continues to function without any storytelling content configured.
@@ -83,7 +87,13 @@ public class PackLoader {
                     TimberLog.d(TAG, "Loaded " + items.length + " " + label + " definitions from " + file.getAbsolutePath());
                     return Arrays.asList(items);
                 } catch (Exception e) {
-                    TimberLog.w(TAG, "Failed to load " + filename + " from pack dir: " + e.getMessage());
+                    // The pack shipped this file, so it is the authority — do NOT fall back to the
+                    // bundled asset. Silently running another pack's rules looks like everything is
+                    // fine while the wallpaper behaves nothing like the project the user authored;
+                    // running no rules at all is the visible failure this deserves.
+                    TimberLog.e(TAG, "Failed to parse " + filename + " from pack dir " + file.getAbsolutePath()
+                            + " — no " + label + "s loaded (NOT falling back to the bundled asset)", e);
+                    return Collections.emptyList();
                 }
             }
         }

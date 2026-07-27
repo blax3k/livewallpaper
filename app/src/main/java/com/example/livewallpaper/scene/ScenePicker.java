@@ -11,11 +11,10 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Selects the next scene to show using the flag-based scoring system.
+ * Selects which scene to show using the flag-based scoring system.
  *
  * <h3>Selection algorithm</h3>
  * <ol>
- *   <li>Skip the scene that is currently displayed (no immediate repeats).</li>
  *   <li>Exclude any scene whose {@code excluded} flags list contains an active flag.</li>
  *   <li>Exclude any scene whose {@code required} flags list has a flag that is NOT active.</li>
  *   <li>Score each remaining scene: sum the {@code weight} for every active flag in
@@ -23,17 +22,22 @@ import java.util.Random;
  *   <li>Pick the highest-scoring scene. On a tie, prefer the scene shown fewest times
  *       (tracked by {@link WorldStateManager}). On a further tie, pick randomly.</li>
  * </ol>
+ * This mirrors the web editor's simulator ranking (frontend/src/simulatorScenes.ts) so the
+ * device and the simulator always agree on which scene wins.
+ *
+ * <h3>Advancing vs. starting up</h3>
+ * {@link #getNextScene(Scene)} additionally skips the scene already on screen, and returns
+ * that same scene when nothing else qualifies — i.e. "stay put". Flag constraints are never
+ * relaxed here: a pack with one scene per time-of-day has exactly one eligible scene, so a
+ * double tap correctly does nothing rather than cycling through ineligible scenes.
+ * {@link #getInitialScene()} must produce something to render, so it — and only it — falls
+ * back to ignoring flag constraints when no scene qualifies.
  *
  * <h3>Backward compatibility</h3>
  * Scenes whose JSON has no {@code flags} field have a null {@link SceneFlagDeclarations}.
  * These scenes are always eligible (no required/excluded constraints) and score 0.
  * They will show up whenever no flag-aware scenes outscore them — which is the same
  * behaviour as the old random picker for packs that haven't been updated yet.
- *
- * <h3>Fallbacks</h3>
- * If every scene is excluded by flags, the restriction is relaxed and all scenes except
- * the current one are considered (score 0). This prevents a black screen when the world
- * state produces an impossible selection (e.g., conflicting required flags).
  */
 public class ScenePicker {
     private static final String TAG = "ScenePicker";
@@ -49,37 +53,55 @@ public class ScenePicker {
     }
 
     /**
-     * Returns the next scene to display.
+     * Returns the scene to display when the wallpaper starts up.
      *
-     * @param currentScene the scene currently on screen (will not be selected again
-     *                     unless it is the only scene available)
+     * Something must be rendered, so if no scene passes the required/excluded filter the
+     * constraints are relaxed and every scene is considered. This keeps an impossible world
+     * state (e.g. conflicting required flags) from leaving the wallpaper blank.
+     */
+    public Scene getInitialScene() {
+        requireScenes();
+
+        List<Scene> eligible = buildEligibleList();
+        if (eligible.isEmpty()) {
+            TimberLog.w(TAG, "No scenes passed flag eligibility filter at startup — relaxing constraints");
+            eligible = new ArrayList<>(scenes);
+        }
+
+        return pickBest(eligible);
+    }
+
+    /**
+     * Returns the next scene to display, or {@code currentScene} itself when no other scene is
+     * eligible right now — the caller should then stay on the current scene instead of switching.
+     *
+     * @param currentScene the scene currently on screen (never selected again)
      */
     public Scene getNextScene(Scene currentScene) {
-        if (scenes.isEmpty()) {
-            throw new IllegalStateException("No scenes available");
-        }
+        requireScenes();
 
-        // Step 1: Build eligible set (pass required/excluded filter, skip current)
-        List<Scene> eligible = buildEligibleList(currentScene);
+        // Eligibility is evaluated over every scene, then the one already on screen is removed.
+        // Doing it in this order keeps a pack whose only eligible scene is the current one from
+        // looking like "nothing qualifies" — it means "nothing new qualifies", so we stay put.
+        List<Scene> eligible = buildEligibleList();
+        eligible.removeIf(scene -> scene.getSceneId().equals(currentScene.getSceneId()));
 
-        // Fallback: if all scenes failed the flag filter, ignore flag constraints and
-        // use all scenes except the current one so the wallpaper never goes blank.
         if (eligible.isEmpty()) {
-            TimberLog.w(TAG, "No scenes passed flag eligibility filter — relaxing constraints");
-            for (Scene scene : scenes) {
-                if (!scene.getSceneId().equals(currentScene.getSceneId())) {
-                    eligible.add(scene);
-                }
-            }
+            TimberLog.d(TAG, "No eligible scene other than '" + currentScene.getSceneId()
+                    + "' — staying on the current scene");
+            return currentScene;
         }
 
-        // Absolute fallback: only one scene exists and it's the current one.
-        if (eligible.isEmpty()) {
-            TimberLog.w(TAG, "Only one scene available — returning it");
-            return scenes.get(0);
-        }
+        return pickBest(eligible);
+    }
 
-        // Step 2: Score eligible scenes and find the maximum score.
+    // ─────────────────────────────────────────────────────────────────────────
+    // Private helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Scores the given scenes and returns the winner. The list must be non-empty. */
+    private Scene pickBest(List<Scene> eligible) {
+        // Score the eligible scenes and find the maximum score.
         int[] scores = new int[eligible.size()];
         int maxScore = Integer.MIN_VALUE;
         for (int i = 0; i < eligible.size(); i++) {
@@ -87,7 +109,7 @@ public class ScenePicker {
             if (scores[i] > maxScore) maxScore = scores[i];
         }
 
-        // Step 3: Collect scenes that share the top score.
+        // Collect the scenes that share the top score.
         List<Scene> topScorers = new ArrayList<>();
         for (int i = 0; i < eligible.size(); i++) {
             if (scores[i] == maxScore) topScorers.add(eligible.get(i));
@@ -95,12 +117,12 @@ public class ScenePicker {
 
         logSelection(eligible, scores, maxScore, topScorers);
 
-        // Step 4a: Only one winner — done.
+        // Only one winner — done.
         if (topScorers.size() == 1) {
             return topScorers.get(0);
         }
 
-        // Step 4b: Tiebreaker — prefer the scene shown fewest times.
+        // Tiebreaker — prefer the scene shown fewest times.
         int minCount = Integer.MAX_VALUE;
         for (Scene scene : topScorers) {
             int count = worldState.getSceneShowCount(scene.getSceneId());
@@ -114,25 +136,23 @@ public class ScenePicker {
             }
         }
 
-        // Step 4c: Still tied — pick randomly.
+        // Still tied — pick randomly.
         Scene selected = leastShown.get(random.nextInt(leastShown.size()));
         TimberLog.d(TAG, "Selected (tiebreak): " + selected.getSceneId()
                 + " (showCount=" + worldState.getSceneShowCount(selected.getSceneId()) + ")");
         return selected;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Private helpers
-    // ─────────────────────────────────────────────────────────────────────────
+    private void requireScenes() {
+        if (scenes.isEmpty()) {
+            throw new IllegalStateException("No scenes available");
+        }
+    }
 
-    /**
-     * Returns all scenes that pass the required/excluded flag checks,
-     * excluding the scene currently on screen.
-     */
-    private List<Scene> buildEligibleList(Scene currentScene) {
+    /** Returns all scenes that pass the required/excluded flag checks. */
+    private List<Scene> buildEligibleList() {
         List<Scene> eligible = new ArrayList<>();
         for (Scene scene : scenes) {
-            if (scene.getSceneId().equals(currentScene.getSceneId())) continue;
             if (isEligible(scene)) eligible.add(scene);
         }
         return eligible;

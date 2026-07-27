@@ -16,9 +16,9 @@ import java.util.List;
  *
  * <h3>Rule behaviour</h3>
  * <ul>
- *   <li>If a rule's {@code conditions} group passes, all its {@code actions} are executed.</li>
+ *   <li>If any of a rule's {@code conditions} groups passes, all its {@code actions} are executed.</li>
  *   <li>If {@code oneShot} is true and the rule has already fired, it is permanently skipped.</li>
- *   <li>If {@code conditions} is null or has no checks, the rule always fires.</li>
+ *   <li>If {@code conditions} is null or empty, the rule always fires.</li>
  * </ul>
  *
  * <h3>Action types</h3>
@@ -65,7 +65,7 @@ public class RulesEvaluator {
             return false;
         }
 
-        if (!conditionEvaluator.evaluate(rule.conditions)) {
+        if (!conditionEvaluator.evaluateAny(rule.conditions)) {
             return false;
         }
 

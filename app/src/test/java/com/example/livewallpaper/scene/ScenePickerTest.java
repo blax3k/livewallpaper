@@ -86,6 +86,84 @@ public class ScenePickerTest {
         assertEquals(only.getSceneId(), picker.getNextScene(only).getSceneId());
     }
 
+    // ── "stay put" when nothing else qualifies ───────────────────────────────
+
+    /**
+     * The time-of-day pack shape: one scene per period, each gated on its own flag. Exactly one
+     * scene is ever eligible, so a double tap must leave the wallpaper where it is instead of
+     * cycling through the three scenes the flags rule out.
+     */
+    @Test
+    public void getNextScene_staysOnCurrentSceneWhenItIsTheOnlyEligibleOne() {
+        when(worldState.isFlagActive("afternoon")).thenReturn(true);
+
+        Scene dawn = sceneWith("dawn", required("morning"));
+        Scene day = sceneWith("day", required("afternoon"));
+        Scene sunset = sceneWith("sunset", required("evening"));
+        Scene night = sceneWith("night", required("night"));
+        ScenePicker picker = new ScenePicker(List.of(dawn, day, sunset, night), worldState);
+
+        for (int i = 0; i < 10; i++) {
+            assertEquals("day", picker.getNextScene(day).getSceneId());
+        }
+    }
+
+    /** Flag constraints are never relaxed when advancing — an ineligible scene must not sneak in. */
+    @Test
+    public void getNextScene_staysPutWhenNoSceneAtAllIsEligible() {
+        // No flag is active, so every scene — including the current one — fails its requirement.
+        Scene current = sceneWith("current", required("morning"));
+        Scene other = sceneWith("other", required("evening"));
+        ScenePicker picker = new ScenePicker(List.of(current, other), worldState);
+
+        for (int i = 0; i < 10; i++) {
+            assertEquals("current", picker.getNextScene(current).getSceneId());
+        }
+    }
+
+    @Test
+    public void getNextScene_advancesWhenAnotherSceneBecomesEligible() {
+        // Both the day scene and an ungated scene qualify, so the tap has somewhere to go.
+        when(worldState.isFlagActive("afternoon")).thenReturn(true);
+
+        Scene day = sceneWith("day", required("afternoon"));
+        Scene anytime = new Scene("anytime");
+        ScenePicker picker = new ScenePicker(List.of(day, anytime), worldState);
+
+        assertEquals("anytime", picker.getNextScene(day).getSceneId());
+    }
+
+    // ── startup selection ────────────────────────────────────────────────────
+
+    @Test
+    public void getInitialScene_picksTheSceneGatedOnTheActiveFlag() {
+        when(worldState.isFlagActive("night")).thenReturn(true);
+
+        Scene day = sceneWith("day", required("afternoon"));
+        Scene night = sceneWith("night", required("night"));
+        ScenePicker picker = new ScenePicker(List.of(day, night), worldState);
+
+        assertEquals("night", picker.getInitialScene().getSceneId());
+    }
+
+    /** Startup must render something, so an impossible world state relaxes rather than blanks. */
+    @Test
+    public void getInitialScene_relaxesConstraintsWhenNothingQualifies() {
+        Scene day = sceneWith("day", required("afternoon"));
+        Scene night = sceneWith("night", required("night"));
+        ScenePicker picker = new ScenePicker(List.of(day, night), worldState);
+
+        Scene selected = picker.getInitialScene();
+        assertNotNull("Startup must always yield a scene", selected);
+        assertTrue(List.of("day", "night").contains(selected.getSceneId()));
+    }
+
+    @Test
+    public void getInitialScene_ThrowsExceptionWhenNoScenesAvailable() {
+        ScenePicker emptyPicker = new ScenePicker(new ArrayList<>(), worldState);
+        assertThrows(IllegalStateException.class, emptyPicker::getInitialScene);
+    }
+
     @Test
     public void constructor_CreatesDefensiveCopy() {
         List<Scene> originalList = new ArrayList<>(testScenes);
